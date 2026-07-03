@@ -1,0 +1,30 @@
+import { History } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { RECENT_ACTIVITY } from "@/data/dashboardData";
+
+export default function RecentActivity() {
+  return (
+    <Card className="p-6">
+      <div className="flex items-center gap-2">
+        <History className="h-[18px] w-[18px] text-slate-700" strokeWidth={2} />
+        <h2 className="text-base font-bold text-slate-900">Recent Activity</h2>
+      </div>
+
+      <ul className="mt-5 flex flex-col gap-5">
+        {RECENT_ACTIVITY.map((activity) => (
+          <li key={activity.id} className="flex items-start gap-3">
+            <span
+              className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${activity.dotClass}`}
+            />
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                {activity.text}
+              </p>
+              <p className="mt-0.5 text-xs text-slate-400">{activity.time}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
