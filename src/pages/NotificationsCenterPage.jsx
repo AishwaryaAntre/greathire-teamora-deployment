@@ -1,0 +1,341 @@
+import React, { useState } from "react";
+import {
+  LayoutGrid,
+  LayoutDashboard,
+  CalendarCheck,
+  Bell,
+  Users,
+  BarChart3,
+  Settings,
+  HelpCircle,
+  LogOut,
+  Search,
+  CheckCheck,
+  TrendingUp,
+  Download,
+  LogIn as LogInIcon,
+  Coffee,
+  Cog,
+} from "lucide-react";
+
+/* -------------------------------------------------------------------------- */
+/* Static data                                                                */
+/* -------------------------------------------------------------------------- */
+
+const navItems = [
+  { label: "Dashboard", icon: LayoutDashboard },
+  { label: "Attendance", icon: CalendarCheck },
+  { label: "Notifications", icon: Bell, active: true },
+  { label: "Employees", icon: Users },
+  { label: "Analytics", icon: BarChart3 },
+  { label: "Settings", icon: Settings },
+];
+
+const filters = ["All", "Unread", "Attendance", "Leave", "System"];
+
+const summary = [
+  { label: "Unread", value: "12", tone: "text-blue-600" },
+  { label: "High Priority", value: "3", tone: "text-red-500" },
+];
+
+const notifications = [
+  {
+    id: 1,
+    title: "Attendance Log",
+    description: "Aarav Mehta checked in at 09:02 AM",
+    time: "2m ago",
+    avatar: "https://i.pravatar.cc/64?img=13",
+    badge: { label: "Normal", tone: "bg-emerald-50 text-emerald-600" },
+    icon: LogInIcon,
+    unread: true,
+  },
+  {
+    id: 2,
+    title: "Break Started",
+    description: "Neha Sharma started a break",
+    time: "15m ago",
+    avatar: "https://i.pravatar.cc/64?img=25",
+    badge: { label: "Medium", tone: "bg-amber-50 text-amber-600" },
+    icon: Coffee,
+    unread: true,
+  },
+  {
+    id: 3,
+    title: "System Alert",
+    description: "Attendance report generated successfully",
+    time: "1h ago",
+    isSystem: true,
+    badge: { label: "Low", tone: "bg-slate-100 text-slate-500" },
+    icon: Cog,
+    unread: false,
+  },
+];
+
+/* -------------------------------------------------------------------------- */
+/* Sidebar                                                                    */
+/* -------------------------------------------------------------------------- */
+
+function Sidebar() {
+  return (
+    <aside className="w-64 h-full bg-slate-900 text-slate-300 flex flex-col justify-between flex-shrink-0">
+      <div>
+        <div className="flex items-center gap-3 px-5 py-6">
+          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+            <LayoutGrid className="w-5 h-5 text-white" />
+          </div>
+          <div className="leading-tight">
+            <p className="text-white font-semibold text-sm">Teamora</p>
+            <p className="text-slate-400 text-xs">Enterprise Plan</p>
+          </div>
+        </div>
+
+        <nav className="mt-2 px-3 flex flex-col gap-1">
+          {navItems.map(({ label, icon: Icon, active }) => (
+            <button
+              key={label}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
+                active
+                  ? "bg-slate-800 text-white"
+                  : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+              }`}
+            >
+              <Icon className="w-4 h-4 flex-shrink-0" />
+              {label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      <div className="px-3 pb-6 flex flex-col gap-3">
+        <button className="w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm font-medium py-2.5 rounded-lg">
+          Upgrade Plan
+        </button>
+        <div className="flex flex-col gap-1">
+          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-white transition-colors text-left">
+            <HelpCircle className="w-4 h-4 flex-shrink-0" />
+            Help Center
+          </button>
+          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-white transition-colors text-left">
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* TopBar                                                                     */
+/* -------------------------------------------------------------------------- */
+
+function TopBar() {
+  return (
+    <header className="flex items-center justify-between gap-4 px-6 py-4 bg-white border-b border-slate-200 flex-shrink-0">
+      <div className="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 w-full max-w-md">
+        <Search className="w-4 h-4 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search Notifications..."
+          className="bg-transparent outline-none text-sm text-slate-600 placeholder-slate-400 w-full"
+        />
+      </div>
+
+      <div className="flex items-center gap-5 flex-shrink-0">
+        <button className="relative text-slate-500 hover:text-slate-700">
+          <Bell className="w-5 h-5" />
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500" />
+        </button>
+        <button className="text-slate-500 hover:text-slate-700">
+          <Settings className="w-5 h-5" />
+        </button>
+        <button className="text-slate-500 hover:text-slate-700">
+          <HelpCircle className="w-5 h-5" />
+        </button>
+        <span className="w-px h-5 bg-slate-200" />
+        <button className="text-sm font-medium text-blue-600 hover:text-blue-700">
+          Support
+        </button>
+        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
+          <img
+            src="https://i.pravatar.cc/72?img=47"
+            alt="Current user"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Page header + filters                                                     */
+/* -------------------------------------------------------------------------- */
+
+function PageHeader({ activeFilter, setActiveFilter }) {
+  return (
+    <>
+      <div className="mb-5">
+        <h2 className="text-2xl font-bold text-slate-900">Notifications</h2>
+        <p className="text-sm text-slate-500 mt-1">
+          Stay updated with workforce activities and important alerts.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-3 py-2.5 mb-5">
+        <div className="flex items-center gap-2">
+          {filters.map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`relative px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                activeFilter === filter
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-500 hover:bg-slate-100"
+              }`}
+            >
+              {filter}
+              {filter === "Unread" && (
+                <span className="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-blue-600" />
+              )}
+            </button>
+          ))}
+        </div>
+        <button className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700">
+          <CheckCheck className="w-4 h-4" />
+          Mark All as Read
+        </button>
+      </div>
+    </>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Notification list                                                         */
+/* -------------------------------------------------------------------------- */
+
+function NotificationRow({ item }) {
+  const Icon = item.icon;
+  return (
+    <div
+      className={`flex items-start gap-4 px-6 py-5 border-b border-slate-100 last:border-b-0 ${
+        item.unread ? "bg-blue-50/40" : "bg-white"
+      }`}
+    >
+      {item.unread && (
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
+      )}
+      {!item.unread && <span className="w-1.5 flex-shrink-0" />}
+
+      {item.isSystem ? (
+        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+          <Icon className="w-5 h-5 text-slate-500" />
+        </div>
+      ) : (
+        <img
+          src={item.avatar}
+          alt={item.title}
+          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+        />
+      )}
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+          <span className="text-xs text-slate-400 whitespace-nowrap">
+            {item.time}
+          </span>
+        </div>
+        <p className="text-sm text-slate-500 mt-1">{item.description}</p>
+        <span
+          className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md mt-2 ${item.badge.tone}`}
+        >
+          {item.badge.label}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Right rail                                                                 */
+/* -------------------------------------------------------------------------- */
+
+function SummaryCard() {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-5">
+      <h3 className="text-base font-bold text-slate-900 mb-4 pb-3 border-b border-slate-100">
+        Summary
+      </h3>
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        {summary.map(({ label, value, tone }) => (
+          <div key={label} className="bg-slate-50 rounded-xl p-3">
+            <p className="text-xs text-slate-400 mb-1">{label}</p>
+            <p className={`text-xl font-bold ${tone}`}>{value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="bg-slate-50 rounded-xl p-3 flex items-center justify-between">
+        <div>
+          <p className="text-xs text-slate-400 mb-1">Today's Volume</p>
+          <p className="text-xl font-bold text-slate-900">45 Alerts</p>
+        </div>
+        <TrendingUp className="w-5 h-5 text-slate-400" />
+      </div>
+    </div>
+  );
+}
+
+function QuickActionsCard() {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-5">
+      <h3 className="text-base font-bold text-slate-900 mb-4">Quick Actions</h3>
+      <div className="flex flex-col gap-2">
+        <button className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <Settings className="w-4 h-4 text-slate-500" />
+          Notification Settings
+        </button>
+        <button className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <Download className="w-4 h-4 text-slate-500" />
+          Export Logs
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Main export                                                                */
+/* -------------------------------------------------------------------------- */
+
+export default function NotificationsCenterPage() {
+  const [activeFilter, setActiveFilter] = useState("All");
+
+  return (
+    <div className="w-screen h-screen overflow-hidden flex bg-slate-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0 h-full">
+        <TopBar />
+        <main className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+            <div className="xl:col-span-2 min-w-0">
+              <PageHeader
+                activeFilter={activeFilter}
+                setActiveFilter={setActiveFilter}
+              />
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                {notifications.map((item) => (
+                  <NotificationRow key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col gap-5">
+              <SummaryCard />
+              <QuickActionsCard />
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
