@@ -1,4 +1,4 @@
-export let employees = [
+export const employees = [
   { id: "emp_001", name: "Priya Sharma", role: "Senior Engineer", department: "Engineering", initials: "PS", avatar: null },
   { id: "emp_002", name: "John Doe", role: "Product Designer", department: "Design", initials: "JD", avatar: null },
   { id: "emp_003", name: "Marcus Vance", role: "Senior Developer", department: "Engineering", initials: "MV", avatar: null },
@@ -13,4 +13,4 @@ export let employees = [
   { id: "emp_012", name: "Ravi Patel", role: "Backend Engineer", department: "Engineering", initials: "RP", avatar: null },
 ];
 
-export let departments = [...new Set(employees.map((e) => e.department))];
+export const departments = [...new Set(employees.map((e) => e.department))];

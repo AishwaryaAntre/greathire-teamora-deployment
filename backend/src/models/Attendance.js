@@ -2,6 +2,7 @@ import { attendanceRecords, findTodayRecord } from "../data/attendanceStore.js";
 import { Employee } from "./Employee.js";
 import { todayISO } from "../utils/dates.js";
 import { generateId } from "../utils/id.js";
+import { logActivity } from "../data/activityStore.js";
 
 function withEmployee(record) {
   const employee = Employee.getById(record.employeeId);
@@ -130,6 +131,7 @@ export const Attendance = {
         existing.checkIn = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
       }
       existing.status = "Present";
+      logActivity("check-in", employeeId, `${employee.name} checked in`);
       return withEmployee(existing);
     }
 
@@ -145,6 +147,7 @@ export const Attendance = {
       hoursWorked: 0,
     };
     attendanceRecords.unshift(record);
+    logActivity("check-in", employeeId, `${employee.name} checked in`);
     return withEmployee(record);
   },
 
@@ -153,6 +156,8 @@ export const Attendance = {
     if (!record) return null;
     record.liveStatus = null;
     record.checkOut = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    const employee = Employee.getById(employeeId);
+    if (employee) logActivity("check-out", employeeId, `${employee.name} checked out`);
     return withEmployee(record);
   },
 
@@ -160,7 +165,13 @@ export const Attendance = {
     const record = attendanceRecords.find((r) => r.id === recordId);
     if (!record) return null;
     if (status) record.status = status;
-    if (liveStatus !== undefined) record.liveStatus = liveStatus;
+    if (liveStatus !== undefined && liveStatus !== record.liveStatus) {
+      record.liveStatus = liveStatus;
+      const employee = Employee.getById(record.employeeId);
+      if (employee && liveStatus === "On Break") {
+        logActivity("break", record.employeeId, `${employee.name} started break`);
+      }
+    }
     return withEmployee(record);
   },
 };

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { attendanceController } from "../controllers/attendanceController.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 
-let router = Router();
+const router = Router();
 
 router.get("/stats", asyncHandler(attendanceController.getStats));
 router.get("/live", asyncHandler(attendanceController.getLive));

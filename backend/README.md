@@ -1,4 +1,4 @@
- Backend API
+# GreatHire Teamora — Backend API
 
 Node.js + Express API built specifically to power three pages of the `greathire-teamora`
 frontend: **Attendance Management**, **Leave Management**, and **Reports & Analytics**.
@@ -9,19 +9,22 @@ real numbers behind every stat card, table, and chart. The data layer (`src/mode
 isolated from the in-memory store (`src/data/`), so swapping in Postgres/Mongo later only
 means rewriting the files in `src/data/`.
 
-Getting started
+## Getting started
 
+```bash
 npm install
 cp .env.example .env
-npm run dev       
-
+npm run dev        # auto-restarts on file changes (Node's built-in --watch)
+# or: npm start
+```
 
 Server runs at `http://localhost:5000` by default. Set `CLIENT_ORIGIN` in `.env` to your
 Vite dev server URL (e.g. `http://localhost:5173`) to restrict CORS in production; it
 defaults to `*` for local development.
 
- Project structure
+## Project structure
 
+```
 server.js                        # entrypoint
 src/
   app.js                         # express app, middleware, route mounting
@@ -51,10 +54,24 @@ src/
     id.js
 ```
 
- API reference
+## API reference
 
 All responses are JSON of the shape `{ success: boolean, data: ... }` (errors are
 `{ success: false, error: "message" }`). Query params are optional unless noted.
+
+### Dashboard — `DashboardPage.jsx`
+
+| Method | Route | Purpose | Maps to |
+|---|---|---|---|
+| GET | `/api/dashboard/overview` | Greeting + Total Employees / Live Online / Attendance % | `DashboardOverviewCard` |
+| GET | `/api/dashboard/snapshot` | Total / Working / Break / Leave, each with a percent bar | `WorkforceSnapshot` |
+| GET | `/api/dashboard/metrics` | Total Employees / Currently Working / On Break / Avg Working Hrs (+ trend) | `MetricRow` |
+| GET | `/api/dashboard/live-workforce?limit=` | Employees currently working, on break, or on leave today | `LiveWorkforceTable` |
+| GET | `/api/dashboard/activity?limit=` | Recent check-in/check-out/break events, newest first | `RecentActivity` |
+| GET | `/api/dashboard` | All 5 shapes above bundled into one response | initial page load |
+
+Check-in, check-out, and break corrections made via the Attendance endpoints automatically
+append to the activity feed backing `/api/dashboard/activity`.
 
  Attendance — `AttendanceManagement.jsx`
 
@@ -70,7 +87,7 @@ All responses are JSON of the shape `{ success: boolean, data: ... }` (errors ar
 | POST | `/api/attendance/check-out` `{ employeeId }` | Clock an employee out | — |
 | PATCH | `/api/attendance/:id` `{ status?, liveStatus? }` | Admin correction | row "⋮" action |
 
- Leave — `LeaveManagement.jsx`
+### Leave — `LeaveManagement.jsx`
 
 | Method | Route | Purpose | Maps to |
 |---|---|---|---|
@@ -85,7 +102,7 @@ All responses are JSON of the shape `{ success: boolean, data: ... }` (errors ar
 | PATCH | `/api/leave/requests/:id/reject` | Reject one | row "⋮" action |
 | GET | `/api/leave/export?status=&period=` | CSV download | "Export" button |
 
- Reports — `Report.jsx`
+### Reports — `Report.jsx`
 
 `range` accepts `7d`, `30d`, or `12m` (matches the "7 Days / 30 Days / 12 Months" tabs).
 
@@ -98,11 +115,11 @@ All responses are JSON of the shape `{ success: boolean, data: ... }` (errors ar
 | POST | `/api/reports/generate` `{ range, department, title }` | Create a report snapshot | "Generate" button |
 | GET | `/api/reports` | List previously generated reports | `ReportsTable` (currently a stub in the frontend) |
 
- Example: wiring into `AttendanceManagement.jsx`
+## Example: wiring into `AttendanceManagement.jsx`
 
 ```jsx
-let [stats, setStats] = useState([]);
-let [live, setLive] = useState([]);
+const [stats, setStats] = useState([]);
+const [live, setLive] = useState([]);
 
 useEffect(() => {
   fetch("/api/attendance/stats").then((r) => r.json()).then((res) => setStats(res.data));
@@ -119,7 +136,7 @@ server: {
 }
 ```
 
- Notes
+## Notes
 
 - Seed data is deterministic (seeded PRNG) so numbers stay consistent across restarts —
   useful for demoing without the UI feeling like it's showing random data every reload.

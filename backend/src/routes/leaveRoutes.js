@@ -2,7 +2,7 @@ import { Router } from "express";
 import { leaveController } from "../controllers/leaveController.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 
-let router = Router();
+const router = Router();
 
 router.get("/stats", asyncHandler(leaveController.getStats));
 router.get("/team-availability", asyncHandler(leaveController.getTeamAvailability));

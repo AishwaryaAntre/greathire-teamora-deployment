@@ -5,10 +5,11 @@ import morgan from "morgan";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
-  let app = express();
+  const app = express();
 
   app.use(
     cors({
@@ -25,6 +26,7 @@ export function createApp() {
   app.use("/api/attendance", attendanceRoutes);
   app.use("/api/leave", leaveRoutes);
   app.use("/api/reports", reportRoutes);
+  app.use("/api/dashboard", dashboardRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
