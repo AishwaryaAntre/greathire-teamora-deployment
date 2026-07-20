@@ -4,7 +4,7 @@ import NavItem from "./NavItem";
 
 export default function Sidebar() {
   return (
-    <aside className="flex h-full w-[280px] shrink-0 flex-col bg-slate-900 px-6 py-7">
+    <aside className="flex h-100p w-[280px] shrink-0 flex-col bg-slate-900 px-6 py-7">
       <div className="flex items-center gap-3 px-1">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <span className="text-sm font-extrabold">G</span>
