@@ -8,17 +8,30 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import SocialLoginButton from "./SocialLoginButton";
 import { GoogleIcon, MicrosoftIcon } from "./BrandIcons";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    navigate("/dashboard");
+    setError("");
+    setSubmitting(true);
+    try {
+      const user = await login({ email, password, rememberMe });
+      navigate(user.role === "employee" ? "/employee-dashboard" : "/dashboard");
+    } catch (err) {
+      setError(err.message || "Invalid email or password");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -86,8 +99,12 @@ export default function LoginForm() {
         <span className="text-sm text-slate-600">Remember me for 30 days</span>
       </label>
 
-      <Button type="submit" size="lg" className="mt-6 w-full text-[15px]">
-        Sign In
+      {error && (
+        <p className="mt-4 text-sm font-medium text-red-600">{error}</p>
+      )}
+
+      <Button type="submit" size="lg" disabled={submitting} className="mt-6 w-full text-[15px]">
+        {submitting ? "Signing in..." : "Sign In"}
         <ArrowRight className="h-4 w-4" />
       </Button>
 

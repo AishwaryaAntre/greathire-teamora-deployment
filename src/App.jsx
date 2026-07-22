@@ -8,19 +8,20 @@ import EmployeeProfilePage from "@/pages/EmployeeProfilePage";
 import MyProfilePage from "@/pages/MyProfilePage";
 import NotificationsCenterPage from "@/pages/NotificationsCenterPage";
 import MessagesPage from "@/pages/MessagesPage";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/employee-dashboard" element={<EmployeeDashboardPage />} />
-      <Route path="/attendance" element={<AttendanceManagement />} />
-      <Route path="/reports" element={<Report />} />
-      <Route path="/employees/:id" element={<EmployeeProfilePage />} />
-<Route path="/profile" element={<MyProfilePage />} />
-<Route path="/notifications" element={<NotificationsCenterPage />} />
-<Route path="/messages" element={<MessagesPage />} />
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/employee-dashboard" element={<ProtectedRoute><EmployeeDashboardPage /></ProtectedRoute>} />
+      <Route path="/attendance" element={<ProtectedRoute><AttendanceManagement /></ProtectedRoute>} />
+      <Route path="/reports" element={<ProtectedRoute><Report /></ProtectedRoute>} />
+      <Route path="/employees/:id" element={<ProtectedRoute><EmployeeProfilePage /></ProtectedRoute>} />
+<Route path="/profile" element={<ProtectedRoute><MyProfilePage /></ProtectedRoute>} />
+<Route path="/notifications" element={<ProtectedRoute><NotificationsCenterPage /></ProtectedRoute>} />
+<Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
     </Routes>
   );
 }

@@ -2,20 +2,19 @@ import { Eye, Download } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import OverviewStatCard from "./OverviewStatCard";
-import { OVERVIEW_STATS } from "@/data/dashboardData";
 
-export default function DashboardOverviewCard() {
+export default function DashboardOverviewCard({ adminName, dateLabel, stats = [] }) {
   return (
     <Card className="p-6">
       <h1 className="text-2xl font-bold text-slate-900">
-        Good Morning, Swaraj Kadam
+        Good Morning, {adminName}
       </h1>
       <p className="mt-1 text-sm text-slate-500">
-        Here is the workforce status for today, October 24th.
+        Here is the workforce status for today, {dateLabel}.
       </p>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-        {OVERVIEW_STATS.map((stat) => (
+        {stats.map((stat) => (
           <OverviewStatCard key={stat.label} {...stat} />
         ))}
       </div>

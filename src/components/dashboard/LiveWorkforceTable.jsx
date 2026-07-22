@@ -2,9 +2,9 @@ import { LayoutGrid } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import Avatar from "./Avatar";
 import StatusBadge from "./StatusBadge";
-import { LIVE_WORKFORCE } from "@/data/dashboardData";
+import { getInitials, getAvatarClass, formatTime } from "@/lib/format";
 
-export default function LiveWorkforceTable() {
+export default function LiveWorkforceTable({ workforce = [] }) {
   return (
     <Card className="flex flex-col p-6">
       <div className="flex items-center justify-between">
@@ -31,13 +31,13 @@ export default function LiveWorkforceTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {LIVE_WORKFORCE.map((employee) => (
+            {workforce.map((employee) => (
               <tr key={employee.name}>
                 <td className="py-3.5">
                   <div className="flex items-center gap-3">
                     <Avatar
-                      initials={employee.initials}
-                      className={employee.avatarClass}
+                      initials={getInitials(employee.name)}
+                      className={getAvatarClass(employee.name)}
                     />
                     <span className="text-sm font-semibold text-slate-900">
                       {employee.name}
@@ -49,7 +49,7 @@ export default function LiveWorkforceTable() {
                   <StatusBadge status={employee.status} />
                 </td>
                 <td className="py-3.5 text-sm text-slate-500">
-                  {employee.checkIn}
+                  {formatTime(employee.checkIn)}
                 </td>
               </tr>
             ))}

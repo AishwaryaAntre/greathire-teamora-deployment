@@ -1,9 +1,9 @@
 import { PieChart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import SnapshotRow from "./SnapshotRow";
-import { SNAPSHOT_STATS } from "@/data/dashboardData";
+import { getSnapshotColor } from "@/lib/format";
 
-export default function WorkforceSnapshot() {
+export default function WorkforceSnapshot({ stats = [] }) {
   return (
     <Card className="flex h-full flex-col p-6">
       <div className="flex items-center gap-2">
@@ -12,8 +12,8 @@ export default function WorkforceSnapshot() {
       </div>
 
       <div className="mt-5 flex flex-1 flex-col justify-between gap-5">
-        {SNAPSHOT_STATS.map((stat) => (
-          <SnapshotRow key={stat.label} {...stat} />
+        {stats.map((stat, i) => (
+          <SnapshotRow key={stat.label} {...stat} color={getSnapshotColor(i)} />
         ))}
       </div>
     </Card>
