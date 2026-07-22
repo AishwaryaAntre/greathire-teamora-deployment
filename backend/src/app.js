@@ -1,45 +1,49 @@
 import express from "express";
 import cors from "cors";
-import helmet from "helmet";
 import morgan from "morgan";
-import cookieParser from "cookie-parser";
-import rateLimit from "express-rate-limit";
+
 import passport from "./config/passport.js";
-import { env } from "./config/env.js";
-import routes from "./routes/index.js";
-import { notFoundHandler, errorHandler } from "./middleware/error.middleware.js";
+import { attachUser } from "./middleware/auth.js";
+import authRoutes from "./routes/authRoutes.js";
+import attendanceRoutes from "./routes/attendanceRoutes.js";
+import leaveRoutes from "./routes/leaveRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import employeeDashboardRoutes from "./routes/employeeDashboardRoutes.js";
+import employeeProfileRoutes from "./routes/employeeProfileRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
+import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
-  const app = express();
+  let app = express();
 
-  app.use(helmet());
   app.use(
     cors({
-      origin: env.clientUrl,
-      credentials: true,
+      origin: process.env.CLIENT_ORIGIN || "*",
     })
   );
   app.use(express.json());
-  app.use(cookieParser());
+  app.use(morgan("dev"));
   app.use(passport.initialize());
 
-  if (env.nodeEnv !== "test") {
-    app.use(morgan(env.nodeEnv === "production" ? "combined" : "dev"));
-  }
+  // Non-blocking: populates req.user when a valid Bearer token is sent, but
+  // every route below still works without one (see middleware/auth.js).
+  app.use(attachUser);
 
-  const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 300,
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
-  app.use("/api", apiLimiter);
-
-  app.get("/", (req, res) => {
-    res.json({ success: true, message: "GreatHire WorkTrack API is running" });
+  app.get("/api/health", (req, res) => {
+    res.json({ success: true, message: "GreatHire Teamora API is running" });
   });
 
-  app.use("/api", routes);
+  app.use("/api/auth", authRoutes);
+  app.use("/api/attendance", attendanceRoutes);
+  app.use("/api/leave", leaveRoutes);
+  app.use("/api/reports", reportRoutes);
+  app.use("/api/dashboard", dashboardRoutes);
+  app.use("/api/employee", employeeDashboardRoutes);
+  app.use("/api/employees", employeeProfileRoutes);
+  app.use("/api/notifications", notificationRoutes);
+  app.use("/api/messages", messageRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

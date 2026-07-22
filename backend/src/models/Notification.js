@@ -1,60 +1,110 @@
-import mongoose from "mongoose";
+import { notifications, getPreferencesFor } from "../data/notificationsStore.js";
+import { generateId } from "../utils/id.js";
+import { CURRENT_EMPLOYEE_ID } from "../data/employees.js";
 
-const { Schema, model } = mongoose;
+function timeAgo(iso) {
+  let diffMs = Date.now() - new Date(iso).getTime();
+  let minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  let hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  let days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
-export const NOTIFICATION_TYPES = ["attendance", "leave", "system"];
-export const NOTIFICATION_PRIORITIES = ["low", "normal", "medium", "high"];
+function badgeForPriority(priority) {
+  if (priority === "high") return { label: "High", tone: "bg-red-50 text-red-600" };
+  if (priority === "medium") return { label: "Medium", tone: "bg-amber-50 text-amber-600" };
+  return { label: "Low", tone: "bg-slate-100 text-slate-500" };
+}
 
-const notificationSchema = new Schema(
-  {
-    // Null recipient = broadcast notification, visible to admins/managers.
-    recipient: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-      index: true,
-    },
-    relatedEmployee: {
-      type: Schema.Types.ObjectId,
-      ref: "Employee",
-      default: null,
-    },
-    type: {
-      type: String,
-      enum: NOTIFICATION_TYPES,
-      required: true,
-      index: true,
-    },
-    title: {
-      type: String,
-      required: [true, "Title is required"],
-      trim: true,
-      maxlength: 200,
-    },
-    message: {
-      type: String,
-      required: [true, "Message is required"],
-      trim: true,
-      maxlength: 1000,
-    },
-    priority: {
-      type: String,
-      enum: NOTIFICATION_PRIORITIES,
-      default: "normal",
-    },
-    isRead: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
-    readAt: {
-      type: Date,
-      default: null,
-    },
+function toDto(n) {
+  return {
+    id: n.id,
+    title: n.title,
+    description: n.description,
+    category: n.category,
+    priority: n.priority,
+    time: timeAgo(n.createdAt),
+    createdAt: n.createdAt,
+    avatar: n.avatar,
+    isSystem: n.isSystem,
+    unread: !n.read,
+    badge: badgeForPriority(n.priority),
+  };
+}
+
+export let Notification = {
+  /** filter: "all" | "unread" | "attendance" | "leave" | "system"; search matches title/description. */
+  list(employeeId = CURRENT_EMPLOYEE_ID, { filter = "all", search = "" } = {}) {
+    let rows = notifications.filter((n) => n.recipientEmployeeId === employeeId);
+
+    if (filter === "unread") rows = rows.filter((n) => !n.read);
+    else if (filter !== "all") rows = rows.filter((n) => n.category === filter);
+
+    if (search) {
+      let q = search.toLowerCase();
+      rows = rows.filter(
+        (n) => n.title.toLowerCase().includes(q) || n.description.toLowerCase().includes(q)
+      );
+    }
+
+    return rows
+      .slice()
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .map(toDto);
   },
-  { timestamps: true }
-);
 
-notificationSchema.index({ createdAt: -1 });
+  getSummary(employeeId = CURRENT_EMPLOYEE_ID) {
+    let rows = notifications.filter((n) => n.recipientEmployeeId === employeeId);
+    let unread = rows.filter((n) => !n.read).length;
+    let highPriority = rows.filter((n) => n.priority === "high" && !n.read).length;
+    return [
+      { label: "Unread", value: String(unread), tone: "text-blue-600" },
+      { label: "High Priority", value: String(highPriority), tone: "text-red-500" },
+    ];
+  },
 
-export const Notification = model("Notification", notificationSchema);
+  getPreferences(employeeId = CURRENT_EMPLOYEE_ID) {
+    return getPreferencesFor(employeeId);
+  },
+
+  updatePreferences(employeeId = CURRENT_EMPLOYEE_ID, updates = {}) {
+    let prefs = getPreferencesFor(employeeId);
+    Object.assign(prefs, updates);
+    return prefs;
+  },
+
+  create({ title, description, category = "system", priority = "low", recipientEmployeeId = CURRENT_EMPLOYEE_ID, isSystem = false, relatedEmployeeId = null, avatar = null }) {
+    let notif = {
+      id: generateId("notif"),
+      type: category,
+      category,
+      title,
+      description,
+      priority,
+      read: false,
+      isSystem,
+      relatedEmployeeId,
+      avatar,
+      createdAt: new Date().toISOString(),
+      recipientEmployeeId,
+    };
+    notifications.unshift(notif);
+    return toDto(notif);
+  },
+
+  markAsRead(id, employeeId = CURRENT_EMPLOYEE_ID) {
+    let notif = notifications.find((n) => n.id === id && n.recipientEmployeeId === employeeId);
+    if (!notif) return null;
+    notif.read = true;
+    return toDto(notif);
+  },
+
+  markAllAsRead(employeeId = CURRENT_EMPLOYEE_ID) {
+    let rows = notifications.filter((n) => n.recipientEmployeeId === employeeId);
+    rows.forEach((n) => (n.read = true));
+    return rows.length;
+  },
+};

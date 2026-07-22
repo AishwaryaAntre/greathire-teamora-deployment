@@ -1,17 +1,9 @@
+import "dotenv/config";
 import { createApp } from "./src/app.js";
-import { connectDB } from "./src/config/db.js";
-import { env } from "./src/config/env.js";
 
-async function start() {
-  await connectDB();
-  const app = createApp();
+const PORT = process.env.PORT || 5000;
+const app = createApp();
 
-  app.listen(env.port, () => {
-    console.log(`GreatHire WorkTrack API listening on http://localhost:${env.port}`);
-  });
-}
-
-start().catch((err) => {
-  console.error("[server] Failed to start:", err);
-  process.exit(1);
+app.listen(PORT, () => {
+  console.log(`GreatHire Teamora API listening on http://localhost:${PORT}`);
 });
