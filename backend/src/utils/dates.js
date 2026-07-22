@@ -13,43 +13,50 @@ export function todayISO() {
   return toISODate(new Date());
 }
 
+/** Midnight (00:00:00.000) of the given date, in local time. */
+export function startOfDay(date = new Date()) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/** Last instant (23:59:59.999) of the given date, in local time. */
+export function endOfDay(date = new Date()) {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
+
 export function addDays(date, days) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
   return d;
 }
 
-export function daysBetweenInclusive(startISO, endISO) {
-  const start = new Date(startISO);
-  const end = new Date(endISO);
-  return Math.round((end - start) / DAY_MS) + 1;
+export function daysBetweenInclusive(start, end) {
+  return Math.round((startOfDay(end) - startOfDay(start)) / DAY_MS) + 1;
 }
 
-export function isSameMonth(dateISO, referenceDate = new Date()) {
-  const d = new Date(dateISO);
-  return (
-    d.getFullYear() === referenceDate.getFullYear() &&
-    d.getMonth() === referenceDate.getMonth()
-  );
+export function isSameMonth(date, referenceDate = new Date()) {
+  const d = new Date(date);
+  return d.getFullYear() === referenceDate.getFullYear() && d.getMonth() === referenceDate.getMonth();
 }
 
-export function isLastMonth(dateISO, referenceDate = new Date()) {
+export function isLastMonth(date, referenceDate = new Date()) {
   const ref = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - 1, 1);
-  const d = new Date(dateISO);
+  const d = new Date(date);
   return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
 }
 
-/** Formats an ISO date range like "Oct 12 - Oct 16". */
-export function formatDateRange(startISO, endISO) {
+/** Formats a date range like "Oct 12 - Oct 16". */
+export function formatDateRange(start, end) {
   const opts = { month: "short", day: "2-digit" };
-  const start = new Date(startISO).toLocaleDateString("en-US", opts);
-  const end = new Date(endISO).toLocaleDateString("en-US", opts);
-  return `${start} - ${end}`;
+  return `${new Date(start).toLocaleDateString("en-US", opts)} - ${new Date(end).toLocaleDateString("en-US", opts)}`;
 }
 
-/** "2 mins ago" / "3 hours ago" / "5 days ago" style relative label for activity feeds. */
-export function timeAgo(isoTimestamp) {
-  const diffMs = Date.now() - new Date(isoTimestamp).getTime();
+/** "2 mins ago" / "3 hours ago" / "5 days ago" relative label for activity/notification feeds. */
+export function timeAgo(timestamp) {
+  const diffMs = Date.now() - new Date(timestamp).getTime();
   const minutes = Math.round(diffMs / 60000);
 
   if (minutes < 1) return "Just now";
@@ -62,18 +69,15 @@ export function timeAgo(isoTimestamp) {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
-export function formatPrettyDate(dateISO) {
-  return new Date(dateISO).toLocaleDateString("en-US", {
+export function formatPrettyDate(date) {
+  return new Date(date).toLocaleDateString("en-US", {
     weekday: "long",
     month: "short",
     day: "numeric",
   });
 }
 
-/**
- * Maps a `range` query param ("7d" | "30d" | "12m") to a cutoff Date,
- * mirroring the "7 Days / 30 Days / 12 Months" tabs on the Reports page.
- */
+/** Maps a `range` query param ("7d" | "30d" | "12m") to a cutoff Date. */
 export function rangeToCutoff(range = "12m") {
   const now = new Date();
   switch (range) {
