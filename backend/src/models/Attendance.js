@@ -1,4 +1,4 @@
-import { attendanceRecords, findTodayRecord } from "../data/attendanceStore.js";
+import { attendanceRecords, findTodayRecord, persistNewAttendance, persistAttendanceUpdate } from "../data/attendanceStore.js";
 import { Employee } from "./Employee.js";
 import { todayISO } from "../utils/dates.js";
 import { generateId } from "../utils/id.js";
@@ -77,7 +77,6 @@ export let Attendance = {
       .filter((r) => r.liveStatus)
       .map((r) => ({
         id: r.id,
-        employeeId: r.employeeId,
         name: r.employee.name,
         role: r.employee.role,
         department: r.employee.department,
@@ -134,7 +133,7 @@ export let Attendance = {
       .map(withEmployee);
   },
 
-  checkIn(employeeId) {
+  async checkIn(employeeId) {
     let employee = Employee.getById(employeeId);
     if (!employee) return null;
 
@@ -145,6 +144,7 @@ export let Attendance = {
         existing.checkIn = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
       }
       existing.status = "Present";
+      await persistAttendanceUpdate(existing);
       logActivity("check-in", employeeId, `${employee.name} checked in`);
       return withEmployee(existing);
     }
@@ -160,26 +160,23 @@ export let Attendance = {
       late: false,
       hoursWorked: 0,
     };
-    attendanceRecords.unshift(record);
+    await persistNewAttendance(record);
     logActivity("check-in", employeeId, `${employee.name} checked in`);
     return withEmployee(record);
   },
 
-  checkOut(employeeId) {
+  async checkOut(employeeId) {
     let record = findTodayRecord(employeeId);
     if (!record) return null;
     record.liveStatus = null;
     record.checkOut = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    await persistAttendanceUpdate(record);
     let employee = Employee.getById(employeeId);
     if (employee) logActivity("check-out", employeeId, `${employee.name} checked out`);
     return withEmployee(record);
   },
 
-  getById(recordId) {
-    return attendanceRecords.find((r) => r.id === recordId) || null;
-  },
-
-  updateStatus(recordId, { status, liveStatus }) {
+  async updateStatus(recordId, { status, liveStatus }) {
     let record = attendanceRecords.find((r) => r.id === recordId);
     if (!record) return null;
     if (status) record.status = status;
@@ -190,6 +187,7 @@ export let Attendance = {
         logActivity("break", record.employeeId, `${employee.name} started break`);
       }
     }
+    await persistAttendanceUpdate(record);
     return withEmployee(record);
   },
 };

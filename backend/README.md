@@ -292,6 +292,11 @@ server: {
 }
 ```
 
+
+## mongodb
+MONGODB_URI=mongodb://127.0.0.1:27017/greathire
+
+
 ## Notes
 
 - Seed data is deterministic (seeded PRNG) so numbers stay consistent across restarts —

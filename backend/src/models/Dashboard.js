@@ -117,6 +117,7 @@ export let Dashboard = {
     let active = rows
       .filter((r) => r.liveStatus)
       .map((r) => ({
+        id: r.employeeId,
         initials: initialsFor(r.employee.name),
         name: r.employee.name,
         role: r.employee.role,
@@ -129,6 +130,7 @@ export let Dashboard = {
       .map((id) => Employee.getById(id))
       .filter(Boolean)
       .map((employee) => ({
+        id: employee.id,
         initials: initialsFor(employee.name),
         name: employee.name,
         role: employee.role,

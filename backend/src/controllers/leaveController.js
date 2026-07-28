@@ -13,7 +13,6 @@ export let leaveController = {
     res.json({ success: true, data: LeaveRequest.getTeamAvailability() });
   },
 
-
   // GET /api/leave/types
   getLeaveTypes: (req, res) => {
     res.json({ success: true, data: LEAVE_TYPE_OPTIONS });
@@ -25,15 +24,6 @@ export let leaveController = {
     res.json({ success: true, data: LeaveRequest.getAll({ status, period, search }) });
   },
 
-  // GET /api/leave/requests/mine — the logged-in employee's own requests, any role.
-  listMine: (req, res) => {
-    let { status, period } = req.query;
-    res.json({
-      success: true,
-      data: LeaveRequest.getAll({ status, period, employeeId: req.user.employeeId }),
-    });
-  },
-
   // GET /api/leave/requests/:id
   getById: (req, res) => {
     let request = LeaveRequest.getById(req.params.id);
@@ -42,11 +32,8 @@ export let leaveController = {
   },
 
   // POST /api/leave/requests  { employeeId, leaveType, startDate, endDate, reason }
-  create: (req, res) => {
+  create: async (req, res) => {
     let { employeeId, leaveType, startDate, endDate, reason } = req.body;
-    if (!["admin", "manager"].includes(req.user.role)) {
-      employeeId = req.user.employeeId;
-    }
     if (!employeeId || !leaveType || !startDate || !endDate) {
       throw new ApiError(400, "employeeId, leaveType, startDate and endDate are required");
     }
@@ -54,27 +41,27 @@ export let leaveController = {
       throw new ApiError(400, "endDate cannot be before startDate");
     }
 
-    let request = LeaveRequest.create({ employeeId, leaveType, startDate, endDate, reason });
+    let request = await LeaveRequest.create({ employeeId, leaveType, startDate, endDate, reason });
     res.status(201).json({ success: true, data: request });
   },
 
   // PATCH /api/leave/requests/:id/approve
-  approve: (req, res) => {
-    let request = LeaveRequest.updateStatus(req.params.id, "Approved");
+  approve: async (req, res) => {
+    let request = await LeaveRequest.updateStatus(req.params.id, "Approved");
     if (!request) throw new ApiError(404, "Leave request not found");
     res.json({ success: true, data: request });
   },
 
   // PATCH /api/leave/requests/:id/reject
-  reject: (req, res) => {
-    let request = LeaveRequest.updateStatus(req.params.id, "Rejected");
+  reject: async (req, res) => {
+    let request = await LeaveRequest.updateStatus(req.params.id, "Rejected");
     if (!request) throw new ApiError(404, "Leave request not found");
     res.json({ success: true, data: request });
   },
 
   // POST /api/leave/requests/approve-all  — "Approve All Pending" quick action
-  approveAll: (req, res) => {
-    let updated = LeaveRequest.approveAllPending();
+  approveAll: async (req, res) => {
+    let updated = await LeaveRequest.approveAllPending();
     res.json({ success: true, data: updated, count: updated.length });
   },
 

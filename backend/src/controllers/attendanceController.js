@@ -8,11 +8,6 @@ function todaysSummaryWithIcons(summary) {
   return summary;
 }
 
-function isSelfOrPrivileged(req, employeeId) {
-  if (["admin", "manager"].includes(req.user.role)) return true;
-  return req.user.employeeId === employeeId;
-}
-
 export let attendanceController = {
   // GET /api/attendance/stats?date=YYYY-MM-DD
   getStats: (req, res) => {
@@ -47,39 +42,29 @@ export let attendanceController = {
   },
 
   // POST /api/attendance/check-in  { employeeId }
-  checkIn: (req, res) => {
+  checkIn: async (req, res) => {
     let { employeeId } = req.body;
     if (!employeeId) throw new ApiError(400, "employeeId is required");
-    if (!isSelfOrPrivileged(req, employeeId)) {
-      throw new ApiError(403, "You can only check yourself in");
-    }
 
-    let record = Attendance.checkIn(employeeId);
+    let record = await Attendance.checkIn(employeeId);
     if (!record) throw new ApiError(404, "Employee not found");
     res.status(201).json({ success: true, data: record });
   },
 
   // POST /api/attendance/check-out  { employeeId }
-  checkOut: (req, res) => {
+  checkOut: async (req, res) => {
     let { employeeId } = req.body;
     if (!employeeId) throw new ApiError(400, "employeeId is required");
-    if (!isSelfOrPrivileged(req, employeeId)) {
-      throw new ApiError(403, "You can only check yourself out");
-    }
 
-    let record = Attendance.checkOut(employeeId);
+    let record = await Attendance.checkOut(employeeId);
     if (!record) throw new ApiError(404, "No check-in record found for today");
     res.json({ success: true, data: record });
   },
 
   // PATCH /api/attendance/:id  { status?, liveStatus? }
-  update: (req, res) => {
+  update: async (req, res) => {
     let { id } = req.params;
-    let existing = Attendance.getById(id);
-    if (existing && !isSelfOrPrivileged(req, existing.employeeId)) {
-      throw new ApiError(403, "You can only update your own attendance record");
-    }
-    let record = Attendance.updateStatus(id, req.body);
+    let record = await Attendance.updateStatus(id, req.body);
     if (!record) throw new ApiError(404, "Attendance record not found");
     res.json({ success: true, data: record });
   },

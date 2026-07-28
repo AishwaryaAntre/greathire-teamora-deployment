@@ -1,11 +1,11 @@
 import { EmployeeDashboard } from "../models/EmployeeDashboard.js";
+import { CURRENT_EMPLOYEE_ID } from "../data/employees.js";
 import { ApiError } from "../middleware/errorHandler.js";
 
-// Self-service routes always use the authenticated user's own employeeId.
-// The /:id variants are admin/manager-only (enforced by requireRole in the
-// route file), so trusting req.params.id there is safe.
+// No auth system yet, so :id defaults to the self-service "me" employee.
+// Pass ?employeeId=emp_00X (or a /:id route param, once added) to view someone else's dashboard.
 function resolveEmployeeId(req) {
-  return req.params.id || req.user.employeeId;
+  return req.params.id || req.query.employeeId || CURRENT_EMPLOYEE_ID;
 }
 
 export let employeeDashboardController = {

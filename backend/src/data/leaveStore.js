@@ -1,43 +1,25 @@
-import { employees } from "./employees.js";
-import { generateId } from "../utils/id.js";
-import { addDays, toISODate, daysBetweenInclusive } from "../utils/dates.js";
+import { LeaveRequestModel } from "../db/schemas.js";
 
-let LEAVE_TYPES = ["Annual", "Sick Leave", "Casual", "Unpaid"];
-let STATUSES = ["Pending", "Approved", "Rejected"];
+export let leaveRequests = [];
 
-function seedLeaveRequests() {
-  let today = new Date();
-  let seedRows = [
-    { empIdx: 2, type: "Annual", startOffset: 4, span: 5, status: "Pending", reason: "Family trip" },
-    { empIdx: 3, type: "Sick Leave", startOffset: -3, span: 2, status: "Approved", reason: "Flu recovery" },
-    { empIdx: 0, type: "Casual", startOffset: 1, span: 1, status: "Pending", reason: "Personal errand" },
-    { empIdx: 6, type: "Annual", startOffset: 10, span: 3, status: "Pending", reason: "Wedding" },
-    { empIdx: 5, type: "Sick Leave", startOffset: -1, span: 1, status: "Approved", reason: "Doctor appointment" },
-    { empIdx: 8, type: "Unpaid", startOffset: 15, span: 4, status: "Pending", reason: "Relocation" },
-    { empIdx: 9, type: "Annual", startOffset: -10, span: 2, status: "Rejected", reason: "Overlaps sprint freeze" },
-    { empIdx: 10, type: "Casual", startOffset: 2, span: 1, status: "Approved", reason: "Home repair" },
-  ];
-
-  return seedRows.map((row) => {
-    let employee = employees[row.empIdx];
-    let start = toISODate(addDays(today, row.startOffset));
-    let end = toISODate(addDays(today, row.startOffset + row.span - 1));
-    return {
-      id: generateId("lv"),
-      employeeId: employee.id,
-      leaveType: row.type,
-      startDate: start,
-      endDate: end,
-      durationDays: daysBetweenInclusive(start, end),
-      status: row.status,
-      reason: row.reason,
-      appliedOn: toISODate(addDays(today, row.startOffset - 3)),
-      decidedOn: row.status === "Pending" ? null : toISODate(addDays(today, row.startOffset - 1)),
-    };
-  });
+export async function loadLeaveRequests() {
+  let docs = await LeaveRequestModel.find().lean();
+  leaveRequests.length = 0;
+  leaveRequests.push(...docs.map(({ _id, ...rest }) => rest));
+  return leaveRequests;
 }
 
-export let leaveRequests = seedLeaveRequests();
+export async function persistNewLeaveRequest(request) {
+  leaveRequests.unshift(request);
+  await LeaveRequestModel.create(request);
+  return request;
+}
 
-export let LEAVE_TYPE_OPTIONS = LEAVE_TYPES;
-export let LEAVE_STATUS_OPTIONS = STATUSES;
+export async function persistLeaveRequestUpdate(request) {
+  let { id, ...rest } = request;
+  await LeaveRequestModel.updateOne({ id }, { $set: rest });
+  return request;
+}
+
+export let LEAVE_TYPE_OPTIONS = ["Annual", "Sick Leave", "Casual", "Unpaid"];
+export let LEAVE_STATUS_OPTIONS = ["Pending", "Approved", "Rejected"];

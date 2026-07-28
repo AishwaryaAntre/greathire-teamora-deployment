@@ -23,16 +23,16 @@ export let messageController = {
     res.json({ success: true, data });
   },
 
-  sendMessage: (req, res) => {
+  sendMessage: async (req, res) => {
     let { content, attachments } = req.body || {};
     if (!content || !content.trim()) throw new ApiError(400, "content is required");
-    let data = Message.sendMessage(req.params.id, { content, attachments }, resolveEmployeeId(req));
+    let data = await Message.sendMessage(req.params.id, { content, attachments }, resolveEmployeeId(req));
     if (!data) throw new ApiError(404, "Conversation not found");
     res.status(201).json({ success: true, data });
   },
 
-  markRead: (req, res) => {
-    let data = Message.markConversationRead(req.params.id, resolveEmployeeId(req));
+  markRead: async (req, res) => {
+    let data = await Message.markConversationRead(req.params.id, resolveEmployeeId(req));
     res.json({ success: true, data });
   },
 };

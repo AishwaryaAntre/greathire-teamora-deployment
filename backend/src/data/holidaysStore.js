@@ -1,21 +1,10 @@
-// Static company holiday calendar. Dates are relative offsets from server start
-// so the seed always shows sensible "upcoming" holidays regardless of when it's run.
-import { addDays, toISODate } from "../utils/dates.js";
+import { HolidayModel } from "../db/schemas.js";
 
-let seedOffsets = [
-  { offsetDays: 14, name: "Founders' Day", type: "National Holiday" },
-  { offsetDays: 40, name: "Harvest Festival", type: "Regional Holiday" },
-  { offsetDays: 75, name: "Winter Break", type: "National Holiday" },
-  { offsetDays: -20, name: "Spring Festival", type: "Regional Holiday" }, // already past, kept for history
-];
+export let holidays = [];
 
-let today = new Date();
-
-export let holidays = seedOffsets.map(({ offsetDays, name, type }) => {
-  let date = addDays(today, offsetDays);
-  return {
-    date: toISODate(date),
-    name,
-    type,
-  };
-});
+export async function loadHolidays() {
+  let docs = await HolidayModel.find().sort({ date: 1 }).lean();
+  holidays.length = 0;
+  holidays.push(...docs.map(({ _id, ...rest }) => rest));
+  return holidays;
+}

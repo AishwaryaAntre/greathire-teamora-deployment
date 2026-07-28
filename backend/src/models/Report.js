@@ -1,6 +1,6 @@
 import { Attendance } from "./Attendance.js";
 import { Employee } from "./Employee.js";
-import { generatedReports } from "../data/reportsStore.js";
+import { generatedReports, persistNewReport } from "../data/reportsStore.js";
 import { generateId } from "../utils/id.js";
 import { rangeToCutoff, toISODate, todayISO, addDays } from "../utils/dates.js";
 
@@ -109,17 +109,17 @@ export let Report = {
   },
 
   /** Simulates kicking off an async report job (the "Generate" button). */
-  generate({ range = "12m", department = "All Departments", title } = {}) {
+  async generate({ range = "12m", department = "All Departments", title } = {}) {
     let report = {
       id: generateId("rpt"),
       title: title || `${department} attendance report — ${range}`,
       range,
       department,
-      status: "ready", // no real job queue here; instant for an in-memory demo backend
+      status: "ready", // no real job queue here; instant for now
       createdAt: new Date().toISOString(),
       stats: this.getStatsCards(range, department),
     };
-    generatedReports.unshift(report);
+    await persistNewReport(report);
     return report;
   },
 

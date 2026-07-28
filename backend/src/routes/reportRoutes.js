@@ -1,10 +1,8 @@
 import { Router } from "express";
 import { reportController } from "../controllers/reportController.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
 
 let router = Router();
-router.use(requireAuth, requireRole("admin", "manager"));
 
 router.get("/stats", asyncHandler(reportController.getStats));
 router.get("/attendance-trends", asyncHandler(reportController.getAttendanceTrends));

@@ -2,9 +2,8 @@ import { Notification } from "../models/Notification.js";
 import { CURRENT_EMPLOYEE_ID } from "../data/employees.js";
 import { ApiError } from "../middleware/errorHandler.js";
 
-// Self-service, in-memory demo: use the authenticated user's linked employee if a
-// token was sent, otherwise fall back to the seeded CURRENT_EMPLOYEE_ID so the
-// endpoints work standalone (same pattern as the employee dashboard/profile routes).
+// Uses the authenticated user's linked employee if a token was sent, otherwise
+// falls back to the seeded CURRENT_EMPLOYEE_ID so the endpoints work standalone.
 function resolveEmployeeId(req) {
   return req.user?.employeeId || CURRENT_EMPLOYEE_ID;
 }
@@ -24,15 +23,15 @@ export let notificationController = {
     res.json({ success: true, data: Notification.getPreferences(resolveEmployeeId(req)) });
   },
 
-  updatePreferences: (req, res) => {
-    let data = Notification.updatePreferences(resolveEmployeeId(req), req.body || {});
+  updatePreferences: async (req, res) => {
+    let data = await Notification.updatePreferences(resolveEmployeeId(req), req.body || {});
     res.json({ success: true, data });
   },
 
-  create: (req, res) => {
+  create: async (req, res) => {
     let { title, description, category, priority, recipientEmployeeId } = req.body || {};
     if (!title || !description) throw new ApiError(400, "title and description are required");
-    let data = Notification.create({
+    let data = await Notification.create({
       title,
       description,
       category,
@@ -42,14 +41,14 @@ export let notificationController = {
     res.status(201).json({ success: true, data });
   },
 
-  markAsRead: (req, res) => {
-    let data = Notification.markAsRead(req.params.id, resolveEmployeeId(req));
+  markAsRead: async (req, res) => {
+    let data = await Notification.markAsRead(req.params.id, resolveEmployeeId(req));
     if (!data) throw new ApiError(404, "Notification not found");
     res.json({ success: true, data });
   },
 
-  markAllAsRead: (req, res) => {
-    let count = Notification.markAllAsRead(resolveEmployeeId(req));
+  markAllAsRead: async (req, res) => {
+    let count = await Notification.markAllAsRead(resolveEmployeeId(req));
     res.json({ success: true, data: { updated: count } });
   },
 };

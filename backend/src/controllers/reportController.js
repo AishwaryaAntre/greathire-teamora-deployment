@@ -31,9 +31,9 @@ export let reportController = {
   },
 
   // POST /api/reports/generate  { range, department, title }
-  generate: (req, res) => {
+  generate: async (req, res) => {
     let { range, department, title } = req.body;
-    let report = Report.generate({ range: normalizeRange(range), department, title });
+    let report = await Report.generate({ range: normalizeRange(range), department, title });
     res.status(201).json({ success: true, data: report });
   },
 

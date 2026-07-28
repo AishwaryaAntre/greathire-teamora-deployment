@@ -1,49 +1,30 @@
-import bcrypt from "bcryptjs";
-import mongoose from "mongoose";
-import { employees, CURRENT_EMPLOYEE_ID } from "./employees.js";
+import { UserModel, PasswordResetTokenModel } from "../db/schemas.js";
 import { generateId } from "../utils/id.js";
-import { UserModel } from "../schemas/userSchema.js";
 
 // Demo credentials — every seeded employee can sign in with this password.
-// Change DEMO_PASSWORD in your .env (or just document a new one) before using this
-// anywhere but local development.
-let DEMO_PASSWORD = process.env.SEED_USER_PASSWORD || "password123";
-let DEMO_PASSWORD_HASH = bcrypt.hashSync(DEMO_PASSWORD, 10);
+// Change SEED_USER_PASSWORD in your .env before using this anywhere but local dev.
+export const DEMO_PASSWORD_PLAIN = process.env.SEED_USER_PASSWORD || "password123";
 
-function roleForEmployee(employee) {
-  if (employee.id === "emp_005") return "admin"; // HR Director
-  if (employee.role?.toLowerCase().includes("manager") || employee.role?.toLowerCase().includes("lead")) {
-    return "manager";
-  }
-  return "employee";
+function strip(doc) {
+  if (!doc) return null;
+  let { _id, ...rest } = doc;
+  return rest;
 }
 
-// One auth "user" per seeded employee, linked by employeeId.
-export let users = employees.map((e) => ({
-  id: `user_${e.id.replace("emp_", "")}`,
-  employeeId: e.id,
-  name: e.name,
-  email: e.email,
-  passwordHash: DEMO_PASSWORD_HASH,
-  role: roleForEmployee(e),
-  createdAt: new Date().toISOString(),
-}));
-
-// Password reset tokens: { token, userId, expiresAt }
-export let passwordResetTokens = [];
-
-export let UsersStore = {
-  findByEmail(email) {
+/** All reads/writes go straight to MongoDB — auth data is small and low-traffic
+ * enough that an in-memory cache isn't worth the staleness risk. */
+export const UsersStore = {
+  async findByEmail(email) {
     if (!email) return null;
-    return users.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null;
+    return strip(await UserModel.findOne({ email: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") }).lean());
   },
-  findById(id) {
-    return users.find((u) => u.id === id) || null;
+  async findById(id) {
+    return strip(await UserModel.findOne({ id }).lean());
   },
-  findByEmployeeId(employeeId) {
-    return users.find((u) => u.employeeId === employeeId) || null;
+  async findByEmployeeId(employeeId) {
+    return strip(await UserModel.findOne({ employeeId }).lean());
   },
-  create({ name, email, passwordHash, employeeId, role = "employee" }) {
+  async create({ name, email, passwordHash, employeeId, role = "employee" }) {
     let user = {
       id: generateId("user"),
       employeeId: employeeId || null,
@@ -53,44 +34,30 @@ export let UsersStore = {
       role,
       createdAt: new Date().toISOString(),
     };
-    users.push(user);
-
-    if (mongoose.connection.readyState === 1) {
-      UserModel.create(user).catch((err) =>
-        console.error("[db] Failed to persist new user:", err.message)
-      );
-    }
-
+    await UserModel.create(user);
     return user;
   },
-  createPasswordResetToken(userId) {
+  async createPasswordResetToken(userId) {
     let token = generateId("reset");
     let expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
-    passwordResetTokens.push({ token, userId, expiresAt });
+    await PasswordResetTokenModel.create({ token, userId, expiresAt });
     return token;
   },
-  consumePasswordResetToken(token) {
-    let entry = passwordResetTokens.find((t) => t.token === token);
+  async consumePasswordResetToken(token) {
+    let entry = await PasswordResetTokenModel.findOne({ token }).lean();
     if (!entry) return null;
-    passwordResetTokens = passwordResetTokens.filter((t) => t.token !== token);
+    await PasswordResetTokenModel.deleteOne({ token });
     if (new Date(entry.expiresAt).getTime() < Date.now()) return null;
     return entry;
   },
-  updatePassword(userId, passwordHash) {
-    let user = users.find((u) => u.id === userId);
-    if (!user) return null;
-    user.passwordHash = passwordHash;
-
-    if (mongoose.connection.readyState === 1) {
-      UserModel.updateOne({ id: userId }, { $set: { passwordHash } }).catch((err) =>
-        console.error("[db] Failed to persist password update:", err.message)
-      );
-    }
-
-    return user;
+  async updatePassword(userId, passwordHash) {
+    let user = await UserModel.findOneAndUpdate({ id: userId }, { $set: { passwordHash } }, { new: true }).lean();
+    return strip(user);
   },
 };
 
-// Handy for local testing / seed logs.
-export let DEFAULT_USER_EMAIL = UsersStore.findByEmployeeId(CURRENT_EMPLOYEE_ID)?.email;
-export let DEMO_PASSWORD_PLAIN = DEMO_PASSWORD;
+/** Handy for local testing / seed logs — resolved lazily since it needs a DB round trip. */
+export async function getDefaultUserEmail(currentEmployeeId) {
+  let user = await UsersStore.findByEmployeeId(currentEmployeeId);
+  return user?.email;
+}

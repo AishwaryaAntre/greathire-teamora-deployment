@@ -1,21 +1,25 @@
 import "dotenv/config";
 import { createApp } from "./src/app.js";
 import { connectDB } from "./src/config/db.js";
-import { hydrateFromDb } from "./src/config/hydrate.js";
+import { seedDatabaseIfEmpty } from "./src/db/seed.js";
+import { loadAllData } from "./src/db/loadAll.js";
 
 const PORT = process.env.PORT || 5000;
 
 async function start() {
-  const connected = await connectDB();
-  if (connected) await hydrateFromDb();
+  try {
+    await connectDB();
+    await seedDatabaseIfEmpty();
+    await loadAllData();
 
-  const app = createApp();
-  app.listen(PORT, () => {
-    console.log(`GreatHire Teamora API listening on http://localhost:${PORT}`);
-    if (!connected) {
-      console.warn("[db] Running without MongoDB — data will not persist across restarts.");
-    }
-  });
+    let app = createApp();
+    app.listen(PORT, () => {
+      console.log(`GreatHire Teamora API listening on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("[boot] failed to start server:", err.message);
+    process.exit(1);
+  }
 }
 
 start();

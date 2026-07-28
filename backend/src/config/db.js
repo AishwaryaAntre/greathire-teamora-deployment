@@ -2,33 +2,44 @@ import mongoose from "mongoose";
 
 mongoose.set("strictQuery", true);
 
+let isConnected = false;
+
 /**
- * Connects to MongoDB. If MONGODB_URI is not set, the server intentionally
- * keeps running on the existing in-memory arrays (dev-friendly fallback) —
- * but logs a clear warning so it's obvious data won't persist across restarts.
- * Returns true if connected, false if running on the in-memory fallback.
+ * Connects to MongoDB using MONGODB_URI from the environment.
+ * Call once at boot, before the server starts accepting requests.
  */
 export async function connectDB() {
+  if (isConnected) return mongoose.connection;
+
   let uri = process.env.MONGODB_URI;
-
   if (!uri) {
-    console.warn(
-      "[db] MONGODB_URI not set — running on in-memory data only. " +
-        "Data will reset on every server restart. Set MONGODB_URI in .env to enable persistence."
+    throw new Error(
+      "MONGODB_URI is not set. Copy .env.example to .env and set MONGODB_URI (local Mongo or a MongoDB Atlas connection string)."
     );
-    return false;
   }
 
-  mongoose.connection.on("error", (err) => console.error("[db] MongoDB connection error:", err.message));
-  mongoose.connection.on("disconnected", () => console.warn("[db] MongoDB disconnected"));
+  mongoose.connection.on("connected", () => {
+    console.log(`[mongo] connected -> ${mongoose.connection.name}`);
+  });
+  mongoose.connection.on("error", (err) => {
+    console.error("[mongo] connection error:", err.message);
+  });
+  mongoose.connection.on("disconnected", () => {
+    console.warn("[mongo] disconnected");
+  });
 
-  try {
-    await mongoose.connect(uri, { dbName: process.env.MONGODB_DB_NAME || undefined });
-    console.log(`[db] MongoDB connected -> ${mongoose.connection.name}`);
-    return true;
-  } catch (err) {
-    console.error("[db] Failed to connect to MongoDB:", err.message);
-    console.warn("[db] Falling back to in-memory data for this run.");
-    return false;
-  }
+  await mongoose.connect(uri, {
+    serverSelectionTimeoutMS: 10000,
+  });
+
+  isConnected = true;
+  return mongoose.connection;
 }
+
+export async function disconnectDB() {
+  if (!isConnected) return;
+  await mongoose.disconnect();
+  isConnected = false;
+}
+
+export default mongoose;

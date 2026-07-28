@@ -1,10 +1,8 @@
 import { Router } from "express";
 import { messageController } from "../controllers/messageController.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-import { requireAuth } from "../middleware/auth.js";
 
 let router = Router();
-router.use(requireAuth);
 
 router.get("/conversations", asyncHandler(messageController.listConversations));
 router.get("/conversations/:id", asyncHandler(messageController.getConversation));

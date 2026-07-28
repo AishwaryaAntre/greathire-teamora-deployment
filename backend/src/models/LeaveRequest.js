@@ -1,4 +1,4 @@
-import { leaveRequests } from "../data/leaveStore.js";
+import { leaveRequests, persistNewLeaveRequest, persistLeaveRequestUpdate } from "../data/leaveStore.js";
 import { Employee } from "./Employee.js";
 import { generateId } from "../utils/id.js";
 import { todayISO, isSameMonth, isLastMonth, daysBetweenInclusive } from "../utils/dates.js";
@@ -9,12 +9,9 @@ function withEmployee(request) {
 }
 
 export let LeaveRequest = {
-  getAll({ status, period, search, employeeId } = {}) {
+  getAll({ status, period, search } = {}) {
     let rows = leaveRequests;
 
-    if (employeeId) {
-      rows = rows.filter((r) => r.employeeId === employeeId);
-    }
     if (status && status !== "All") {
       rows = rows.filter((r) => r.status === status);
     }
@@ -87,7 +84,7 @@ export let LeaveRequest = {
     ];
   },
 
-  create({ employeeId, leaveType, startDate, endDate, reason }) {
+  async create({ employeeId, leaveType, startDate, endDate, reason }) {
     let employee = Employee.getById(employeeId);
     if (!employee) throw new Error("Unknown employeeId");
 
@@ -103,28 +100,30 @@ export let LeaveRequest = {
       appliedOn: todayISO(),
       decidedOn: null,
     };
-    leaveRequests.unshift(request);
+    await persistNewLeaveRequest(request);
     return withEmployee(request);
   },
 
-  updateStatus(id, status) {
+  async updateStatus(id, status) {
     let request = leaveRequests.find((r) => r.id === id);
     if (!request) return null;
     request.status = status;
     request.decidedOn = todayISO();
+    await persistLeaveRequestUpdate(request);
     return withEmployee(request);
   },
 
-  approveAllPending() {
+  async approveAllPending() {
     let today = todayISO();
     let updated = [];
-    leaveRequests.forEach((r) => {
+    for (let r of leaveRequests) {
       if (r.status === "Pending") {
         r.status = "Approved";
         r.decidedOn = today;
+        await persistLeaveRequestUpdate(r);
         updated.push(withEmployee(r));
       }
-    });
+    }
     return updated;
   },
 };

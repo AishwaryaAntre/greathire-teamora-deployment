@@ -10,16 +10,15 @@ function extractToken(req) {
 
 /**
  * Populates req.user if a valid token is present, but never blocks the request.
- * Existing routes stay public (matching this backend's "no DB / zero-friction
- * local dev" philosophy) while still letting controllers personalize a response
- * when a token IS sent.
+ * Most routes stay accessible without a token; controllers can still personalize
+ * a response when one IS sent.
  */
-export function attachUser(req, res, next) {
+export async function attachUser(req, res, next) {
   let token = extractToken(req);
   if (!token) return next();
   try {
     let payload = verifyToken(token);
-    let user = UsersStore.findById(payload.sub);
+    let user = await UsersStore.findById(payload.sub);
     if (user) {
       req.user = { id: user.id, employeeId: user.employeeId, name: user.name, email: user.email, role: user.role };
     }
@@ -30,18 +29,18 @@ export function attachUser(req, res, next) {
 }
 
 /** Use on routes that must be authenticated (e.g. /api/auth/me). */
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
   let token = extractToken(req);
-  if (!token) throw new ApiError(401, "Authentication required");
+  if (!token) return next(new ApiError(401, "Authentication required"));
   try {
     let payload = verifyToken(token);
-    let user = UsersStore.findById(payload.sub);
-    if (!user) throw new ApiError(401, "Invalid session");
+    let user = await UsersStore.findById(payload.sub);
+    if (!user) return next(new ApiError(401, "Invalid session"));
     req.user = { id: user.id, employeeId: user.employeeId, name: user.name, email: user.email, role: user.role };
     next();
   } catch (err) {
-    if (err instanceof ApiError) throw err;
-    throw new ApiError(401, "Invalid or expired token");
+    if (err instanceof ApiError) return next(err);
+    next(new ApiError(401, "Invalid or expired token"));
   }
 }
 

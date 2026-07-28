@@ -1,4 +1,12 @@
-import { channels, directConversations, messages, getReadStateFor, avatarFor } from "../data/messagesStore.js";
+import {
+  channels,
+  directConversations,
+  messages,
+  getReadStateFor,
+  avatarFor,
+  persistNewMessage,
+  persistReadState,
+} from "../data/messagesStore.js";
 import { Employee } from "./Employee.js";
 import { generateId } from "../utils/id.js";
 import { CURRENT_EMPLOYEE_ID } from "../data/employees.js";
@@ -101,7 +109,7 @@ export let Message = {
   },
 
   /** POST /api/messages/conversations/:id/messages */
-  sendMessage(conversationId, { content, attachments = [] }, employeeId = CURRENT_EMPLOYEE_ID) {
+  async sendMessage(conversationId, { content, attachments = [] }, employeeId = CURRENT_EMPLOYEE_ID) {
     let conversation = allConversationsFor(employeeId).find((c) => c.id === conversationId);
     if (!conversation) return null;
 
@@ -113,18 +121,21 @@ export let Message = {
       attachments,
       createdAt: new Date().toISOString(),
     };
-    messages.push(message);
+    await persistNewMessage(message);
 
     let read = getReadStateFor(employeeId);
     read[conversationId] = message.createdAt;
+    await persistReadState(employeeId, conversationId, message.createdAt);
 
     return toMessageDto(message);
   },
 
   /** POST /api/messages/conversations/:id/read */
-  markConversationRead(conversationId, employeeId = CURRENT_EMPLOYEE_ID) {
+  async markConversationRead(conversationId, employeeId = CURRENT_EMPLOYEE_ID) {
     let read = getReadStateFor(employeeId);
-    read[conversationId] = new Date().toISOString();
-    return { conversationId, readAt: read[conversationId] };
+    let lastReadISO = new Date().toISOString();
+    read[conversationId] = lastReadISO;
+    await persistReadState(employeeId, conversationId, lastReadISO);
+    return { conversationId, readAt: lastReadISO };
   },
 };

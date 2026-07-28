@@ -1,19 +1,10 @@
-// Company-wide announcements. Newest first — index 0 is what AnnouncementCard shows.
-export let announcements = [
-  {
-    id: "ann_001",
-    eyebrow: "Announcement",
-    title: "New Hybrid Work Policy",
-    body: "Starting next month, we are transitioning to a flexible 3-day office week. Managers will share team-specific rosters shortly.",
-    ctaLabel: "Read More",
-    postedOn: "2026-07-10",
-  },
-  {
-    id: "ann_002",
-    eyebrow: "Announcement",
-    title: "Annual Health Checkup Drive",
-    body: "The on-site health checkup camp runs next week. Book your slot through the HR portal before Friday.",
-    ctaLabel: "Read More",
-    postedOn: "2026-06-28",
-  },
-];
+import { AnnouncementModel } from "../db/schemas.js";
+
+export let announcements = [];
+
+export async function loadAnnouncements() {
+  let docs = await AnnouncementModel.find().sort({ postedOn: -1 }).lean();
+  announcements.length = 0;
+  announcements.push(...docs.map(({ _id, ...rest }) => rest));
+  return announcements;
+}

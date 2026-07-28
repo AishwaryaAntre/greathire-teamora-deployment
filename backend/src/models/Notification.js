@@ -1,4 +1,10 @@
-import { notifications, getPreferencesFor } from "../data/notificationsStore.js";
+import {
+  notifications,
+  getPreferencesFor,
+  persistNewNotification,
+  persistNotificationUpdate,
+  persistPreferencesUpdate,
+} from "../data/notificationsStore.js";
 import { generateId } from "../utils/id.js";
 import { CURRENT_EMPLOYEE_ID } from "../data/employees.js";
 
@@ -70,13 +76,14 @@ export let Notification = {
     return getPreferencesFor(employeeId);
   },
 
-  updatePreferences(employeeId = CURRENT_EMPLOYEE_ID, updates = {}) {
+  async updatePreferences(employeeId = CURRENT_EMPLOYEE_ID, updates = {}) {
     let prefs = getPreferencesFor(employeeId);
     Object.assign(prefs, updates);
+    await persistPreferencesUpdate(employeeId, prefs);
     return prefs;
   },
 
-  create({ title, description, category = "system", priority = "low", recipientEmployeeId = CURRENT_EMPLOYEE_ID, isSystem = false, relatedEmployeeId = null, avatar = null }) {
+  async create({ title, description, category = "system", priority = "low", recipientEmployeeId = CURRENT_EMPLOYEE_ID, isSystem = false, relatedEmployeeId = null, avatar = null }) {
     let notif = {
       id: generateId("notif"),
       type: category,
@@ -91,20 +98,24 @@ export let Notification = {
       createdAt: new Date().toISOString(),
       recipientEmployeeId,
     };
-    notifications.unshift(notif);
+    await persistNewNotification(notif);
     return toDto(notif);
   },
 
-  markAsRead(id, employeeId = CURRENT_EMPLOYEE_ID) {
+  async markAsRead(id, employeeId = CURRENT_EMPLOYEE_ID) {
     let notif = notifications.find((n) => n.id === id && n.recipientEmployeeId === employeeId);
     if (!notif) return null;
     notif.read = true;
+    await persistNotificationUpdate(notif);
     return toDto(notif);
   },
 
-  markAllAsRead(employeeId = CURRENT_EMPLOYEE_ID) {
+  async markAllAsRead(employeeId = CURRENT_EMPLOYEE_ID) {
     let rows = notifications.filter((n) => n.recipientEmployeeId === employeeId);
-    rows.forEach((n) => (n.read = true));
+    for (let n of rows) {
+      n.read = true;
+      await persistNotificationUpdate(n);
+    }
     return rows.length;
   },
 };

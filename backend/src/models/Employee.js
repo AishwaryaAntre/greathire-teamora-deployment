@@ -1,6 +1,4 @@
-import { employees, departments } from "../data/employees.js";
-import { EmployeeModel } from "../schemas/employeeSchema.js";
-import mongoose from "mongoose";
+import { employees, departments, persistEmployeeUpdate } from "../data/employees.js";
 
 export let Employee = {
   getAll(department) {
@@ -16,26 +14,9 @@ export let Employee = {
     return departments;
   },
 
-  /** Allows editing a handful of self-service-safe fields (name, email, phone, avatar). */
-  update(id, updates = {}) {
-    let employee = employees.find((e) => e.id === id);
-    if (!employee) return null;
-
-    let allowed = ["name", "email", "phone", "avatar"];
-    let applied = {};
-    for (let key of allowed) {
-      if (updates[key] !== undefined) {
-        employee[key] = updates[key];
-        applied[key] = updates[key];
-      }
-    }
-
-    if (mongoose.connection.readyState === 1 && Object.keys(applied).length > 0) {
-      EmployeeModel.updateOne({ id }, { $set: applied }).catch((err) =>
-        console.error("[db] Failed to persist employee update:", err.message)
-      );
-    }
-
-    return employee;
+  /** Allows editing a handful of self-service-safe fields (name, email, phone, avatar).
+   * Persists to MongoDB via the data layer. */
+  async update(id, updates = {}) {
+    return persistEmployeeUpdate(id, updates);
   },
 };

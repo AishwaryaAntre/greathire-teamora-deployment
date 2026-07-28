@@ -1,14 +1,29 @@
 import { EmployeeProfile } from "../models/EmployeeProfile.js";
+import { CURRENT_EMPLOYEE_ID, employees } from "../data/employees.js";
 import { ApiError } from "../middleware/errorHandler.js";
 
-// Self-service routes always use the authenticated user's own employeeId.
-// The /:id variants are admin/manager-only (enforced by requireRole in the
-// route file), so trusting req.params.id there is safe.
+// Profile pages are usually navigated to with a specific :id (e.g. from a directory list),
+// but default to the self-service employee so `/api/employees/profile` also works standalone.
 function resolveEmployeeId(req) {
-  return req.params.id || req.user.employeeId;
+  return req.params.id || CURRENT_EMPLOYEE_ID;
 }
 
 export let employeeProfileController = {
+  // GET /api/employees — directory list (powers the "Employees" nav item / EmployeesListPage.jsx).
+  listAll: (req, res) => {
+    let data = employees.map((e) => ({
+      id: e.id,
+      name: e.name,
+      role: e.role,
+      department: e.department,
+      initials: e.initials,
+      avatar: e.avatar,
+      email: e.email,
+      employeeCode: e.employeeCode,
+    }));
+    res.json({ success: true, data });
+  },
+
   getProfile: (req, res) => {
     let employeeId = resolveEmployeeId(req);
     let profile = EmployeeProfile.getProfile(employeeId);
@@ -27,9 +42,9 @@ export let employeeProfileController = {
   getPersonalInfo: (req, res) => {
     res.json({ success: true, data: EmployeeProfile.getPersonalInfo(resolveEmployeeId(req)) });
   },
-  updatePersonalInfo: (req, res) => {
+  updatePersonalInfo: async (req, res) => {
     let employeeId = resolveEmployeeId(req);
-    let data = EmployeeProfile.updatePersonalInfo(employeeId, req.body || {});
+    let data = await EmployeeProfile.updatePersonalInfo(employeeId, req.body || {});
     if (!data) throw new ApiError(404, "Unknown employeeId");
     res.json({ success: true, data });
   },

@@ -1,10 +1,8 @@
 import { Router } from "express";
 import { dashboardController } from "../controllers/dashboardController.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
 
 let router = Router();
-router.use(requireAuth, requireRole("admin", "manager"));
 
 router.get("/overview", asyncHandler(dashboardController.getOverview));
 router.get("/snapshot", asyncHandler(dashboardController.getSnapshot));

@@ -83,7 +83,6 @@ export let EmployeeDashboard = {
 
     return {
       state,
-      recordId: today?.id || null,
       checkIn: today?.checkIn || null,
       currentSession,
       todaysGoal: "8 Hours",

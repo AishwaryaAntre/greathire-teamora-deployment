@@ -1,102 +1,59 @@
-import { employees, CURRENT_EMPLOYEE_ID } from "./employees.js";
-import { generateId } from "../utils/id.js";
+import { NotificationModel, NotificationPreferenceModel } from "../db/schemas.js";
+import { CURRENT_EMPLOYEE_ID } from "./employees.js";
 
-function employeeAvatarSeed(employeeId) {
-  let idx = employees.findIndex((e) => e.id === employeeId);
-  return 10 + (idx >= 0 ? idx : 0);
+export let notifications = [];
+
+export async function loadNotifications() {
+  let docs = await NotificationModel.find().lean();
+  notifications.length = 0;
+  notifications.push(...docs.map(({ _id, ...rest }) => rest));
+  return notifications;
 }
 
-// category: "attendance" | "leave" | "system"
-// priority: "low" | "medium" | "high"
-let seed = [
-  {
-    type: "check-in",
-    category: "attendance",
-    title: "Attendance Log",
-    description: "Aarav Mehta checked in at 09:02 AM",
-    priority: "low",
-    minutesAgo: 2,
-    read: false,
-    isSystem: false,
-    relatedEmployeeId: "emp_001",
-  },
-  {
-    type: "break-start",
-    category: "attendance",
-    title: "Break Started",
-    description: "Neha Sharma started a break",
-    priority: "medium",
-    minutesAgo: 15,
-    read: false,
-    isSystem: false,
-    relatedEmployeeId: "emp_002",
-  },
-  {
-    type: "report-generated",
-    category: "system",
-    title: "System Alert",
-    description: "Attendance report generated successfully",
-    priority: "low",
-    minutesAgo: 60,
-    read: true,
-    isSystem: true,
-    relatedEmployeeId: null,
-  },
-  {
-    type: "leave-requested",
-    category: "leave",
-    title: "Leave Request",
-    description: "Marcus Vance requested 2 days of paid leave",
-    priority: "high",
-    minutesAgo: 90,
-    read: false,
-    isSystem: false,
-    relatedEmployeeId: "emp_003",
-  },
-  {
-    type: "leave-approved",
-    category: "leave",
-    title: "Leave Approved",
-    description: "Your leave request for Oct 18-19 was approved",
-    priority: "medium",
-    minutesAgo: 240,
-    read: false,
-    isSystem: false,
-    relatedEmployeeId: CURRENT_EMPLOYEE_ID,
-  },
-];
+export async function persistNewNotification(notif) {
+  notifications.unshift(notif);
+  await NotificationModel.create(notif);
+  return notif;
+}
 
-export let notifications = seed.map((n, i) => ({
-  id: generateId("notif"),
-  ...n,
-  avatar: n.relatedEmployeeId
-    ? `https://i.pravatar.cc/64?img=${employeeAvatarSeed(n.relatedEmployeeId)}`
-    : null,
-  createdAt: new Date(Date.now() - n.minutesAgo * 60 * 1000).toISOString(),
-  // Every notification is addressed to the self-service employee for this in-memory demo;
-  // swap for a real recipient/employeeId column once a proper multi-user DB is in place.
-  recipientEmployeeId: CURRENT_EMPLOYEE_ID,
-}));
+export async function persistNotificationUpdate(notif) {
+  let { id, ...rest } = notif;
+  await NotificationModel.updateOne({ id }, { $set: rest });
+  return notif;
+}
 
-export let notificationPreferences = {
-  [CURRENT_EMPLOYEE_ID]: {
-    email: true,
-    push: true,
-    attendanceAlerts: true,
-    leaveAlerts: true,
-    systemAlerts: false,
-  },
-};
+/** Per-employee cache of notification preferences, kept in sync with MongoDB. */
+let preferencesCache = {};
+
+export async function loadNotificationPreferences() {
+  let docs = await NotificationPreferenceModel.find().lean();
+  preferencesCache = {};
+  docs.forEach((doc) => {
+    let { _id, employeeId, ...rest } = doc;
+    preferencesCache[employeeId] = rest;
+  });
+  return preferencesCache;
+}
 
 export function getPreferencesFor(employeeId) {
-  if (!notificationPreferences[employeeId]) {
-    notificationPreferences[employeeId] = {
+  if (!preferencesCache[employeeId]) {
+    preferencesCache[employeeId] = {
       email: true,
       push: true,
       attendanceAlerts: true,
       leaveAlerts: true,
       systemAlerts: false,
     };
+    NotificationPreferenceModel.create({ employeeId, ...preferencesCache[employeeId] }).catch((err) =>
+      console.error("[notifications] failed to persist default preferences:", err.message)
+    );
   }
-  return notificationPreferences[employeeId];
+  return preferencesCache[employeeId];
 }
+
+export async function persistPreferencesUpdate(employeeId, prefs) {
+  await NotificationPreferenceModel.updateOne({ employeeId }, { $set: prefs }, { upsert: true });
+  return prefs;
+}
+
+export { CURRENT_EMPLOYEE_ID };

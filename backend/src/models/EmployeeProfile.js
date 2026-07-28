@@ -227,8 +227,8 @@ export let EmployeeProfile = {
   },
 
   /** Edits name/email/phone/avatar, then returns the refreshed personal-info card. */
-  updatePersonalInfo(employeeId, updates) {
-    let employee = Employee.update(employeeId, updates);
+  async updatePersonalInfo(employeeId, updates) {
+    let employee = await Employee.update(employeeId, updates);
     if (!employee) return null;
     return this.getPersonalInfo(employeeId);
   },

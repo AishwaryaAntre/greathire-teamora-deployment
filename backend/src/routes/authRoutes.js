@@ -19,11 +19,11 @@ if (googleEnabled) {
   router.get(
     "/oauth/google/callback",
     passport.authenticate("google", { session: false, failureRedirect: "/api/auth/oauth/failure" }),
-    (req, res) => {
-      let { token } = authController.issueOAuthToken(req.user.email, req.user.name);
+    asyncHandler(async (req, res) => {
+      let { token } = await authController.issueOAuthToken(req.user.email, req.user.name);
       let clientUrl = process.env.CLIENT_ORIGIN || "http://localhost:5173";
       res.redirect(`${clientUrl}/dashboard?token=${token}`);
-    }
+    })
   );
 } else {
   router.get("/oauth/google", (req, res) => {
@@ -40,11 +40,11 @@ if (microsoftEnabled) {
   router.get(
     "/oauth/microsoft/callback",
     passport.authenticate("microsoft", { session: false, failureRedirect: "/api/auth/oauth/failure" }),
-    (req, res) => {
-      let { token } = authController.issueOAuthToken(req.user.email, req.user.name);
+    asyncHandler(async (req, res) => {
+      let { token } = await authController.issueOAuthToken(req.user.email, req.user.name);
       let clientUrl = process.env.CLIENT_ORIGIN || "http://localhost:5173";
       res.redirect(`${clientUrl}/dashboard?token=${token}`);
-    }
+    })
   );
 } else {
   router.get("/oauth/microsoft", (req, res) => {
