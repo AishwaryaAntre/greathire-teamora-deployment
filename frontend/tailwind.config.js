@@ -65,7 +65,7 @@ export default {
       },
       backgroundImage: {
         "hero-gradient":
-          "linear-gradient(160deg, #EEF3FD 0%, #E3EBFB 45%, #D9E4F8 100%)",
+          "linear-gradient(160deg, hsl(var(--hero-gradient-from)) 0%, hsl(var(--hero-gradient-via)) 45%, hsl(var(--hero-gradient-to)) 100%)",
       },
     },
   },

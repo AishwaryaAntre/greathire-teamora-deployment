@@ -21,7 +21,7 @@ export default function DashboardTopBar() {
         <Link to="/support">
         <IconButton icon={HelpCircle} label="Help" /></Link>
        
-        <Link to="/profile">
+        <Link to="/employee-dashboard">
           <IconButton icon={CircleUserRound} label="Account" />
         </Link>
          

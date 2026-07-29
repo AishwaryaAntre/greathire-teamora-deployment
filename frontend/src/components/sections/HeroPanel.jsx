@@ -4,8 +4,9 @@ import DashboardPreview from "./DashboardPreview";
 
 export default function HeroPanel() {
   return (
-    <div className="relative hidden h-full flex-col overflow-hidden bg-hero-gradient px-10 py-12 lg:flex lg:px-16 lg:py-14">
-      <div className="flex items-center gap-3">
+    
+    <div className="relative hidden h-full flex-col overflow-hidden bg-hero-gradient px-10 py-12 lg:flex lg:px-16 lg:py-14 ">
+      <div className="flex items-center gap-3 ">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
           <span className="text-sm font-extrabold">GH</span>
         </div>
@@ -51,5 +52,6 @@ export default function HeroPanel() {
         <DashboardPreview />
       </div>
     </div>
+    
   );
 }

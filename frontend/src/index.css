@@ -27,6 +27,10 @@
     --ring: 221 83% 45%;
 
     --radius: 0.875rem;
+
+    --hero-gradient-from: 216 90% 95%;
+    --hero-gradient-via: 214 84% 90%;
+    --hero-gradient-to: 217 80% 84%;
   }
 
   .dark {
@@ -51,6 +55,10 @@
     --border: 222 25% 20%;
     --input: 222 25% 22%;
     --ring: 217 91% 60%;
+
+    --hero-gradient-from: 222 47% 10%;
+    --hero-gradient-via: 222 32% 13%;
+    --hero-gradient-to: 222 42% 18%;
   }
 }
 
