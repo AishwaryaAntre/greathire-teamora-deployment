@@ -26,7 +26,7 @@ import ApplyLeaveModal from "@/components/employee/ApplyLeaveModal";
 
 const defaultNavItems = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
-  { label: "Directory", icon: Users, to: "/employees" },
+  { label: "Directory", icon: Users, to: "/dashboard" },
   { label: "Attendance", icon: CalendarCheck, to: "/attendance" },
   { label: "Leave Management", icon: CalendarClock, active: true, to: "/leave" },
 ];
