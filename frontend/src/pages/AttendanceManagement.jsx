@@ -1,17 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
-  LayoutDashboard,
-  CalendarCheck,
   Users,
-  CalendarDays,
-  BarChart3,
   Settings,
-  LogOut,
-  LifeBuoy,
   Search,
   Bell,
   HelpCircle,
-  LayoutGrid,
   Download,
   FileSpreadsheet,
   RefreshCw,
@@ -28,14 +21,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { attendanceApi } from "@/lib/api/attendance";
 import { useAuth } from "@/lib/AuthContext";
-
-let navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
-  { label: "Attendance", icon: CalendarCheck, active: true, to: "/attendance" },
-  { label: "Employees", icon: Users, to: "/profile" },
-  { label: "Schedules", icon: CalendarDays, to: "/leave" },
-  { label: "report", icon: BarChart3, to: "/reports" },
-];
+import MasterSidebar from "@/components/layout/MasterSidebar";
 
 // Backend sends stat cards without icons attached — map by label client-side.
 let STAT_ICONS = { "Total Expected": Users };
@@ -45,70 +31,6 @@ let SUMMARY_ICON_CONFIG = {
   onTime: { icon: LogIn, iconBg: "bg-emerald-100", iconColor: "text-emerald-600" },
   late: { icon: Clock, iconBg: "bg-amber-100", iconColor: "text-amber-600" },
 };
-
-function Sidebar() {
-  const navigate = useNavigate();
-  const { logout } = useAuth();
-  return (
-    <aside className="static inset-y-0 left-0 z-50 w-64 h-full bg-slate-900 text-slate-300 flex flex-col justify-between flex-shrink-0">
-      <div>
-        <div className="flex items-center gap-3 px-5 py-6">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <LayoutGrid className="w-5 h-5 text-white" />
-          </div>
-          <div className="leading-tight">
-            <p className="text-white font-semibold text-sm">Enterprise SaaS</p>
-            <p className="text-slate-400 dark:text-slate-500 text-xs">Global Admin</p>
-          </div>
-        </div>
-
-        <nav className="mt-2 px-3 flex flex-col gap-1">
-          {navItems.map(({ label, icon: Icon, active, to }) => (
-            <button
-              key={label}
-              onClick={() => navigate(to)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left
-                ${active ? "bg-blue-600 text-white" : "text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white"}`}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className="px-3 pb-6">
-        <button
-          onClick={() => navigate("/support")}
-          className="w-full flex items-center justify-center gap-2 border border-slate-700 text-slate-300 hover:bg-slate-800/60 transition-colors text-sm font-medium py-2.5 rounded-lg mb-4"
-        >
-          <LifeBuoy className="w-4 h-4" />
-          Support Center
-        </button>
-
-        <div className="border-t border-slate-800 pt-3 flex flex-col gap-1">
-          <button
-            onClick={() => navigate("/profile")}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white transition-colors text-left"
-          >
-            <Settings className="w-4 h-4 flex-shrink-0" />
-            Settings
-          </button>
-          <button
-            onClick={async () => {
-              await logout();
-              navigate("/");
-            }}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white transition-colors text-left"
-          >
-            <LogOut className="w-4 h-4 flex-shrink-0" />
-            Logout
-          </button>
-        </div>
-      </div>
-    </aside>
-  );
-}
 
 function TopBar({ onCheckIn, checkingIn, search, onSearchChange }) {
   const navigate = useNavigate();
@@ -147,14 +69,7 @@ function TopBar({ onCheckIn, checkingIn, search, onSearchChange }) {
         >
           <Settings className="w-5 h-5" />
         </button>
-        <button
-          onClick={onCheckIn}
-          disabled={checkingIn}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded-lg px-3 sm:px-4 py-2 text-sm font-medium disabled:opacity-60"
-        >
-          <LogIn className="w-4 h-4" />
-          <span className="hidden sm:inline">{checkingIn ? "Checking In..." : "Check In"}</span>
-        </button>
+        
         <div className="w-8 h-8 rounded-full bg-slate-300 overflow-hidden flex-shrink-0" />
       </div>
     </header>
@@ -431,7 +346,7 @@ export default function AttendanceManagement() {
 
   return (
     <div className="w-screen h-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950">
-      <Sidebar />
+      <MasterSidebar />
 
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <TopBar onCheckIn={handleCheckIn} checkingIn={checkingIn} search={search} onSearchChange={setSearch} />

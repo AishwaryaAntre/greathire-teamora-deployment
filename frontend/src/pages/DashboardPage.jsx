@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "@/components/layout/Sidebar";
+import MasterSidebar from "@/components/layout/MasterSidebar";
 import DashboardTopBar from "@/components/layout/DashboardTopBar";
 import DashboardOverviewCard from "@/components/dashboard/DashboardOverviewCard";
 import WorkforceSnapshot from "@/components/dashboard/WorkforceSnapshot";
@@ -42,7 +42,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-slate-50 dark:bg-slate-950">
-      <Sidebar />
+      <MasterSidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopBar />

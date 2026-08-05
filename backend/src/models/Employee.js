@@ -1,4 +1,4 @@
-import { employees, departments, persistEmployeeUpdate, createEmployee } from "../data/employees.js";
+import { employees, departments, persistEmployeeUpdate, createEmployee, deleteEmployee } from "../data/employees.js";
 
 const SELF_EDITABLE_FIELDS = ["name", "email", "phone", "avatar"];
 const ADMIN_EDITABLE_FIELDS = ["name", "email", "phone", "avatar", "role", "department", "employeeCode"];
@@ -30,5 +30,13 @@ export let Employee = {
   /** Admin-only: create a new employee record. */
   async create(fields) {
     return createEmployee(fields);
+  },
+
+  /** Admin-only: permanently remove an employee record. Returns false if no
+   * such employee exists. Callers are responsible for cleaning up related
+   * data (attendance, leave requests, login account) — see
+   * employeeProfileController.deleteEmployee for the full cascade. */
+  async remove(id) {
+    return deleteEmployee(id);
   },
 };

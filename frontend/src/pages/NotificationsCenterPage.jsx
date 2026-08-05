@@ -1,15 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  LayoutGrid,
-  LayoutDashboard,
-  CalendarCheck,
-  Bell,
-  Users,
-  BarChart3,
   Settings,
   HelpCircle,
-  LogOut,
   Search,
   CheckCheck,
   Download,
@@ -19,16 +12,8 @@ import {
   X,
 } from "lucide-react";
 import { notificationsApi } from "@/lib/api/notifications";
-import { useAuth } from "@/lib/AuthContext";
 import { Checkbox } from "@/components/ui/checkbox";
-
-const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
-  { label: "Attendance", icon: CalendarCheck, to: "/attendance" },
-  { label: "Notifications", icon: Bell, active: true, to: "/notifications" },
-  { label: "Employees", icon: Users, to: "/employees" },
-  { label: "Analytics", icon: BarChart3, to: "/reports" },
-];
+import MasterSidebar from "@/components/layout/MasterSidebar";
 
 const filters = ["All", "Unread", "Attendance", "Leave", "System"];
 
@@ -39,63 +24,6 @@ function filterToApiValue(filter) {
   if (filter === "All") return "all";
   if (filter === "Unread") return "unread";
   return filter.toLowerCase();
-}
-
-function Sidebar() {
-  const navigate = useNavigate();
-  const { logout } = useAuth();
-  return (
-    <aside className="w-64 h-full bg-slate-900 text-slate-300 flex flex-col justify-between flex-shrink-0">
-      <div>
-        <div className="flex items-center gap-3 px-5 py-6">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <LayoutGrid className="w-5 h-5 text-white" />
-          </div>
-          <div className="leading-tight">
-            <p className="text-white font-semibold text-sm">Teamora</p>
-            <p className="text-slate-400 dark:text-slate-500 text-xs">Enterprise Plan</p>
-          </div>
-        </div>
-
-        <nav className="mt-2 px-3 flex flex-col gap-1">
-          {navItems.map(({ label, icon: Icon, active, to }) => (
-            <button
-              key={label}
-              onClick={() => navigate(to)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
-                active ? "bg-slate-800 text-white" : "text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white"
-              }`}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              {label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className="px-3 pb-6 flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <button
-            onClick={() => navigate("/support")}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white transition-colors text-left"
-          >
-            <HelpCircle className="w-4 h-4 flex-shrink-0" />
-            Help Center
-          </button>
-          <button
-            onClick={async () => {
-              await logout();
-              navigate("/");
-            }}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white transition-colors text-left"
-          >
-            <LogOut className="w-4 h-4 flex-shrink-0" />
-            Sign Out
-          </button>
-        </div>
-      </div>
-    </aside>
-  );
 }
 
 function TopBar({ search, onSearchChange }) {
@@ -319,7 +247,7 @@ export default function NotificationsCenterPage() {
 
   return (
     <div className="w-screen h-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950">
-      <Sidebar />
+      <MasterSidebar />
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <TopBar search={search} onSearchChange={setSearch} />
         <main className="flex-1 overflow-y-auto px-6 py-6">

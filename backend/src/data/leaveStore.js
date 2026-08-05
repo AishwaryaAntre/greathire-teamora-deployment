@@ -21,5 +21,15 @@ export async function persistLeaveRequestUpdate(request) {
   return request;
 }
 
+/** Removes every leave request for a deleted employee — otherwise the
+ * requests list and CSV export keep showing rows for someone who no longer
+ * has an account. */
+export async function deleteLeaveRequestsByEmployeeId(employeeId) {
+  for (let i = leaveRequests.length - 1; i >= 0; i--) {
+    if (leaveRequests[i].employeeId === employeeId) leaveRequests.splice(i, 1);
+  }
+  await LeaveRequestModel.deleteMany({ employeeId });
+}
+
 export let LEAVE_TYPE_OPTIONS = ["Annual", "Sick Leave", "Casual", "Unpaid"];
 export let LEAVE_STATUS_OPTIONS = ["Pending", "Approved", "Rejected"];

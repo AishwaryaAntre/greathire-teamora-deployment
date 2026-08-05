@@ -9,8 +9,8 @@ export default function NavItem({ icon: Icon, label, active, href }) {
       className={cn(
         "group relative flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors",
         active
-          ? "bg-white dark:bg-slate-900/10 text-white font-semibold"
-          : "text-slate-400 dark:text-slate-500 hover:bg-white dark:hover:bg-slate-900/5 hover:text-slate-200"
+          ? "bg-[#1E293B] dark:bg-[#1E293B] text-white font-semibold"
+          : "text-slate-400 dark:text-slate-500 hover:bg-[#1E293B] dark:hover:bg-[#1E293B] hover:text-slate-200"
       )}
     >
       {active && (

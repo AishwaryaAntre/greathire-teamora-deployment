@@ -30,3 +30,13 @@ export async function persistAttendanceUpdate(record) {
   await AttendanceModel.updateOne({ id }, { $set: rest });
   return record;
 }
+
+/** Removes every attendance record for a deleted employee, so nothing is left
+ * pointing at an id that no longer resolves (Attendance/Dashboard models join
+ * records back to Employee.getById and don't guard against a null result). */
+export async function deleteAttendanceByEmployeeId(employeeId) {
+  for (let i = attendanceRecords.length - 1; i >= 0; i--) {
+    if (attendanceRecords[i].employeeId === employeeId) attendanceRecords.splice(i, 1);
+  }
+  await AttendanceModel.deleteMany({ employeeId });
+}

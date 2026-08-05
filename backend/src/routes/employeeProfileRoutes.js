@@ -16,6 +16,15 @@ router.get("/", asyncHandler(employeeProfileController.listAll));
 // POST /api/employees — admin-only: add a new employee or admin account.
 router.post("/", requireRole("admin"), validate(createEmployeeSchema), asyncHandler(employeeProfileController.createEmployee));
 
+// DELETE /api/employees/:id — admin-only: permanently remove an employee
+// (their login account and attendance/leave history go with them).
+router.delete(
+  "/:id",
+  requireRole("admin"),
+  validate(idParamSchema, "params"),
+  asyncHandler(employeeProfileController.deleteEmployee)
+);
+
 // Self-service (no id) — defaults to CURRENT_EMPLOYEE_ID.
 router.get("/profile", asyncHandler(employeeProfileController.getProfile));
 router.get("/profile/stat-cards", asyncHandler(employeeProfileController.getStatCards));

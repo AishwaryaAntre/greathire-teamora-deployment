@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserPlus, X } from "lucide-react";
-import Sidebar from "@/components/layout/Sidebar";
+import { UserPlus, X, Trash2 } from "lucide-react";
+import MasterSidebar from "@/components/layout/MasterSidebar";
 import DashboardTopBar from "@/components/layout/DashboardTopBar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Avatar from "@/components/dashboard/Avatar";
+import ConfirmDeleteEmployeeModal from "@/components/employee/ConfirmDeleteEmployeeModal";
 import { employeeProfileApi } from "@/lib/api/employeeProfile";
 import { useAuth } from "@/lib/AuthContext";
 import PageLoading from "@/components/routing/PageLoading";
@@ -97,6 +98,7 @@ export default function EmployeesListPage() {
   const [employees, setEmployees] = useState(null);
   const [error, setError] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const isAdmin = user?.role === "admin";
 
   function loadEmployees() {
@@ -119,7 +121,7 @@ export default function EmployeesListPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-slate-50 dark:bg-slate-950">
-      <Sidebar />
+      <MasterSidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopBar />
@@ -143,12 +145,25 @@ export default function EmployeesListPage() {
                 className="flex cursor-pointer items-center gap-3 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-950"
               >
                 <Avatar initials={employee.initials} />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{employee.name}</p>
                   <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                     {employee.role} · {employee.department}
                   </p>
                 </div>
+                {isAdmin && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTarget(employee);
+                    }}
+                    disabled={employee.id === user?.employeeId}
+                    title={employee.id === user?.employeeId ? "You can't delete your own account" : "Delete employee"}
+                    className="flex-shrink-0 rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400 dark:text-slate-500"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
               </Card>
             ))}
           </div>
@@ -160,6 +175,17 @@ export default function EmployeesListPage() {
           onClose={() => setShowAddModal(false)}
           onCreated={() => {
             setShowAddModal(false);
+            loadEmployees();
+          }}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDeleteEmployeeModal
+          employee={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={() => {
+            setDeleteTarget(null);
             loadEmployees();
           }}
         />

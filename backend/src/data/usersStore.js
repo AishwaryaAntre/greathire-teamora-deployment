@@ -54,6 +54,11 @@ export const UsersStore = {
     let user = await UserModel.findOneAndUpdate({ id: userId }, { $set: { passwordHash } }, { new: true }).lean();
     return strip(user);
   },
+  /** Removes the login account tied to a deleted employee, so it can no
+   * longer be used to sign in. */
+  async deleteByEmployeeId(employeeId) {
+    await UserModel.deleteOne({ employeeId });
+  },
 };
 
 /** Handy for local testing / seed logs — resolved lazily since it needs a DB round trip. */

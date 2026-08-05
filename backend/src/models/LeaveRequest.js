@@ -1,4 +1,4 @@
-import { leaveRequests, persistNewLeaveRequest, persistLeaveRequestUpdate } from "../data/leaveStore.js";
+import { leaveRequests, persistNewLeaveRequest, persistLeaveRequestUpdate, deleteLeaveRequestsByEmployeeId } from "../data/leaveStore.js";
 import { Employee } from "./Employee.js";
 import { generateId } from "../utils/id.js";
 import { todayISO, isSameMonth, isLastMonth, daysBetweenInclusive } from "../utils/dates.js";
@@ -136,5 +136,12 @@ export let LeaveRequest = {
       }
     }
     return updated;
+  },
+
+  /** Admin-only cleanup for a deleted employee: removes their leave request
+   * history so the requests list/CSV export don't keep showing rows for
+   * someone who no longer has an account. */
+  async deleteAllForEmployee(employeeId) {
+    return deleteLeaveRequestsByEmployeeId(employeeId);
   },
 };

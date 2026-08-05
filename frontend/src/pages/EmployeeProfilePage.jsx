@@ -6,6 +6,7 @@ import {
   Settings,
   Download,
   Pencil,
+  Trash2,
   Eye,
   Percent,
   Clock,
@@ -27,6 +28,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import ConfirmDeleteEmployeeModal from "@/components/employee/ConfirmDeleteEmployeeModal";
 import PageLoading from "@/components/routing/PageLoading";
 
 // Backend sends icon names as plain strings — resolve to a component client-side.
@@ -167,7 +169,7 @@ function EditEmployeeModal({ employee, onClose, onSaved }) {
   );
 }
 
-function ProfileHeaderCard({ employee, onViewAttendance, canEdit, onEdit }) {
+function ProfileHeaderCard({ employee, onViewAttendance, canEdit, onEdit, canDelete, onDelete }) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-6 flex flex-col sm:flex-row sm:items-center gap-6">
       <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0 bg-slate-200 flex items-center justify-center text-xl font-bold text-slate-500 dark:text-slate-400">
@@ -207,6 +209,17 @@ function ProfileHeaderCard({ employee, onViewAttendance, canEdit, onEdit }) {
             >
               <Pencil className="w-3.5 h-3.5" />
               Edit Employee
+            </button>
+          )}
+          {canEdit && (
+            <button
+              onClick={onDelete}
+              disabled={!canDelete}
+              title={canDelete ? "Delete employee" : "You can't delete your own account"}
+              className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white dark:disabled:hover:bg-slate-900"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete
             </button>
           )}
           <button onClick={onViewAttendance} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950">
@@ -352,6 +365,7 @@ export default function EmployeeProfilePage() {
   const { user } = useAuth();
   const [bundle, setBundle] = useState(null);
   const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const isAdmin = user?.role === "admin";
 
   function loadBundle() {
@@ -379,6 +393,8 @@ export default function EmployeeProfilePage() {
           onViewAttendance={() => navigate("/attendance")}
           canEdit={isAdmin}
           onEdit={() => setEditing(true)}
+          canDelete={isAdmin && profile.id !== user?.employeeId}
+          onDelete={() => setDeleting(true)}
         />
         <StatCards statCards={statCards} />
         <div className="flex flex-col lg:flex-row gap-4 mb-4">
@@ -399,6 +415,14 @@ export default function EmployeeProfilePage() {
             setEditing(false);
             loadBundle();
           }}
+        />
+      )}
+
+      {deleting && (
+        <ConfirmDeleteEmployeeModal
+          employee={{ id: profile.id, name: profile.name }}
+          onClose={() => setDeleting(false)}
+          onDeleted={() => navigate("/employees")}
         />
       )}
     </div>

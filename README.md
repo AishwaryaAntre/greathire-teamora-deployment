@@ -119,7 +119,7 @@ frontend/
   src/
     components/
       ui/                  shadcn/ui primitives (Button, Card, Input, Checkbox, ...)
-      layout/              shared chrome (Sidebar, TopBar, EmployeeTopBar, NavItem, ...)
+      layout/              shared chrome (MasterSidebar, TopBar, EmployeeTopBar, NavItem, ...)
       routing/             ProtectedRoute, PublicOnlyRoute, PageLoading, PageError, ErrorBoundary
       sections/            login page composition
       dashboard/           admin dashboard composition
@@ -128,6 +128,8 @@ frontend/
       AuthContext.jsx      auth state + access/refresh token handling
       ThemeContext.jsx     global light/dark theme (persisted, system-aware)
       api/                 one client module per backend feature
+    data/
+      navConfig.js         single source of truth for sidebar nav items, per role
     pages/                 one component per route
     App.jsx                route table (role-gated, lazy-loaded)
 ```
@@ -135,6 +137,42 @@ frontend/
 Full details, including a complete backend API reference (every route mapped to the
 frontend component that calls it, and which routes require which role), live in the two
 sub-READMEs linked above.
+
+---
+
+## Navigation / Sidebar
+
+All authenticated pages render one shared sidebar component,
+`frontend/src/components/layout/MasterSidebar.jsx`. It reads `useAuth()`'s
+`user.role` and renders the right nav items for that role by calling
+`getNavItemsForRole(role)` from `frontend/src/data/navConfig.js` — the single
+source of truth for what shows up in the sidebar, for both roles:
+
+```js
+export const ADMIN_NAV_ITEMS = [ /* Dashboard, Employees, Attendance, ... */ ];
+export const EMPLOYEE_NAV_ITEMS = [ /* Dashboard, Attendance, Leave, ... */ ];
+export function getNavItemsForRole(role) {
+  return role === "admin" ? ADMIN_NAV_ITEMS : EMPLOYEE_NAV_ITEMS;
+}
+```
+
+**To add, remove, relabel, or re-icon a nav item:** edit `navConfig.js` only.
+No page-level changes are needed — every page picks up the change automatically
+because they all render the same `<MasterSidebar />`, not a local copy.
+
+```js
+{ label: "Payroll", href: "/payroll", icon: DollarSign }
+```
+
+added to `ADMIN_NAV_ITEMS` shows up in the admin sidebar on every admin page,
+immediately.
+
+This replaced an earlier state where 7 pages each hand-rolled their own
+sidebar markup — inconsistent branding, copy-paste nav bugs (mislabeled
+links, wrong hrefs), and missing links were the result. `Sidebar.jsx`,
+`EmployeeSidebar.jsx`, and `SidebarNavItem.jsx` (the old per-role sidebar
+components) have been removed; `MasterSidebar.jsx` is now the only sidebar
+component in the codebase.
 
 ---
 

@@ -112,12 +112,3 @@ export const announcement = {
   body: "Starting next month, we are transitioning to a flexible 3-day office week...",
   ctaLabel: "Read More",
 };
-
-export const sidebarNav = [
-  { id: "dashboard", label: "Dashboard", icon: "LayoutGrid", active: true },
-  { id: "attendance", label: "Attendance", icon: "CalendarDays" },
-  { id: "leave", label: "Leave", icon: "CalendarClock" },
-  { id: "profile", label: "My Profile", icon: "User" },
-  { id: "notifications", label: "Notifications", icon: "Bell" },
-  { id: "settings", label: "Settings", icon: "Settings" },
-];

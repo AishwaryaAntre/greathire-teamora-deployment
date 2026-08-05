@@ -1,93 +1,22 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
   Users,
-  CalendarCheck,
-  TrendingUp,
   FileBarChart2,
-  Settings,
   HelpCircle,
   Search,
   Bell,
   ChevronDown,
   Zap,
-  LayoutGrid,
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { reportsApi } from "@/lib/api/reports";
-
-const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
-  { label: "Directory", icon: Users, to: "/employees" },
-  { label: "Attendance", icon: CalendarCheck, to: "/attendance" },
-  { label: "Performance", icon: TrendingUp, to: "/leave" },
-  { label: "Reports", icon: FileBarChart2, active: true, to: "/reports" },
-];
+import MasterSidebar from "@/components/layout/MasterSidebar";
 
 const RANGE_TO_API = { "12 Months": "12m", "30 Days": "30d", "7 Days": "7d" };
 const STAT_ICON_BY_LABEL = { "TOTAL EMPLOYEES": Users, "AVG ATTENDANCE": FileBarChart2 };
-
-function Sidebar({ onGenerate, generating }) {
-  const navigate = useNavigate();
-  return (
-    <aside className="static inset-y-0 left-0 z-50 w-64 h-full bg-slate-900 text-slate-300 flex flex-col justify-between flex-shrink-0">
-      <div>
-        <div className="flex items-center gap-3 px-5 py-6">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <LayoutGrid className="w-5 h-5 text-white" />
-          </div>
-          <div className="leading-tight">
-            <p className="text-white font-semibold text-sm">GreatHire</p>
-            <p className="text-slate-400 dark:text-slate-500 text-xs">Teamora</p>
-          </div>
-        </div>
-
-        <nav className="mt-2 px-3 flex flex-col gap-1">
-          {navItems.map(({ label, icon: Icon, active, to }) => (
-            <button
-              key={label}
-              onClick={() => navigate(to)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left
-                ${active ? "bg-slate-800 text-white" : "text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white"}`}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
-      <div className="px-3 pb-6">
-        <button
-          onClick={onGenerate}
-          disabled={generating}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm font-medium py-2.5 rounded-lg mb-4 disabled:opacity-60"
-        >
-          <span className="text-lg leading-none">+</span> {generating ? "Generating..." : "New Report"}
-        </button>
-
-        <div className="flex flex-col gap-1">
-          <button
-            onClick={() => navigate("/profile")}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white transition-colors text-left"
-          >
-            <Settings className="w-4 h-4 flex-shrink-0" />
-            Settings
-          </button>
-          <button
-            onClick={() => navigate("/support")}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white transition-colors text-left"
-          >
-            <HelpCircle className="w-4 h-4 flex-shrink-0" />
-            Support
-          </button>
-        </div>
-      </div>
-    </aside>
-  );
-}
 
 function TopBar() {
   const navigate = useNavigate();
@@ -310,7 +239,7 @@ export default function Report() {
 
   return (
     <div className="w-screen h-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950">
-      <Sidebar onGenerate={handleGenerate} generating={generating} />
+      <MasterSidebar />
 
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <TopBar />

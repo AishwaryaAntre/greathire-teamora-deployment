@@ -34,7 +34,7 @@ npm run build
 src/
   components/
     ui/            # shadcn/ui primitives (Button, Input, Label, Checkbox, Badge, Card)
-    layout/         # Page chrome shared across pages (TopBar, SiteFooter, Sidebar,
+    layout/         # Page chrome shared across pages (TopBar, SiteFooter, MasterSidebar,
                      # DashboardTopBar, NavItem, IconButton)
     sections/       # Login page composition (HeroPanel, LoginPanel, LoginForm, ...)
     dashboard/      # Dashboard page composition (DashboardOverviewCard,
@@ -44,13 +44,24 @@ src/
     LoginPage.jsx    # "/" — sign-in screen
     DashboardPage.jsx  # "/dashboard" — admin dashboard
   data/
-    dashboardData.js  # Nav items, employees, activity feed, snapshot stats
+    navConfig.js     # Sidebar nav items, per role — single source of truth,
+                      # consumed by components/layout/MasterSidebar.jsx
+    dashboardData.js  # Dashboard employees, activity feed, snapshot stats
   lib/
     utils.js        # cn() classname helper
   App.jsx           # React Router route table
   index.css         # Tailwind layers + shadcn CSS variables
   main.jsx          # React entry point
 ```
+
+## Navigation
+
+This app has grown past the original two screens above — every authenticated
+page now shares one sidebar, `src/components/layout/MasterSidebar.jsx`, which
+renders role-appropriate nav items from `src/data/navConfig.js`. See the
+"Navigation / Sidebar" section in the [top-level README](../README.md) for
+details on how to add or change a nav item. There is no per-page sidebar
+component anymore.
 
 ## Notes
 

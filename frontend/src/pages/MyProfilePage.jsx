@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  LayoutGrid,
-  LayoutDashboard,
   CalendarCheck,
-  CalendarClock,
-  Users,
   FileBarChart2,
-  Settings,
-  HelpCircle,
   Search,
   Bell,
   MessageSquare,
@@ -27,80 +21,11 @@ import {
 } from "lucide-react";
 import PageLoading from "@/components/routing/PageLoading";
 import { employeeProfileApi } from "@/lib/api/employeeProfile";
-import { attendanceApi } from "@/lib/api/attendance";
-import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
-
-let navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
-  { label: "Attendance", icon: CalendarCheck, to: "/attendance" },
-  { label: "Schedules", icon: CalendarClock, to: "/leave" },
-  { label: "Employees", icon: Users, active: true, to: "/profile" },
-  { label: "Reports", icon: FileBarChart2, to: "/reports" },
-];
+import MasterSidebar from "@/components/layout/MasterSidebar";
 
 // Backend sends stat labels like "Percent"/"Clock" as plain strings — map to icons client-side.
 let ICON_BY_NAME = { Percent: Gauge, Clock: Clock3, CalendarCheck2: CalendarCheck, CalendarX2: FileBarChart2 };
-
-function Sidebar() {
-  let navigate = useNavigate();
-  let { user } = useAuth();
-
-  async function handleClockIn() {
-    if (!user?.employeeId) return;
-    await attendanceApi.checkIn(user.employeeId);
-  }
-
-  return (
-    <aside className="w-64 h-full bg-slate-900 text-slate-300 flex flex-col justify-between flex-shrink-0">
-      <div>
-        <div className="flex items-center gap-3 px-5 py-6">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <LayoutGrid className="w-5 h-5 text-white" />
-          </div>
-          <div className="leading-tight">
-            <p className="text-white font-semibold text-sm">GreatHire</p>
-            <p className="text-slate-400 dark:text-slate-500 text-xs">WorkTrack Pro</p>
-          </div>
-        </div>
-
-        <div className="px-4 mb-4">
-          <button onClick={handleClockIn} className="w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm font-medium py-2.5 rounded-lg">
-            Clock In
-          </button>
-        </div>
-
-        <nav className="px-3 flex flex-col gap-1">
-          {navItems.map(({ label, icon: Icon, active, to }) => (
-            <button
-              key={label}
-              onClick={() => navigate(to)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
-                active ? "bg-slate-800 text-white" : "text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white"
-              }`}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              {label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className="px-3 pb-6 flex flex-col gap-1">
-        <Link to="/employee-dashboard">
-        <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white transition-colors text-left">
-          <Settings className="w-4 h-4 flex-shrink-0" />
-          Settings
-        </button></Link>
-        <Link to="/support">
-        <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white transition-colors text-left">
-          <HelpCircle className="w-4 h-4 flex-shrink-0" />
-          Support
-        </button></Link>
-      </div>
-    </aside>
-  );
-}
 
 function TopBar() {
   let navigate = useNavigate();
@@ -403,7 +328,7 @@ export default function MyProfilePage() {
 
   return (
     <div className="w-screen h-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950">
-      <Sidebar />
+      <MasterSidebar />
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <TopBar />
         <main className="flex-1 overflow-y-auto px-6 py-6">

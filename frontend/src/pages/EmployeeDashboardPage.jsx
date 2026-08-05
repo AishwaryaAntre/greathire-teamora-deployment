@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import EmployeeSidebar from "@/components/layout/EmployeeSidebar";
+import MasterSidebar from "@/components/layout/MasterSidebar";
 import EmployeeTopBar from "@/components/layout/EmployeeTopBar";
 import GreetingBanner from "@/components/employee/GreetingBanner";
 import CurrentStatusCard from "@/components/employee/CurrentStatusCard";
@@ -131,7 +131,7 @@ export default function EmployeeDashboardPage() {
 
   return (
     <div className="flex h-screen bg-background">
-      <EmployeeSidebar />
+      <MasterSidebar />
 
       <div className="flex flex-1 flex-col overflow-y-auto">
         <EmployeeTopBar user={currentUser} />

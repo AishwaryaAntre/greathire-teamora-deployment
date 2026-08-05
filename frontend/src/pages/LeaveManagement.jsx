@@ -1,11 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Users,
-  CalendarCheck,
   CalendarClock,
-  Settings,
   HelpCircle,
   Search,
   Bell,
@@ -23,13 +19,7 @@ import { leaveApi } from "@/lib/api/leave";
 import { reportsApi } from "@/lib/api/reports";
 import { useAuth } from "@/lib/AuthContext";
 import ApplyLeaveModal from "@/components/employee/ApplyLeaveModal";
-
-const defaultNavItems = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
-  { label: "Directory", icon: Users, to: "/dashboard" },
-  { label: "Attendance", icon: CalendarCheck, to: "/attendance" },
-  { label: "Leave Management", icon: CalendarClock, active: true, to: "/leave" },
-];
+import MasterSidebar from "@/components/layout/MasterSidebar";
 
 // Backend sends stat cards keyed by `key` — map to an icon client-side.
 const STAT_ICON_BY_KEY = {
@@ -38,63 +28,9 @@ const STAT_ICON_BY_KEY = {
   onLeaveToday: Waypoints,
 };
 
-const defaultBrand = { name: "Teamora HR", tagline: "Leave Management System" };
-
 function formatDateShort(iso) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "2-digit" });
-}
-
-// Sidebar
-
-function Sidebar({ brand, navItems }) {
-  const navigate = useNavigate();
-  return (
-    <aside className="static inset-y-0 left-0 z-50 w-64 h-full bg-slate-900 text-slate-300 flex flex-col justify-between flex-shrink-0">
-      <div>
-        <div className="flex items-center gap-3 px-5 py-6">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <LayoutDashboard className="w-5 h-5 text-white" />
-          </div>
-          <div className="leading-tight">
-            <p className="text-white font-semibold text-sm">{brand.name}</p>
-            <p className="text-slate-400 dark:text-slate-500 text-xs">{brand.tagline}</p>
-          </div>
-        </div>
-
-        <nav className="mt-2 px-3 flex flex-col gap-1">
-          {navItems.map(({ label, icon: Icon, active, to }) => (
-            <button
-              key={label}
-              onClick={() => navigate(to)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left
-                ${active ? "bg-slate-800 text-white border-l-2 border-blue-500" : "text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white"}`}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className="px-3 pb-6 border-t border-slate-800 pt-3 flex flex-col gap-1">
-        <button
-          onClick={() => navigate("/profile")}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white transition-colors text-left"
-        >
-          <Settings className="w-4 h-4 flex-shrink-0" />
-          Settings
-        </button>
-        <button
-          onClick={() => navigate("/support")}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white transition-colors text-left"
-        >
-          <HelpCircle className="w-4 h-4 flex-shrink-0" />
-          Support
-        </button>
-      </div>
-    </aside>
-  );
 }
 
 function TopBar({ user, search, onSearchChange }) {
@@ -367,7 +303,7 @@ function initialsFor(name = "") {
   return name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
 }
 
-export default function LeaveManagement({ brand = defaultBrand, navItems = defaultNavItems }) {
+export default function LeaveManagement() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("This Month");
@@ -444,7 +380,7 @@ export default function LeaveManagement({ brand = defaultBrand, navItems = defau
 
   return (
     <div className="w-screen h-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950">
-      <Sidebar brand={brand} navItems={navItems} />
+      <MasterSidebar />
 
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <TopBar user={topBarUser} search={search} onSearchChange={setSearch} />

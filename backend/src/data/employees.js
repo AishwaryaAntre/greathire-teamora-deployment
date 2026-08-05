@@ -73,4 +73,14 @@ export async function createEmployee({ name, email, role, department, phone }) {
   return employee;
 }
 
+/** Admin-only: permanently removes an employee record from the cache + MongoDB. */
+export async function deleteEmployee(id) {
+  let index = employees.findIndex((e) => e.id === id);
+  if (index === -1) return false;
+  employees.splice(index, 1);
+  await EmployeeModel.deleteOne({ id });
+  recomputeDepartments();
+  return true;
+}
+
 export { CURRENT_EMPLOYEE_ID };

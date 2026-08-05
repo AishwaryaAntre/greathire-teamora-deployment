@@ -1,5 +1,7 @@
 import { EmployeeProfile } from "../models/EmployeeProfile.js";
 import { Employee } from "../models/Employee.js";
+import { Attendance } from "../models/Attendance.js";
+import { LeaveRequest } from "../models/LeaveRequest.js";
 import { CURRENT_EMPLOYEE_ID, employees } from "../data/employees.js";
 import { UsersStore } from "../data/usersStore.js";
 import { hashPassword } from "../utils/password.js";
@@ -41,6 +43,28 @@ export let employeeProfileController = {
     let user = await UsersStore.create({ name, email, passwordHash, employeeId: employee.id, role });
 
     res.status(201).json({ success: true, data: { employee, user: { id: user.id, email: user.email, role: user.role } } });
+  },
+
+  // DELETE /api/employees/:id — admin-only. Removes the employee record, their
+  // login account, and their attendance/leave history (both of those join
+  // back to the employee by id and would otherwise show blank rows, or in
+  // Attendance's case, throw — see Attendance.js's withEmployee()).
+  deleteEmployee: async (req, res) => {
+    let { id } = req.params;
+    if (id === req.user?.employeeId) {
+      throw new ApiError(400, "You can't delete your own account.");
+    }
+    let employee = Employee.getById(id);
+    if (!employee) throw new ApiError(404, "Unknown employeeId");
+
+    await Promise.all([
+      Attendance.deleteAllForEmployee(id),
+      LeaveRequest.deleteAllForEmployee(id),
+      UsersStore.deleteByEmployeeId(id),
+    ]);
+    await Employee.remove(id);
+
+    res.json({ success: true, data: { id } });
   },
 
   getProfile: (req, res) => {

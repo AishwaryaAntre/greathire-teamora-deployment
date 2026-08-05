@@ -3,6 +3,7 @@ import { api } from "../apiClient.js";
 export const employeeProfileApi = {
   getAll: () => api.get("/employees"),
   create: (fields) => api.post("/employees", fields),
+  remove: (employeeId) => api.delete(`/employees/${employeeId}`),
   updatePersonalInfoFor: (employeeId, updates) => api.put(`/employees/${employeeId}/profile/personal-info`, updates),
   getBundle: (employeeId) => api.get(employeeId ? `/employees/${employeeId}/profile/bundle` : "/employees/profile/bundle"),
   getProfile: () => api.get("/employees/profile"),

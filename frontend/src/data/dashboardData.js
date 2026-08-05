@@ -1,21 +1,3 @@
-import {
-  LayoutGrid,
-  Users,
-  Fingerprint,
-  CalendarCheck,
-  BarChart3,
-  Bell,
-} from "lucide-react";
-
-export const NAV_ITEMS = [
-  { label: "Dashboard", icon: LayoutGrid, href: "/dashboard", active: true },
-  { label: "Employees", icon: Users, href: "/employees" },
-  { label: "Attendance", icon: Fingerprint, href: "/attendance" },
-  { label: "Leave Management", icon: CalendarCheck, href: "/leave" },
-  { label: "Reports & Analytics", icon: BarChart3, href: "/reports" },
-  { label: "Notifications", icon: Bell, href: "/notifications" },
-];
-
 export const SNAPSHOT_STATS = [
   { label: "Total Engineers", value: 120, percent: 100, color: "bg-slate-300" },
   { label: "Working", value: 105, percent: 88, color: "bg-primary" },

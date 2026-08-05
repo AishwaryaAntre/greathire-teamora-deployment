@@ -1,4 +1,10 @@
-import { attendanceRecords, findTodayRecord, persistNewAttendance, persistAttendanceUpdate } from "../data/attendanceStore.js";
+import {
+  attendanceRecords,
+  findTodayRecord,
+  persistNewAttendance,
+  persistAttendanceUpdate,
+  deleteAttendanceByEmployeeId,
+} from "../data/attendanceStore.js";
 import { Employee } from "./Employee.js";
 import { todayISO } from "../utils/dates.js";
 import { generateId } from "../utils/id.js";
@@ -209,5 +215,12 @@ export let Attendance = {
     }
     await persistAttendanceUpdate(record);
     return withEmployee(record);
+  },
+
+  /** Admin-only cleanup for a deleted employee: removes their attendance
+   * history so no record is left pointing at an id Employee.getById can no
+   * longer resolve (withEmployee() above doesn't guard against that). */
+  async deleteAllForEmployee(employeeId) {
+    return deleteAttendanceByEmployeeId(employeeId);
   },
 };
