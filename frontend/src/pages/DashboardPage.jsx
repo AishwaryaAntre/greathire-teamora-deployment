@@ -9,11 +9,13 @@ import LiveWorkforceTable from "@/components/dashboard/LiveWorkforceTable";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import { dashboardApi } from "@/lib/api/dashboard";
 import { reportsApi } from "@/lib/api/reports";
+import { useAuth } from "@/lib/AuthContext";
 import PageLoading from "@/components/routing/PageLoading";
 import PageError from "@/components/routing/PageError";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
 
@@ -52,6 +54,7 @@ export default function DashboardPage() {
             <div className="xl:col-span-2">
               <DashboardOverviewCard
                 {...data.overview}
+                name={user?.name || data.overview?.adminName}
                 onViewAttendance={() => navigate("/attendance")}
                 onGenerateReport={handleGenerateReport}
               />

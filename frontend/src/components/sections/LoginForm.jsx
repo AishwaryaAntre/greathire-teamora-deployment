@@ -135,19 +135,6 @@ export default function LoginForm() {
         {submitting ? "Signing In..." : "Sign In"}
         <ArrowRight className="h-4 w-4" />
       </Button>
-
-      <div className="mt-6 flex items-center gap-4">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-xs font-semibold tracking-wide text-muted-foreground">
-          OR CONTINUE WITH
-        </span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
-
-      <div className="mt-6 grid grid-cols-2 gap-3">
-        <SocialLoginButton icon={<GoogleIcon />} label="Google" onClick={() => (window.location.href = `${API_BASE_URL}/auth/oauth/google`)} />
-        <SocialLoginButton icon={<MicrosoftIcon />} label="Microsoft" onClick={() => (window.location.href = `${API_BASE_URL}/auth/oauth/microsoft`)} />
-      </div>
     </form>
   );
 }
