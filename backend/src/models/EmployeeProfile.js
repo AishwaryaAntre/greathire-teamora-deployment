@@ -33,7 +33,11 @@ function monthBounds(offsetMonths = 0) {
   let now = new Date();
   let start = new Date(now.getFullYear(), now.getMonth() + offsetMonths, 1);
   let end = new Date(now.getFullYear(), now.getMonth() + offsetMonths + 1, 0);
-  return { startISO: toISODate(start), endISO: toISODate(offsetMonths === 0 ? now : end) };
+
+  return {
+    startISO: toISODate(start),
+    endISO: toISODate(end),
+  };
 }
 
 function tenureLabel(joiningDateISO) {
@@ -111,7 +115,7 @@ export let EmployeeProfile = {
     let onTimeRatio = presentDays ? onTimeDays / presentDays : 0;
     let hoursRatio = Math.min(1, monthlyHours / 160);
     let performanceScore = Math.round(attendancePct * 0.5 + onTimeRatio * 100 * 0.3 + hoursRatio * 100 * 0.2);
-
+   
     return [
       {
         label: "Attendance %",
