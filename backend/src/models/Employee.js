@@ -1,4 +1,4 @@
-import { employees, departments, persistEmployeeUpdate, createEmployee, deleteEmployee } from "../data/employees.js";
+import { employees, departments, persistEmployeeUpdate, createEmployee, deleteEmployee, adjustLeaveAccrual } from "../data/employees.js";
 
 const SELF_EDITABLE_FIELDS = ["name", "email", "phone", "avatar"];
 const ADMIN_EDITABLE_FIELDS = ["name", "email", "phone", "avatar", "role", "department", "employeeCode"];
@@ -38,5 +38,11 @@ export let Employee = {
    * employeeProfileController.deleteEmployee for the full cascade. */
   async remove(id) {
     return deleteEmployee(id);
+  },
+
+  /** Adjusts the running leave-accrual total (+/-) used to nudge leave balance
+   * from attendance events. See data/employees.js#adjustLeaveAccrual. */
+  async adjustLeaveAccrual(id, delta) {
+    return adjustLeaveAccrual(id, delta);
   },
 };

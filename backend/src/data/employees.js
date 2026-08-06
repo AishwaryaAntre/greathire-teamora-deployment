@@ -44,6 +44,20 @@ export async function persistEmployeeUpdate(id, updates = {}, allowed = ["name",
   return employee;
 }
 
+/** Adjusts an employee's running leave-accrual total by `delta` (positive or
+ * negative) and persists it. Used by attendance events (check-in, admin
+ * status corrections to/from "Absent") to nudge leave balance ±0.5. Mutates
+ * the in-memory cache and writes through to MongoDB, same pattern as
+ * persistEmployeeUpdate(). Returns the updated employee, or null if not found. */
+export async function adjustLeaveAccrual(id, delta) {
+  let employee = employees.find((e) => e.id === id);
+  if (!employee) return null;
+
+  employee.leaveAccrual = Math.round(((employee.leaveAccrual || 0) + delta) * 100) / 100;
+  await EmployeeModel.updateOne({ id }, { $set: { leaveAccrual: employee.leaveAccrual } });
+  return employee;
+}
+
 /** Admin-only: creates a brand-new employee record. */
 export async function createEmployee({ name, email, role, department, phone }) {
   let employee = {

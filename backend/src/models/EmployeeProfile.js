@@ -93,12 +93,24 @@ export let EmployeeProfile = {
       (r) => r.employeeId === employeeId && r.status === "Approved" && r.startDate.startsWith(String(new Date().getFullYear()))
     ).reduce((sum, r) => sum + r.durationDays, 0);
     let totalAllocated = Object.values(employee.leaveAllocation).reduce((a, b) => a + b, 0);
-    let leaveBalance = Math.max(0, totalAllocated - leaveUsed);
+    // leaveAccrual is a small running ± adjustment driven by attendance events
+    // (check-ins, admin corrections to/from "Absent") — see Attendance.checkIn()
+    // and Attendance.updateStatus().
+    let leaveBalance = Math.max(0, totalAllocated - leaveUsed + (employee.leaveAccrual || 0));
     let upcomingLeave = LeaveRequest.getAll().filter(
       (r) => r.employeeId === employeeId && r.status === "Approved" && r.startDate > todayISO()
     ).length;
 
     let avgLogin = averageCheckInClock(thisMonthRows);
+
+    // Perf. Score used to be a static seeded field, sitting oddly next to the
+    // other live, month-scoped metrics above. Now computed from this month's
+    // attendance: mostly attendance rate, with punctuality and hours-vs-target
+    // as secondary factors.
+    let onTimeDays = workDays.filter((r) => r.status === "Present" && !r.late).length;
+    let onTimeRatio = presentDays ? onTimeDays / presentDays : 0;
+    let hoursRatio = Math.min(1, monthlyHours / 160);
+    let performanceScore = Math.round(attendancePct * 0.5 + onTimeRatio * 100 * 0.3 + hoursRatio * 100 * 0.2);
 
     return [
       {
@@ -130,6 +142,13 @@ export let EmployeeProfile = {
         noteTone: "neutral",
       },
       {
+        label: "Leaves Taken",
+        value: String(leaveUsed),
+        icon: "CalendarMinus2",
+        note: `Out of ${totalAllocated} allocated`,
+        noteTone: "neutral",
+      },
+      {
         label: "Avg. Login",
         value: avgLogin?.time || "--:--",
         valueSuffix: avgLogin?.period || "",
@@ -139,10 +158,10 @@ export let EmployeeProfile = {
       },
       {
         label: "Perf. Score",
-        value: `${employee.performanceScore}%`,
+        value: `${performanceScore}%`,
         icon: "Award",
-        note: employee.performanceScore >= 90 ? "Top 10% in dept" : "On track",
-        noteTone: employee.performanceScore >= 90 ? "up" : "neutral",
+        note: performanceScore >= 90 ? "Top 10% in dept" : "On track",
+        noteTone: performanceScore >= 90 ? "up" : "neutral",
       },
     ];
   },

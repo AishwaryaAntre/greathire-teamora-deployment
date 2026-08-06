@@ -166,6 +166,9 @@ export let Attendance = {
     };
     await persistNewAttendance(record);
     logActivity("check-in", employeeId, `${employee.name} checked in`);
+    // First check-in of the day nudges leave accrual up slightly — an
+    // attendance-driven reward, not part of the leave allocation itself.
+    await Employee.adjustLeaveAccrual(employeeId, 0.5);
     return withEmployee(record);
   },
 
@@ -205,6 +208,8 @@ export let Attendance = {
   async updateStatus(recordId, { status, liveStatus }) {
     let record = attendanceRecords.find((r) => r.id === recordId);
     if (!record) return null;
+
+    let previousStatus = record.status;
     if (status) record.status = status;
     if (liveStatus !== undefined && liveStatus !== record.liveStatus) {
       record.liveStatus = liveStatus;
@@ -214,6 +219,17 @@ export let Attendance = {
       }
     }
     await persistAttendanceUpdate(record);
+
+    // Admin correction into/out of "Absent" nudges leave accrual down/up —
+    // symmetric with the +0.5 check-in nudge above.
+    if (status && status !== previousStatus) {
+      if (status === "Absent" && previousStatus !== "Absent") {
+        await Employee.adjustLeaveAccrual(record.employeeId, -0.5);
+      } else if (previousStatus === "Absent" && status !== "Absent") {
+        await Employee.adjustLeaveAccrual(record.employeeId, 0.5);
+      }
+    }
+
     return withEmployee(record);
   },
 

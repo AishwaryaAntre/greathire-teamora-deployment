@@ -12,6 +12,7 @@ import {
   Clock,
   CalendarCheck2,
   CalendarX2,
+  CalendarMinus2,
   LogIn,
   Award,
   Briefcase,
@@ -23,6 +24,7 @@ import {
   Code2,
 } from "lucide-react";
 import { employeeProfileApi } from "@/lib/api/employeeProfile";
+import { employeeDashboardApi } from "@/lib/api/employeeDashboard";
 import { useAuth } from "@/lib/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,9 +32,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ConfirmDeleteEmployeeModal from "@/components/employee/ConfirmDeleteEmployeeModal";
 import PageLoading from "@/components/routing/PageLoading";
+import AttendanceCalendar from "@/components/employee/AttendanceCalendar";
 
 // Backend sends icon names as plain strings — resolve to a component client-side.
-const ICON_BY_NAME = { Percent, Clock, CalendarCheck2, CalendarX2, LogIn, Award };
+const ICON_BY_NAME = { Percent, Clock, CalendarCheck2, CalendarX2, CalendarMinus2, LogIn, Award };
 const DOC_ICON_BY_TYPE = { pdf: FileText, image: FileImage };
 
 const intensityClasses = ["bg-slate-100 dark:bg-slate-800", "bg-blue-200", "bg-blue-400", "bg-blue-600", "bg-blue-800"];
@@ -234,7 +237,7 @@ function ProfileHeaderCard({ employee, onViewAttendance, canEdit, onEdit, canDel
 
 function StatCards({ statCards }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
       {statCards.map(({ label, value, valueSuffix, icon, note, noteTone }) => {
         let Icon = ICON_BY_NAME[icon] || Percent;
         return (
@@ -366,6 +369,8 @@ export default function EmployeeProfilePage() {
   const [bundle, setBundle] = useState(null);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [calendarCursor, setCalendarCursor] = useState(null); // { year, month } | null = current month
+  const [attendanceMonth, setAttendanceMonth] = useState(null);
   const isAdmin = user?.role === "admin";
 
   function loadBundle() {
@@ -376,6 +381,33 @@ export default function EmployeeProfilePage() {
     loadBundle();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    employeeDashboardApi
+      .getAttendanceMonthFor(id, calendarCursor ? { year: calendarCursor.year, month: calendarCursor.month } : undefined)
+      .then((month) => !cancelled && setAttendanceMonth(month))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [id, calendarCursor]);
+
+  function shiftCalendarMonth(delta) {
+    const now = new Date();
+    const base = calendarCursor || { year: now.getFullYear(), month: now.getMonth() };
+    let month = base.month + delta;
+    let year = base.year;
+    if (month < 0) {
+      month = 11;
+      year -= 1;
+    } else if (month > 11) {
+      month = 0;
+      year += 1;
+    }
+    setCalendarCursor({ year, month });
+  }
 
   if (!bundle) {
     return <PageLoading label="Loading employee profile…" />;
@@ -400,6 +432,15 @@ export default function EmployeeProfilePage() {
         <div className="flex flex-col lg:flex-row gap-4 mb-4">
           <WorkSummaryCard workSummary={workSummary} />
           <ActivityMapCard activityMap={activityMap} />
+        </div>
+        <div className="mb-4">
+          {attendanceMonth ? (
+            <AttendanceCalendar month={attendanceMonth} onPrevMonth={() => shiftCalendarMonth(-1)} onNextMonth={() => shiftCalendarMonth(1)} />
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 h-64 flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">
+              Loading attendance calendar…
+            </div>
+          )}
         </div>
         <div className="flex flex-col md:flex-row gap-4">
           <PersonalInfoCard personalInfo={personalInfo} />

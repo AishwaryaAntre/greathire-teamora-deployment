@@ -8,14 +8,16 @@ const toneClasses = {
   danger: "bg-rose-50 text-rose-600",
 };
 
-export default function QuickActionButton({ label, icon, tone = "info", onClick }) {
+export default function QuickActionButton({ label, icon, tone = "info", onClick, disabled = false, disabledReason }) {
   const Icon = icons[icon] ?? icons.Circle;
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"
+      disabled={disabled}
+      title={disabled ? disabledReason : undefined}
+      className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-card"
     >
       <span className={cn("flex h-9 w-9 items-center justify-center rounded-full", toneClasses[tone])}>
         <Icon className="h-4 w-4" />

@@ -70,6 +70,7 @@ function buildEmployees() {
     performanceScore: seededScore(e.id + "perf", 82, 98),
     taskLoadPercent: seededScore(e.id + "load", 35, 85),
     leaveAllocation: { casual: 6, paid: 12, sick: 4 },
+    leaveAccrual: 0,
     documents: seedDocuments(e.name),
   }));
 }

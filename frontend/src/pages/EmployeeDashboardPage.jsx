@@ -148,7 +148,7 @@ export default function EmployeeDashboardPage() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]">
               <CurrentStatusCard status={currentStatus} />
-              <QuickActionsGrid actions={quickActions} onAction={handleQuickAction} />
+              <QuickActionsGrid actions={quickActions} onAction={handleQuickAction} currentState={currentStatus?.state} />
             </div>
 
             {actionError && (

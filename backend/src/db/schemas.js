@@ -26,6 +26,10 @@ let EmployeeSchema = new Schema(
       paid: Number,
       sick: Number,
     },
+    // Running total of ± adjustments to leave balance driven by attendance events
+    // (+0.5 per check-in, -0.5 per correction to "Absent", +0.5 reversing it).
+    // Folded into EmployeeProfile.getStatCards()'s Leave Balance figure.
+    leaveAccrual: { type: Number, default: 0 },
     documents: [{ name: String, note: String, type: { type: String } }],
   },
   base

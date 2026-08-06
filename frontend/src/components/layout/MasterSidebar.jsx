@@ -1,10 +1,16 @@
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Settings, HelpCircle, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { getNavItemsForRole } from "@/data/navConfig";
 import { attendanceApi } from "@/lib/api/attendance";
+import { employeeDashboardApi } from "@/lib/api/employeeDashboard";
 import { Button } from "@/components/ui/button";
 import NavItem from "./NavItem";
+
+// Check-In is disabled while already Working/On Break — mirrors the same
+// status-driven gating added to EmployeeDashboardPage.jsx's QuickActions.
+const CHECKED_IN_STATES = ["Working", "On Break"];
 
 // Single, role-aware sidebar replacing Sidebar.jsx (admin) and
 // EmployeeSidebar.jsx (employee), plus the 5 hardcoded local copies.
@@ -21,11 +27,30 @@ export default function MasterSidebar() {
   const isAdmin = user?.role === "admin"; // confirmed field/value in Session 1 (ProtectedRoute.jsx, backend authController.js)
   const items = getNavItemsForRole(user?.role);
 
+  const [currentStatus, setCurrentStatus] = useState(null);
+
+  function refreshStatus() {
+    if (isAdmin) return;
+    employeeDashboardApi.getStatus().then((data) => setCurrentStatus(data?.state)).catch(() => {});
+  }
+
+  // Sidebar is rendered on every page, so this is effectively "on route
+  // change" — cheap enough, and keeps the button in sync with check-ins/
+  // check-outs performed elsewhere (e.g. the dashboard's QuickActions).
+  useEffect(() => {
+    refreshStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, isAdmin]);
+
+  const isCheckedIn = CHECKED_IN_STATES.includes(currentStatus);
+
   // Ported from EmployeeSidebar.jsx's handleClockIn — unchanged behavior.
   async function handleClockIn() {
+    if (isCheckedIn) return;
     if (user?.employeeId) {
       await attendanceApi.checkIn(user.employeeId).catch(() => {});
     }
+    refreshStatus();
     navigate("/attendance");
   }
 
@@ -70,10 +95,12 @@ export default function MasterSidebar() {
                 EmployeeSidebar.jsx rather than looking inset. */}
             <div className="-ml-4">
               <Button
-                className="w-full bg-blue-600 hover:bg-blue-600/90"
+                className="w-full bg-blue-600 hover:bg-blue-600/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleClockIn}
+                disabled={isCheckedIn}
+                title={isCheckedIn ? `Already ${currentStatus}` : undefined}
               >
-                Clock In Now
+                {isCheckedIn ? currentStatus : "Clock In Now"}
               </Button>
             </div>
             <NavItem icon={HelpCircle} label="Help Center" href="/support" active={pathname === "/support"} />
