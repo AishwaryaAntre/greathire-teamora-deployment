@@ -17,8 +17,8 @@ async function start() {
     await loadAllData();
 
     let app = createApp();
-    app.listen(PORT, () => {
-      logger.info({ port: PORT }, `GreatHire Teamora API listening on http://localhost:${PORT}`);
+    app.listen(PORT, "0.0.0.0", () => {
+      logger.info({ port: PORT }, `GreatHire Teamora API listening on 0.0.0.0:${PORT}`);
     });
   } catch (err) {
     logger.error({ err }, "[boot] failed to start server");

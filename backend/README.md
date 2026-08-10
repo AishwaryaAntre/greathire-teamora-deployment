@@ -1,309 +1,1346 @@
 # GreatHire Teamora — Backend API
 
-Node.js + Express API built specifically to power the `greathire-teamora` frontend:
-**Login/Auth**, **Dashboard**, **Employee Dashboard**, **Employee Profile**, **Attendance
-Management**, **Leave Management**, **Reports & Analytics**, **Notifications**, and
-**Messages**.
+Node.js + Express + MongoDB backend API for the **GreatHire Teamora** Human Resource Management System.
 
-No database is required — data lives in memory (seeded with 13 employees, 60 days of
-generated attendance history, demo notifications, and seed conversations) so you can
-`npm install && npm run dev` and immediately get real numbers behind every stat card,
-table, and chart. The data layer (`src/models/`) is isolated from the in-memory store
-(`src/data/`), so swapping in Postgres/Mongo later only means rewriting the files in
-`src/data/`.
+The backend provides APIs for:
 
-## Getting started
+* Authentication and authorization
+* Employee management
+* Employee dashboard
+* Employee profiles
+* Attendance management
+* Leave management
+* Reports and analytics
+* Notifications
+* Messages
+* MongoDB data persistence
+* JWT-based authentication
+* Optional Google and Microsoft OAuth
+* Swagger/OpenAPI API documentation
+
+The backend uses **MongoDB with Mongoose** for persistent data storage. The application can connect to a local MongoDB instance during development or **MongoDB Atlas** for production deployment.
+
+---
+
+# 1. Technology Stack
+
+| Technology         | Purpose                   |
+| ------------------ | ------------------------- |
+| Node.js            | JavaScript runtime        |
+| Express.js         | REST API framework        |
+| MongoDB            | Database                  |
+| MongoDB Atlas      | Cloud/production database |
+| Mongoose           | MongoDB ODM               |
+| JWT                | Authentication            |
+| bcryptjs           | Password hashing          |
+| Passport.js        | OAuth authentication      |
+| Zod                | Request validation        |
+| Helmet             | Security headers          |
+| CORS               | Cross-origin requests     |
+| Express Rate Limit | API rate limiting         |
+| Pino               | Logging                   |
+| Swagger/OpenAPI    | API documentation         |
+
+---
+
+# 2. System Architecture
+
+The production architecture is:
+
+```text
+                    INTERNET
+                       |
+                       v
+             +-------------------+
+             |   React Frontend  |
+             |  Vercel / Netlify |
+             +---------+---------+
+                       |
+                       | HTTPS REST API
+                       v
+             +-------------------+
+             | Node.js + Express |
+             | Backend API       |
+             | Render / Railway  |
+             +---------+---------+
+                       |
+                       | MongoDB URI
+                       v
+             +-------------------+
+             |   MongoDB Atlas   |
+             |   Cloud Database  |
+             +-------------------+
+```
+
+All users of the application communicate with the same backend API and therefore use the same MongoDB Atlas database.
+
+---
+
+# 3. Project Structure
+
+```text
+backend/
+│
+├── server.js
+├── package.json
+├── package-lock.json
+├── .env
+├── .env.example
+├── .gitignore
+├── openapi.yaml
+│
+└── src/
+    │
+    ├── app.js
+    │
+    ├── config/
+    │   ├── db.js
+    │   ├── logger.js
+    │   ├── passport.js
+    │   ├── rateLimiters.js
+    │   └── validateEnv.js
+    │
+    ├── controllers/
+    │   ├── authController.js
+    │   ├── attendanceController.js
+    │   ├── dashboardController.js
+    │   ├── employeeDashboardController.js
+    │   ├── employeeProfileController.js
+    │   ├── leaveController.js
+    │   ├── messageController.js
+    │   ├── notificationController.js
+    │   └── reportController.js
+    │
+    ├── data/
+    │   └── Supporting application data
+    │
+    ├── db/
+    │   ├── loadAll.js
+    │   ├── schemas.js
+    │   └── seed.js
+    │
+    ├── middleware/
+    │   ├── asyncHandler.js
+    │   ├── auth.js
+    │   ├── errorHandler.js
+    │   └── validate.js
+    │
+    ├── models/
+    │   ├── Attendance.js
+    │   ├── Dashboard.js
+    │   ├── Employee.js
+    │   ├── EmployeeDashboard.js
+    │   ├── EmployeeProfile.js
+    │   ├── LeaveRequest.js
+    │   ├── Message.js
+    │   ├── Notification.js
+    │   └── Report.js
+    │
+    ├── routes/
+    │   ├── authRoutes.js
+    │   ├── attendanceRoutes.js
+    │   ├── dashboardRoutes.js
+    │   ├── employeeDashboardRoutes.js
+    │   ├── employeeProfileRoutes.js
+    │   ├── leaveRoutes.js
+    │   ├── messageRoutes.js
+    │   ├── notificationRoutes.js
+    │   └── reportRoutes.js
+    │
+    └── utils/
+        ├── dates.js
+        ├── id.js
+        ├── jwt.js
+        └── paginate.js
+```
+
+---
+
+# 4. Requirements
+
+Before running the backend, install:
+
+* Node.js 18+
+* npm
+* MongoDB Community Server for local development, OR
+* MongoDB Atlas for cloud deployment
+
+Check Node.js:
+
+```bash
+node --version
+```
+
+Check npm:
+
+```bash
+npm --version
+```
+
+---
+
+# 5. Installation
+
+Clone the repository:
+
+```bash
+git clone <your-github-repository-url>
+```
+
+Go to the backend directory:
+
+```bash
+cd backend
+```
+
+Install dependencies:
 
 ```bash
 npm install
-cp .env.example .env
-npm run dev        # auto-restarts on file changes (Node's built-in --watch)
-# or: npm start
 ```
 
-Server runs at `http://localhost:5000` by default. Set `CLIENT_ORIGIN` in `.env` to your
-Vite dev server URL (e.g. `http://localhost:5173`) to restrict CORS in production; it
-defaults to `*` for local development.
+---
 
-### Signing in
+# 6. Environment Variables
 
-Every seeded employee (see `src/data/employees.js`) has a matching login in
-`src/data/usersStore.js`, all sharing one demo password:
+Create a `.env` file inside the backend directory.
 
-```
-email:    swaraj.kadam@greathire.com   (or any other seeded employee's email)
-password: password123
-```
-
-Change `SEED_USER_PASSWORD` in `.env` to reseed with a different shared password.
-"Continue with Google/Microsoft" stays disabled (returns `501`) until you set the
-corresponding `GOOGLE_CLIENT_ID`/`MICROSOFT_CLIENT_ID` env vars — everything else works
-without them.
-
-## Project structure
-
-```
-server.js                        # entrypoint
-src/
-  app.js                         # express app, middleware, route mounting
-  config/
-    passport.js                  # Google/Microsoft OAuth strategies (opt-in via env vars)
-  data/                          # in-memory "database" + seed generators
-    employees.js
-    usersStore.js                # auth users (linked 1:1 to employees) + reset tokens
-    attendanceStore.js
-    leaveStore.js
-    reportsStore.js
-    notificationsStore.js
-    messagesStore.js             # channels, DMs, seed messages
-    activityStore.js
-    announcementsStore.js
-    holidaysStore.js
-  models/                        # query/aggregation logic over the data layer
-    Employee.js
-    EmployeeProfile.js
-    EmployeeDashboard.js
-    Attendance.js
-    LeaveRequest.js
-    Report.js
-    Notification.js
-    Message.js
-    Dashboard.js
-  controllers/                   # request/response shaping per page
-    authController.js
-    attendanceController.js
-    leaveController.js
-    reportController.js
-    dashboardController.js
-    employeeDashboardController.js
-    employeeProfileController.js
-    notificationController.js
-    messageController.js
-  routes/
-    authRoutes.js
-    attendanceRoutes.js
-    leaveRoutes.js
-    reportRoutes.js
-    dashboardRoutes.js
-    employeeDashboardRoutes.js
-    employeeProfileRoutes.js
-    notificationRoutes.js
-    messageRoutes.js
-  middleware/
-    asyncHandler.js              # wraps async routes so errors reach errorHandler
-    errorHandler.js              # ApiError class + centralized error responses
-    auth.js                      # attachUser (optional), requireAuth, requireRole
-  utils/
-    dates.js
-    id.js
-    password.js                  # bcrypt hash/compare
-    jwt.js                       # sign/verify access tokens
+```text
+backend/
+├── .env
+├── .env.example
+└── ...
 ```
 
-## Auth model
+Example:
 
-Existing feature routes (attendance, leave, reports, dashboards, notifications, messages)
-are **not** locked behind auth — they keep working exactly as before, with or without a
-token, matching this backend's "zero-friction local dev" philosophy. Sending a valid
-`Authorization: Bearer <token>` header simply personalizes responses to the logged-in
-employee (via `req.user`) instead of the seeded `CURRENT_EMPLOYEE_ID`.
+```env
+PORT=5000
 
-Only `GET /api/auth/me` requires a token. If you later want to lock down write routes
-(e.g. approve leave, delete an employee) behind roles, `requireAuth`/`requireRole` in
-`src/middleware/auth.js` are ready to drop onto any route.
+CLIENT_ORIGIN=http://localhost:5173
 
-## API reference
+MONGODB_URI=mongodb://127.0.0.1:27017/greathire
+MONGODB_DB_NAME=greathire
 
-All responses are JSON of the shape `{ success: boolean, data: ... }` (errors are
-`{ success: false, error: "message" }`). Query params are optional unless noted.
+JWT_SECRET=change-this-to-a-long-random-secret
+JWT_EXPIRES_IN=1d
+JWT_REMEMBER_ME_EXPIRES_IN=30d
 
-### Auth — `LoginPage.jsx`
+JWT_REFRESH_EXPIRES_IN=7d
+JWT_REFRESH_REMEMBER_ME_EXPIRES_IN=30d
 
-| Method | Route | Purpose |
-|---|---|---|
-| POST | `/api/auth/register` `{ name, email, password }` | Create a new account |
-| POST | `/api/auth/login` `{ email, password, rememberMe? }` | Returns `{ user, token }` |
-| POST | `/api/auth/logout` | Client-side no-op (stateless JWT) |
-| GET | `/api/auth/me` *(requires token)* | Current user profile |
-| POST | `/api/auth/forgot-password` `{ email }` | Logs a reset token to the server console (no email transport wired up) |
-| POST | `/api/auth/reset-password` `{ token, password }` | Consumes the reset token |
-| GET | `/api/auth/oauth/google` → `/callback` | Google sign-in (only active if `GOOGLE_CLIENT_ID`/`SECRET` are set) |
-| GET | `/api/auth/oauth/microsoft` → `/callback` | Microsoft sign-in (only active if `MICROSOFT_CLIENT_ID`/`SECRET` are set) |
+SEED_USER_PASSWORD=change-this-password
 
-### Dashboard — `DashboardPage.jsx`
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/oauth/google/callback
 
-| Method | Route | Purpose | Maps to |
-|---|---|---|---|
-| GET | `/api/dashboard/overview` | Greeting + Total Employees / Live Online / Attendance % | `DashboardOverviewCard` |
-| GET | `/api/dashboard/snapshot` | Total / Working / Break / Leave, each with a percent bar | `WorkforceSnapshot` |
-| GET | `/api/dashboard/metrics` | Total Employees / Currently Working / On Break / Avg Working Hrs (+ trend) | `MetricRow` |
-| GET | `/api/dashboard/live-workforce?limit=` | Employees currently working, on break, or on leave today | `LiveWorkforceTable` |
-| GET | `/api/dashboard/activity?limit=` | Recent check-in/check-out/break events, newest first | `RecentActivity` |
-| GET | `/api/dashboard` | All 5 shapes above bundled into one response | initial page load |
-
-Check-in, check-out, and break corrections made via the Attendance endpoints automatically
-append to the activity feed backing `/api/dashboard/activity`.
-
-### Employee Dashboard — `EmployeeDashboardPage.jsx`
-
-Self-service view for the logged-in employee. Defaults to `CURRENT_EMPLOYEE_ID`
-("Swaraj Kadam", `emp_013`) unless called with a `/:id/...` path, or with an
-`Authorization` header for a user linked to a different employee.
-
-| Method | Route | Purpose | Maps to |
-|---|---|---|---|
-| GET | `/api/employee/dashboard` | All rows below, bundled into one response | initial page load |
-| GET | `/api/employee/current-user` | Name / role / today's date / last login | `EmployeeTopBar`, `GreetingBanner` |
-| GET | `/api/employee/status` | Working / On Break / Checked Out + session length | `CurrentStatusCard` |
-| GET | `/api/employee/quick-actions` | Check In / Start Break / Resume / Check Out buttons | `QuickActionsGrid` (calls Attendance endpoints) |
-| GET | `/api/employee/hours-stats` | Today / Weekly / Monthly hours + avg login | `StatsRow` |
-| GET | `/api/employee/attendance-legend` | Present/Absent/Leave/Late legend | `AttendanceLegend` |
-| GET | `/api/employee/attendance-month?year=&month=` | Monday-start calendar grid for one month | `AttendanceCalendar` |
-| GET | `/api/employee/timeline` | Today's real check-in/break/check-out events | `TimelineCard` |
-| GET | `/api/employee/leave-balances` | Casual/Paid/Sick days remaining | `LeaveBalanceCard` |
-| GET | `/api/employee/upcoming-holidays?limit=` | Next N company holidays | `UpcomingHolidaysCard` |
-| GET | `/api/employee/quick-links` | Nav shortcuts | `QuickLinksCard` |
-| GET | `/api/employee/attendance-summary` | This month's attendance %, present/late/leave days | `AttendanceSummaryCard` |
-| GET | `/api/employee/announcement` | Latest company announcement | `AnnouncementCard` |
-
-Every route above also has an `/:id/...` variant (e.g. `/api/employee/emp_001/dashboard`) for viewing
-another employee's dashboard.
-
-### Employee Profile — `EmployeeProfilePage.jsx`, `MyProfilePage.jsx`
-
-`/api/employees/profile*` defaults to the self-service employee; `/api/employees/:id/profile*`
-looks up any employee by id.
-
-| Method | Route | Purpose | Maps to |
-|---|---|---|---|
-| GET | `/api/employees/:id/profile/bundle` | All rows below, bundled into one response | initial page load |
-| GET | `/api/employees/:id/profile` | Name / role / employee code / status / breadcrumb | `ProfileHeaderCard`, `PageActions` |
-| GET | `/api/employees/:id/profile/stat-cards` | Attendance % / Monthly Hrs / Present Days / Leave Balance / Avg Login / Perf. Score | `StatCards` |
-| GET | `/api/employees/:id/profile/work-summary` | Today / This Week / Avg Break / Current Session | `WorkSummaryCard` |
-| GET | `/api/employees/:id/profile/activity-map` | 7×5 grid of daily work intensity (0-4) | `ActivityMapCard` |
-| GET | `/api/employees/:id/profile/personal-info` | Employee ID / Department / Joining date / Contact | `PersonalInfoCard` |
-| PUT | `/api/employees/:id/profile/personal-info` `{ name?, email?, phone?, avatar? }` | Edit personal info | `PersonalInfoCard` edit/pencil icon |
-| GET | `/api/employees/:id/profile/documents` | On-file documents | `DocumentsCard` |
-
-Drop `:id` (e.g. `/api/employees/profile/bundle`) to get the self-service employee's own profile.
-
-### Attendance — `AttendanceManagement.jsx`
-
-| Method | Route | Purpose | Maps to |
-|---|---|---|---|
-| GET | `/api/attendance/stats?date=` | Total Expected / Present / Late / Currently Working | `StatsCards` |
-| GET | `/api/attendance/live?date=&department=&status=&search=` | Employees currently clocked in | `LiveAttendanceTable` |
-| GET | `/api/attendance/summary?date=` | On Time / Late counts | `ActivityPanel` ("Today's Summary") |
-| GET | `/api/attendance/departments` | Department list | "All Departments" filter |
-| GET | `/api/attendance?date=&department=&status=&search=&page=&pageSize=` | Full paginated record list | future full table view |
-| GET | `/api/attendance/export?date=&department=&status=` | CSV download | "Export" / "CSV" buttons |
-| POST | `/api/attendance/check-in` `{ employeeId }` | Clock an employee in | "Check In" button (TopBar) |
-| POST | `/api/attendance/check-out` `{ employeeId }` | Clock an employee out | — |
-| PATCH | `/api/attendance/:id` `{ status?, liveStatus? }` | Admin correction | row "⋮" action |
-
-### Leave — `LeaveManagement.jsx`
-
-| Method | Route | Purpose | Maps to |
-|---|---|---|---|
-| GET | `/api/leave/stats` | Pending / Approved Today / On Leave Today | `StatsCards` |
-| GET | `/api/leave/team-availability` | Working / On Leave / Sick Leave counts | `ActivityPanel` |
-| GET | `/api/leave/types` | Leave type options | request form dropdown |
-| GET | `/api/leave/requests?status=&period=This%20Month\|Last%20Month&search=` | Filtered request list | `LeaveRequestsTable` (also powers the "This Month/Last Month" tabs) |
-| GET | `/api/leave/requests/:id` | Single request | detail drawer |
-| POST | `/api/leave/requests` `{ employeeId, leaveType, startDate, endDate, reason }` | Submit new request | new-request form |
-| POST | `/api/leave/requests/approve-all` | Approve every pending request | "Approve All Pending" quick action |
-| PATCH | `/api/leave/requests/:id/approve` | Approve one | row "⋮" action |
-| PATCH | `/api/leave/requests/:id/reject` | Reject one | row "⋮" action |
-| GET | `/api/leave/export?status=&period=` | CSV download | "Export" button |
-
-### Reports — `Report.jsx`
-
-`range` accepts `7d`, `30d`, or `12m` (matches the "7 Days / 30 Days / 12 Months" tabs).
-
-| Method | Route | Purpose | Maps to |
-|---|---|---|---|
-| GET | `/api/reports/stats?range=&department=` | Total Employees / Avg Attendance, each vs. previous period | `StatsCards` |
-| GET | `/api/reports/attendance-trends?range=&department=` | Daily present/absent/late series | "Attendance Trends" line chart |
-| GET | `/api/reports/working-hours?range=&department=` | Daily avg-hours series + overall average | "Avg Working Hours" area chart |
-| GET | `/api/reports/departments` | Department list | "All Departments" filter |
-| POST | `/api/reports/generate` `{ range, department, title }` | Create a report snapshot | "Generate" button |
-| GET | `/api/reports` | List previously generated reports | `ReportsTable` |
-
-### Notifications — `NotificationsCenterPage.jsx`
-
-Defaults to the self-service employee, same pattern as the Employee Dashboard/Profile routes.
-
-| Method | Route | Purpose | Maps to |
-|---|---|---|---|
-| GET | `/api/notifications?filter=all\|unread\|attendance\|leave\|system&search=` | Filtered notification list | notification feed |
-| GET | `/api/notifications/summary` | Unread / High Priority counts | summary chips |
-| GET | `/api/notifications/preferences` | Current email/push/category toggles | Settings panel |
-| PUT | `/api/notifications/preferences` `{ email?, push?, attendanceAlerts?, leaveAlerts?, systemAlerts? }` | Update toggles | Settings panel |
-| POST | `/api/notifications` `{ title, description, category?, priority?, recipientEmployeeId? }` | Create a notification | server-triggered alerts |
-| PATCH | `/api/notifications/:id/read` | Mark one as read | click on a notification |
-| POST | `/api/notifications/mark-all-read` | Mark all as read | "Mark all as read" button |
-
-### Messages — `MessagesPage.jsx`
-
-Channels (team-wide) and direct-message threads, both scoped to the logged-in employee.
-
-| Method | Route | Purpose | Maps to |
-|---|---|---|---|
-| GET | `/api/messages/conversations` | Sidebar list: channels + DMs, last message preview, unread count | `Sidebar` (channels + direct messages) |
-| GET | `/api/messages/conversations/:id` | Header info, contact card, shared files/links | chat header + right rail |
-| GET | `/api/messages/conversations/:id/messages` | Full message thread | chat body |
-| POST | `/api/messages/conversations/:id/messages` `{ content, attachments? }` | Send a message | message composer |
-| POST | `/api/messages/conversations/:id/read` | Mark a thread as read | opening a conversation |
-
-## Example: wiring into `AttendanceManagement.jsx`
-
-```jsx
-const [stats, setStats] = useState([]);
-const [live, setLive] = useState([]);
-
-useEffect(() => {
-  fetch("/api/attendance/stats").then((r) => r.json()).then((res) => setStats(res.data));
-  fetch("/api/attendance/live").then((r) => r.json()).then((res) => setLive(res.data));
-}, []);
+MICROSOFT_CLIENT_ID=
+MICROSOFT_CLIENT_SECRET=
+MICROSOFT_CALLBACK_URL=http://localhost:5000/api/auth/oauth/microsoft/callback
 ```
 
-## Example: wiring in login
+---
 
-```jsx
-const res = await fetch("/api/auth/login", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email, password, rememberMe }),
-});
-const { data } = await res.json();
-localStorage.setItem("token", data.token);
-// then on every subsequent request:
-fetch("/api/employee/dashboard", {
-  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-});
+# 7. Local MongoDB
+
+For local development, MongoDB can run on:
+
+```text
+mongodb://127.0.0.1:27017/greathire
 ```
 
-If the Vite dev server proxies `/api` to `http://localhost:5000` (add this to
-`vite.config.js`), no CORS setup is needed in dev:
+Set:
 
-```js
-server: {
-  proxy: { "/api": "http://localhost:5000" }
+```env
+MONGODB_URI=mongodb://127.0.0.1:27017/greathire
+```
+
+The backend connects using:
+
+```javascript
+mongoose.connect(process.env.MONGODB_URI)
+```
+
+---
+
+# 8. MongoDB Atlas — Production Database
+
+For production, MongoDB Atlas is recommended.
+
+Create a cluster in:
+
+https://www.mongodb.com/atlas
+
+Then:
+
+1. Create an Atlas project.
+2. Create a MongoDB cluster.
+3. Create a database user.
+4. Configure Network Access.
+5. Copy the MongoDB connection string.
+6. Add the connection string to the production environment variables.
+
+Example:
+
+```env
+MONGODB_URI=mongodb+srv://USERNAME:PASSWORD@CLUSTER.mongodb.net/greathire?retryWrites=true&w=majority
+```
+
+Replace:
+
+```text
+USERNAME
+PASSWORD
+CLUSTER
+```
+
+with your actual Atlas credentials.
+
+Do not commit the real connection string to GitHub.
+
+---
+
+# 9. MongoDB Database Flow
+
+When the server starts:
+
+```text
+server.js
+   |
+   v
+validateEnv()
+   |
+   v
+connectDB()
+   |
+   v
+MongoDB / MongoDB Atlas
+   |
+   v
+seedDatabaseIfEmpty()
+   |
+   v
+loadAllData()
+   |
+   v
+Express API starts
+```
+
+The database connection is implemented in:
+
+```text
+src/config/db.js
+```
+
+Database schemas are maintained in:
+
+```text
+src/db/schemas.js
+```
+
+Initial database seeding is handled by:
+
+```text
+src/db/seed.js
+```
+
+Data loading is handled by:
+
+```text
+src/db/loadAll.js
+```
+
+---
+
+# 10. Running the Backend
+
+Development mode:
+
+```bash
+npm run dev
+```
+
+Production/start mode:
+
+```bash
+npm start
+```
+
+The default local server is:
+
+```text
+http://localhost:5000
+```
+
+---
+
+# 11. Health Check
+
+After starting the backend, test:
+
+```text
+GET /api/health
+```
+
+Example:
+
+```text
+http://localhost:5000/api/health
+```
+
+Expected response:
+
+```json
+{
+  "success": true,
+  "message": "GreatHire Teamora API is running"
 }
 ```
 
+For a deployed backend:
 
-## mongodb
+```text
+https://your-backend-domain.com/api/health
+```
+
+---
+
+# 12. Authentication
+
+The application uses JWT authentication.
+
+## Register
+
+```http
+POST /api/auth/register
+```
+
+Request:
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
+## Login
+
+```http
+POST /api/auth/login
+```
+
+Request:
+
+```json
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
+The response contains a JWT token.
+
+Example:
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {},
+    "token": "JWT_TOKEN"
+  }
+}
+```
+
+Use the token in authenticated requests:
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+## Current User
+
+```http
+GET /api/auth/me
+```
+
+Requires:
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+---
+
+# 13. API Modules
+
+## Authentication
+
+```text
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/logout
+GET  /api/auth/me
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
+```
+
+Optional OAuth:
+
+```text
+GET /api/auth/oauth/google
+GET /api/auth/oauth/microsoft
+```
+
+---
+
+## Dashboard
+
+```text
+GET /api/dashboard
+GET /api/dashboard/overview
+GET /api/dashboard/snapshot
+GET /api/dashboard/metrics
+GET /api/dashboard/live-workforce
+GET /api/dashboard/activity
+```
+
+Dashboard provides:
+
+* Total employees
+* Working employees
+* Employees on break
+* Employees on leave
+* Attendance percentage
+* Recent activity
+* Workforce information
+
+---
+
+# 14. Employee Dashboard
+
+```text
+GET /api/employee/dashboard
+GET /api/employee/current-user
+GET /api/employee/status
+GET /api/employee/quick-actions
+GET /api/employee/hours-stats
+GET /api/employee/attendance-legend
+GET /api/employee/attendance-month
+GET /api/employee/timeline
+GET /api/employee/leave-balances
+GET /api/employee/upcoming-holidays
+GET /api/employee/quick-links
+GET /api/employee/attendance-summary
+GET /api/employee/announcement
+```
+
+Employee dashboard provides:
+
+* Current work status
+* Check-in/check-out information
+* Working hours
+* Attendance calendar
+* Leave balance
+* Upcoming holidays
+* Attendance summary
+* Company announcements
+
+---
+
+# 15. Employee Profile
+
+```text
+GET /api/employees/:id/profile
+GET /api/employees/:id/profile/bundle
+GET /api/employees/:id/profile/stat-cards
+GET /api/employees/:id/profile/work-summary
+GET /api/employees/:id/profile/activity-map
+GET /api/employees/:id/profile/personal-info
+PUT /api/employees/:id/profile/personal-info
+GET /api/employees/:id/profile/documents
+```
+
+The profile module provides:
+
+* Employee information
+* Department
+* Designation
+* Joining date
+* Contact information
+* Attendance statistics
+* Working hours
+* Performance information
+* Documents
+
+---
+
+# 16. Attendance Management
+
+```text
+GET   /api/attendance/stats
+GET   /api/attendance/live
+GET   /api/attendance/summary
+GET   /api/attendance/departments
+GET   /api/attendance
+GET   /api/attendance/export
+POST  /api/attendance/check-in
+POST  /api/attendance/check-out
+PATCH /api/attendance/:id
+```
+
+Features include:
+
+* Employee check-in
+* Employee check-out
+* Attendance tracking
+* Late tracking
+* Live workforce status
+* Department filtering
+* Attendance export
+* Attendance corrections
+
+---
+
+# 17. Leave Management
+
+```text
+GET   /api/leave/stats
+GET   /api/leave/team-availability
+GET   /api/leave/types
+GET   /api/leave/requests
+GET   /api/leave/requests/:id
+POST  /api/leave/requests
+POST  /api/leave/requests/approve-all
+PATCH /api/leave/requests/:id/approve
+PATCH /api/leave/requests/:id/reject
+GET   /api/leave/export
+```
+
+Features include:
+
+* Leave requests
+* Leave approval
+* Leave rejection
+* Leave balances
+* Team availability
+* Leave statistics
+* Leave export
+
+---
+
+# 18. Reports & Analytics
+
+```text
+GET  /api/reports/stats
+GET  /api/reports/attendance-trends
+GET  /api/reports/working-hours
+GET  /api/reports/departments
+POST /api/reports/generate
+GET  /api/reports
+```
+
+Supported report ranges:
+
+```text
+7d
+30d
+12m
+```
+
+Reports include:
+
+* Attendance trends
+* Working hours
+* Department statistics
+* Employee statistics
+* Generated report snapshots
+
+---
+
+# 19. Notifications
+
+```text
+GET /api/notifications
+GET /api/notifications/summary
+GET /api/notifications/preferences
+```
+
+Notification filters:
+
+```text
+all
+unread
+attendance
+leave
+system
+```
+
+---
+
+# 20. Messages
+
+The messaging module supports:
+
+* Channels
+* Direct messages
+* Message history
+* Sending messages
+* Conversation data
+
+API routes are available under:
+
+```text
+/api/messages
+```
+
+See:
+
+```text
+src/routes/messageRoutes.js
+```
+
+for the complete route definition.
+
+---
+
+# 21. Database Seeding
+
+The application can initialize the database with demo data.
+
+The startup sequence calls:
+
+```javascript
+await seedDatabaseIfEmpty();
+await loadAllData();
+```
+
+The seed logic is located at:
+
+```text
+src/db/seed.js
+```
+
+For the first production deployment, demo data can be seeded.
+
+After confirming the production database is correctly initialized, disable unnecessary demo seeding according to your deployment configuration.
+
+---
+
+# 22. CORS Configuration
+
+The backend uses CORS to control which frontend can communicate with the API.
+
+Local development:
+
+```env
+CLIENT_ORIGIN=http://localhost:5173
+```
+
+Production:
+
+```env
+CLIENT_ORIGIN=https://your-frontend-domain.com
+```
+
+Example:
+
+```env
+CLIENT_ORIGIN=https://greathire-teamora.vercel.app
+```
+
+After changing production environment variables, redeploy/restart the backend.
+
+---
+
+# 23. Production Deployment
+
+The recommended production architecture is:
+
+```text
+React Application
+       |
+       | HTTPS
+       v
+Vercel / Netlify
+       |
+       | API Requests
+       v
+Node.js + Express
+       |
+       | MongoDB URI
+       v
+MongoDB Atlas
+```
+
+The backend can be deployed on platforms such as:
+
+* Render
+* Railway
+* AWS
+* Azure
+* Google Cloud
+
+---
+
+# 24. Render Deployment
+
+For a Render Web Service:
+
+### Root Directory
+
+```text
+backend
+```
+
+### Build Command
+
+```bash
+npm install
+```
+
+### Start Command
+
+```bash
+npm start
+```
+
+Add the required environment variables in the Render dashboard.
+
+Example:
+
+```env
+NODE_ENV=production
+
+MONGODB_URI=mongodb+srv://USERNAME:PASSWORD@CLUSTER.mongodb.net/greathire?retryWrites=true&w=majority
+
+CLIENT_ORIGIN=https://your-frontend-domain.com
+
+JWT_SECRET=YOUR_LONG_RANDOM_SECRET
+JWT_EXPIRES_IN=1d
+JWT_REMEMBER_ME_EXPIRES_IN=30d
+
+JWT_REFRESH_EXPIRES_IN=7d
+JWT_REFRESH_REMEMBER_ME_EXPIRES_IN=30d
+
+SEED_USER_PASSWORD=YOUR_SECURE_PASSWORD
+```
+
+Do not commit these production values to GitHub.
+
+---
+
+# 25. Frontend Configuration
+
+The React frontend should use the deployed backend URL instead of localhost.
+
+Local development:
+
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+Production:
+
+```env
+VITE_API_URL=https://your-backend-domain.com
+```
+
+For example:
+
+```env
+VITE_API_URL=https://greathire-teamora-api.onrender.com
+```
+
+After changing the environment variable, rebuild/redeploy the frontend.
+
+---
+
+# 26. Production Data Flow
+
+When User A creates a leave request:
+
+```text
+User A
+   |
+   v
+React Frontend
+   |
+   v
+Production Backend
+   |
+   v
+MongoDB Atlas
+   |
+   v
+Leave Request Stored
+```
+
+When User B opens the leave management page:
+
+```text
+User B
+   |
+   v
+React Frontend
+   |
+   v
+Same Production Backend
+   |
+   v
+Same MongoDB Atlas
+   |
+   v
+User B sees updated data
+```
+
+Therefore, all users work with the same centralized database.
+
+---
+
+# 27. Security
+
+Never commit:
+
+```text
+.env
+```
+
+to GitHub.
+
+Production secrets must be stored in the hosting platform's environment-variable settings.
+
+Important secrets include:
+
+```text
+MONGODB_URI
+JWT_SECRET
+SEED_USER_PASSWORD
+GOOGLE_CLIENT_SECRET
+MICROSOFT_CLIENT_SECRET
+```
+
+Use strong, randomly generated secrets in production.
+
+MongoDB Atlas Network Access should also be configured appropriately for the production backend.
+
+---
+
+# 28. .gitignore
+
+The backend `.gitignore` should include:
+
+```gitignore
+node_modules/
+.env
+.env.*
+!.env.example
+npm-debug.log*
+```
+
+The real `.env` file should remain local or be configured through the deployment platform.
+
+---
+
+# 29. API Documentation
+
+The project contains an OpenAPI specification:
+
+```text
+openapi.yaml
+```
+
+Swagger/OpenAPI can be used to inspect and test the API endpoints.
+
+The API documentation is exposed by the backend according to the configuration in:
+
+```text
+src/app.js
+```
+
+---
+
+# 30. Error Handling
+
+The backend uses centralized error handling.
+
+Main middleware:
+
+```text
+src/middleware/errorHandler.js
+```
+
+API errors follow the general structure:
+
+```json
+{
+  "success": false,
+  "error": "Error message"
+}
+```
+
+Successful responses generally follow:
+
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+---
+
+# 31. Validation
+
+Request validation is handled using Zod.
+
+Validation middleware:
+
+```text
+src/middleware/validate.js
+```
+
+This helps prevent invalid request data from reaching the controllers.
+
+---
+
+# 32. Authentication Middleware
+
+Authentication functionality is implemented in:
+
+```text
+src/middleware/auth.js
+```
+
+Available middleware includes functionality for:
+
+```text
+attachUser
+requireAuth
+requireRole
+```
+
+These can be used to protect routes and enforce role-based access.
+
+---
+
+# 33. Logging
+
+The backend uses Pino for logging.
+
+Configuration:
+
+```text
+src/config/logger.js
+```
+
+Logs are useful for:
+
+* MongoDB connection status
+* Server startup
+* API errors
+* Runtime problems
+* Production debugging
+
+---
+
+# 34. Rate Limiting and Security
+
+The backend uses:
+
+* Helmet
+* CORS
+* Express Rate Limit
+* JWT
+* bcryptjs
+* Zod validation
+
+These provide a baseline security layer for the API.
+
+---
+
+# 35. Development Workflow
+
+Recommended development flow:
+
+```text
+1. Start MongoDB
+        |
+        v
+2. Configure .env
+        |
+        v
+3. npm install
+        |
+        v
+4. npm run dev
+        |
+        v
+5. Start React frontend
+        |
+        v
+6. Test API
+        |
+        v
+7. Test authentication
+        |
+        v
+8. Test dashboard/modules
+```
+
+---
+
+# 36. Production Workflow
+
+```text
+MongoDB Atlas
+      |
+      v
+Deploy Backend
+      |
+      v
+Configure Production Environment Variables
+      |
+      v
+Test Backend Health
+      |
+      v
+Deploy React Frontend
+      |
+      v
+Configure VITE_API_URL
+      |
+      v
+Configure CLIENT_ORIGIN
+      |
+      v
+Test Authentication
+      |
+      v
+Test All Modules
+```
+
+---
+
+# 37. Troubleshooting
+
+## MongoDB connection error
+
+Check:
+
+```env
+MONGODB_URI=...
+```
+
+Make sure:
+
+* MongoDB is running locally, or Atlas is available.
+* Username is correct.
+* Password is correct.
+* Atlas Network Access allows the backend.
+* Cluster URL is correct.
+* Special characters in the password are properly URL encoded.
+
+---
+
+## CORS error
+
+Check:
+
+```env
+CLIENT_ORIGIN=https://your-frontend-domain.com
+```
+
+Make sure the URL exactly matches the deployed frontend origin.
+
+---
+
+## JWT authentication error
+
+Check:
+
+```env
+JWT_SECRET=...
+```
+
+Make sure the frontend sends:
+
+```http
+Authorization: Bearer YOUR_TOKEN
+```
+
+---
+
+## Backend works locally but not after deployment
+
+Check:
+
+1. Production environment variables.
+2. MongoDB Atlas Network Access.
+3. Backend deployment logs.
+4. `MONGODB_URI`.
+5. `CLIENT_ORIGIN`.
+6. Frontend `VITE_API_URL`.
+7. Backend health endpoint.
+
+---
+
+# 38. Useful Commands
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run development server:
+
+```bash
+npm run dev
+```
+
+Run production server:
+
+```bash
+npm start
+```
+
+Run tests:
+
+```bash
+npm test
+```
+
+Run lint:
+
+```bash
+npm run lint
+```
+
+---
+
+# 39. Environment Summary
+
+## Local
+
+```env
+PORT=5000
+CLIENT_ORIGIN=http://localhost:5173
 MONGODB_URI=mongodb://127.0.0.1:27017/greathire
+```
 
+Frontend:
 
-## Notes
+```env
+VITE_API_URL=http://localhost:5000
+```
 
-- Seed data is deterministic (seeded PRNG) so numbers stay consistent across restarts —
-  useful for demoing without the UI feeling like it's showing random data every reload.
-- `hoursWorked`, `late`, and `liveStatus` are derived once at seed time; `checkIn`/`checkOut`
-  mutate that same in-memory record for the current server session only (resets on restart).
-- Everything (users, notifications, messages, password reset tokens) lives in memory and
-  resets on server restart — expected for a zero-DB local backend, same as attendance/leave.
-- JWTs are stateless (no server-side session/blacklist), which keeps `logout` a client-side
-  token-discard. Fine for local dev; swap in refresh-token rotation before shipping to prod.
+## Production
+
+```env
+PORT=<provided-by-hosting-platform>
+
+CLIENT_ORIGIN=https://your-frontend-domain.com
+
+MONGODB_URI=mongodb+srv://USERNAME:PASSWORD@CLUSTER.mongodb.net/greathire?retryWrites=true&w=majority
+
+JWT_SECRET=<strong-production-secret>
+```
+
+Frontend:
+
+```env
+VITE_API_URL=https://your-backend-domain.com
+```
+
+---
+
+# 40. Final Production Architecture
+
+```text
+                         USERS
+                           |
+              +------------+------------+
+              |            |            |
+              v            v            v
+           User 1       User 2       User 3
+              \            |            /
+               \           |           /
+                +----------+----------+
+                           |
+                           v
+                +---------------------+
+                |   React Frontend    |
+                |  Vercel / Netlify   |
+                +----------+----------+
+                           |
+                           | HTTPS
+                           v
+                +---------------------+
+                | Node.js + Express   |
+                |    Backend API      |
+                +----------+----------+
+                           |
+                           | Mongoose
+                           v
+                +---------------------+
+                |    MongoDB Atlas    |
+                |  Central Database    |
+                +---------------------+
+                           |
+                           v
+                 Persistent Application
+                       Data
+```
+
+All users access the same backend and the same MongoDB Atlas database.
+
+---
+
+# 41. Project Status
+
+GreatHire Teamora backend currently provides the foundation for a production-ready HRMS application with:
+
+* REST API architecture
+* MongoDB/Mongoose persistence
+* JWT authentication
+* Employee management
+* Attendance management
+* Leave management
+* Employee dashboard
+* Employee profiles
+* Reports and analytics
+* Notifications
+* Messaging
+* Validation
+* Error handling
+* Security middleware
+* API documentation
+* Cloud database deployment support
+
+The next production steps are:
+
+```text
+MongoDB Atlas
+      ↓
+Backend Deployment
+      ↓
+Frontend Deployment
+      ↓
+CORS Configuration
+      ↓
+Production Testing
+      ↓
+Security Hardening
+      ↓
+Live HRMS Application
+```
+
+---
+
+# 42. License
+
+This project is intended for educational, portfolio, and application-development purposes.
