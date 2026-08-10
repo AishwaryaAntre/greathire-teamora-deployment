@@ -1,0 +1,232 @@
+I’ll summarize the exact deployment checklist from the codebase shape and the connection assumptions so you can move from local development to Render/Vercel with Atlas safely.
+
+## Before deploying
+
+You need to make these changes in the current project so the backend can be served from Render and the frontend can be served from Vercel.
+
+### 1) Backend: make the API deploy-safe
+
+In your backend environment, replace the current development-only MongoDB setting and deploy settings:
+
+- Use the live Atlas connection string in the backend environment instead of localhost MongoDB.
+- Set production auth and CORS values.
+
+Relevant places:
+- .env
+- .env.example
+- app.js
+- server.js
+
+Set these values:
+
+- `MONGODB_URI`
+  - Example:
+    ```env
+    MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/greathire?retryWrites=true&w=majority
+    ```
+- `JWT_SECRET`
+  - Use a long random secret.
+- `CLIENT_ORIGIN`
+  - Set this to your Vercel frontend URL:
+    ```env
+    CLIENT_ORIGIN=https://your-app.vercel.app
+    ```
+- `NODE_ENV=production` in Render
+- Optional OAuth callback URLs should point at Render, not localhost:
+  ```env
+  GOOGLE_CALLBACK_URL=https://your-render-backend.onrender.com/api/auth/oauth/google/callback
+  MICROSOFT_CALLBACK_URL=https://your-render-backend.onrender.com/api/auth/oauth/microsoft/callback
+  ```
+
+### 2) Backend: Render setup
+
+In Render, create a Web Service for the backend:
+
+- Root directory: the backend folder
+- Runtime: Node.js
+- Build command:
+  ```bash
+  npm install
+  ```
+- Start command:
+  ```bash
+  npm start
+  ```
+- Add environment variables:
+  - `MONGODB_URI`
+  - `JWT_SECRET`
+  - `CLIENT_ORIGIN`
+  - optional OAuth keys
+  - `PORT` is usually auto-supplied by Render
+
+Render must expose the API on a public URL such as:
+
+```text
+https://your-render-backend.onrender.com
+```
+
+The API base path is `/api`, so the final API endpoint becomes:
+
+```text
+https://your-render-backend.onrender.com/api
+```
+
+---
+
+### 3) Frontend: make the browser call the Render API
+
+The frontend API client currently reads a base URL from the Vite environment and defaults to localhost only in local dev:
+
+- apiClient.js
+- .env.example
+
+Set this before deploy:
+
+```env
+VITE_API_BASE_URL=https://your-render-backend.onrender.com/api
+```
+
+You should put that into Vercel environment variables, not inside source control.
+
+### 4) Frontend: Vercel setup
+
+In Vercel, create a web app deployment for the frontend folder:
+
+- Root directory: the frontend folder
+- Build command:
+  ```bash
+  npm run build
+  ```
+- Output directory:
+  ```bash
+  dist
+  ```
+
+Then add environment variables in Vercel:
+
+```env
+VITE_API_BASE_URL=https://your-render-backend.onrender.com/api
+```
+
+---
+
+### 5) Atlas network access
+
+Because Atlas is cloud-based, your Render backend must be allowed access to it.
+
+In MongoDB Atlas:
+
+- Open Network Access
+- Allow connections from:
+  - Your Render backend public IP if static and whitelisted
+  - Or `0.0.0.0/0` if you want easier temporary access
+- Confirm your database user has the correct role (read/write)
+
+---
+
+## After deploying
+
+Once both are live:
+
+### Backend on Render
+
+- Open the Render service logs.
+- Hit the health endpoint:
+  ```text
+  https://your-render-backend.onrender.com/api/health
+  ```
+- Confirm it returns a success payload.
+
+### Frontend on Vercel
+
+- Open the deployed frontend URL.
+- Log in using the seeded credentials or user accounts from your DB.
+- Check that API calls reach Render successfully.
+
+### Common smoke tests
+
+- Login request to `/api/auth/login`
+- Dashboard fetch to `/api/dashboard`
+- Employee list request to `/api/employees`
+- Any chart/report call
+
+---
+
+## Local development
+
+If you want to run locally instead of deploying:
+
+### Backend local
+
+From the backend folder:
+
+```bash
+npm install
+npm run dev
+```
+
+In local backend env, use either:
+
+```env
+MONGODB_URI=mongodb://127.0.0.1:27017/greathire
+```
+
+or a live Atlas URI if you want the local app to use the same cloud DB.
+
+Local backend URL:
+
+```text
+http://localhost:5000
+```
+
+Local health URL:
+
+```text
+http://localhost:5000/api/health
+```
+
+### Frontend local
+
+In the frontend:
+
+```bash
+npm install
+npm run dev
+```
+
+Use Vite defaults, and set:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+Then open the local frontend:
+
+```text
+http://localhost:5173
+```
+
+---
+
+## What you must not forget
+
+- Do not commit live secrets.
+- Do not leave the backend pointing at `localhost` in production.
+- Do not leave Vercel or Render pointing at the wrong domain.
+- Do not deploy with an empty `CLIENT_ORIGIN` in production.
+- Make sure Atlas is reachable from Render.
+
+---
+
+## Minimal deployment checklist
+
+1. Atlas URI prepared.
+2. Backend Render service configured.
+3. Backend environment variables filled.
+4. `CLIENT_ORIGIN` set to the Vercel frontend domain.
+5. Frontend Vercel env has `VITE_API_BASE_URL` pointing to Render.
+6. Atlas IP/network permission configured.
+7. Backend health check passes.
+8. Login and dashboard tests pass through the live API.
+
+If you want, I can also generate the actual Render and Vercel environment variable sections for you in a copy-paste format.
