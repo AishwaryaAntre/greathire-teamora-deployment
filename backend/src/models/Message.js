@@ -6,6 +6,8 @@ import {
   avatarFor,
   persistNewMessage,
   persistReadState,
+  persistNewChannel,
+  persistChannelMembers,
 } from "../data/messagesStore.js";
 import { Employee } from "./Employee.js";
 import { generateId } from "../utils/id.js";
@@ -147,5 +149,47 @@ export let Message = {
     read[conversationId] = lastReadISO;
     await persistReadState(employeeId, conversationId, lastReadISO);
     return { conversationId, readAt: lastReadISO };
+  },
+
+  /** GET /api/messages/channels — admin-only directory of EVERY channel
+   * (not just ones the caller happens to be a member of), for the
+   * channel-management UI's create/membership controls. */
+  listAllChannels() {
+    return channels.map((c) => ({
+      id: c.id,
+      name: c.name,
+      isDefault: !!c.isDefault,
+      memberIds: c.memberIds,
+      memberCount: c.memberIds.length,
+    }));
+  },
+
+  /** POST /api/messages/channels — admin-only. The creator is always
+   * included as a member so they land in a channel they just made. */
+  async createChannel({ name, memberIds = [], isDefault = false }, creatorId) {
+    let allMembers = Array.from(new Set([...memberIds, creatorId].filter(Boolean)));
+    let channel = { id: generateId("chan"), name, memberIds: allMembers, isDefault, createdBy: creatorId };
+    await persistNewChannel(channel);
+    return channel;
+  },
+
+  /** POST /api/messages/channels/:id/members — admin-only, grant one
+   * employee access to a channel. */
+  async addChannelMember(channelId, employeeId) {
+    let channel = channels.find((c) => c.id === channelId);
+    if (!channel) return null;
+    if (!channel.memberIds.includes(employeeId)) {
+      await persistChannelMembers(channelId, [...channel.memberIds, employeeId]);
+    }
+    return channel;
+  },
+
+  /** DELETE /api/messages/channels/:id/members/:employeeId — admin-only,
+   * revoke one employee's access to a channel. */
+  async removeChannelMember(channelId, employeeId) {
+    let channel = channels.find((c) => c.id === channelId);
+    if (!channel) return null;
+    await persistChannelMembers(channelId, channel.memberIds.filter((id) => id !== employeeId));
+    return channel;
   },
 };

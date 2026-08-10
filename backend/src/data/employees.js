@@ -58,10 +58,12 @@ export async function adjustLeaveAccrual(id, delta) {
   return employee;
 }
 
-/** Admin-only: creates a brand-new employee record. */
-export async function createEmployee({ name, email, role, department, phone }) {
+/** Admin-only: creates a brand-new employee record. `id` is optional — omit
+ * it for real usage (auto-generated); tests pass an explicit id so a few
+ * hardcoded fixture URLs (see tests/helpers/setup.js) keep working. */
+export async function createEmployee({ id, name, email, role, department, phone }) {
   let employee = {
-    id: generateId("emp"),
+    id: id || generateId("emp"),
     name,
     email: email || null,
     phone: phone || null,

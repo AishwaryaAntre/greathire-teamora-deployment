@@ -154,6 +154,10 @@ let ChannelSchema = new Schema(
     id: { type: String, unique: true, index: true },
     name: String,
     memberIds: [String],
+    // Default channels (e.g. "General") auto-enroll every newly created
+    // employee — see data/messagesStore.js#addEmployeeToDefaultChannels.
+    isDefault: { type: Boolean, default: false },
+    createdBy: String,
   },
   base
 );

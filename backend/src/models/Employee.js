@@ -1,4 +1,5 @@
 import { employees, departments, persistEmployeeUpdate, createEmployee, deleteEmployee, adjustLeaveAccrual } from "../data/employees.js";
+import { addEmployeeToDefaultChannels, removeEmployeeFromAllChannels } from "../data/messagesStore.js";
 
 const SELF_EDITABLE_FIELDS = ["name", "email", "phone", "avatar"];
 const ADMIN_EDITABLE_FIELDS = ["name", "email", "phone", "avatar", "role", "department", "employeeCode"];
@@ -27,16 +28,22 @@ export let Employee = {
     return persistEmployeeUpdate(id, updates, ADMIN_EDITABLE_FIELDS);
   },
 
-  /** Admin-only: create a new employee record. */
+  /** Admin-only: create a new employee record. Auto-enrolls them into every
+   * default message channel (e.g. "General") so they land with messaging
+   * access instead of needing to be added by hand afterward. */
   async create(fields) {
-    return createEmployee(fields);
+    let employee = await createEmployee(fields);
+    await addEmployeeToDefaultChannels(employee.id);
+    return employee;
   },
 
   /** Admin-only: permanently remove an employee record. Returns false if no
-   * such employee exists. Callers are responsible for cleaning up related
-   * data (attendance, leave requests, login account) — see
-   * employeeProfileController.deleteEmployee for the full cascade. */
+   * such employee exists. Also drops them from every channel's member list.
+   * Callers are responsible for cleaning up other related data (attendance,
+   * leave requests, login account) — see employeeProfileController.deleteEmployee
+   * for the full cascade. */
   async remove(id) {
+    await removeEmployeeFromAllChannels(id);
     return deleteEmployee(id);
   },
 

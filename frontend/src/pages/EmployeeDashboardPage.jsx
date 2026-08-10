@@ -136,7 +136,7 @@ export default function EmployeeDashboardPage() {
       <div className="flex flex-1 flex-col overflow-y-auto">
         <EmployeeTopBar user={currentUser} />
 
-        <main className="grid flex-1 grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_320px]">
+        <main className="grid flex-1 grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-[1fr_320px] lg:p-8">
           {/* Main column */}
           <div className="space-y-6">
             <GreetingBanner

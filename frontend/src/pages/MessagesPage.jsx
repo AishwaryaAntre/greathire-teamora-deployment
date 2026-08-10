@@ -22,8 +22,12 @@ import {
   User,
   HelpCircle,
   Hash,
+  Plus,
+  Settings2,
 } from "lucide-react";
 import { messagesApi } from "@/lib/api/messages";
+import { useAuth } from "@/lib/AuthContext";
+import ManageChannelModal from "@/components/employee/ManageChannelModal";
 
 const navItems = [
   { label: "Organization", icon: Building2, to: "/dashboard" },
@@ -33,7 +37,7 @@ const navItems = [
   { label: "Analytics", icon: BarChart3, to: "/reports" },
 ];
 
-function ConversationSidebar({ conversations, activeId, onSelect }) {
+function ConversationSidebar({ conversations, activeId, onSelect, isAdmin, onNewChannel, onManageChannel }) {
   const navigate = useNavigate();
   const channels = conversations.filter((c) => c.type === "channel");
   const dms = conversations.filter((c) => c.type === "dm");
@@ -67,25 +71,42 @@ function ConversationSidebar({ conversations, activeId, onSelect }) {
         </nav>
 
         <div className="px-5">
-          <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-2">CHANNELS</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">CHANNELS</p>
+            {isAdmin && (
+              <button onClick={onNewChannel} title="New channel" className="text-slate-400 hover:text-white">
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
           <div className="flex flex-col gap-0.5 mb-6">
             {channels.map((c) => (
-              <button
+              <div
                 key={c.id}
-                onClick={() => onSelect(c.id)}
-                className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   activeId === c.id ? "bg-slate-800 text-white" : "text-slate-400 dark:text-slate-500 hover:bg-slate-800/60 hover:text-white"
                 }`}
               >
-                <span className="flex items-center gap-1.5">
-                  <Hash className="w-3.5 h-3.5" /> {c.label}
-                </span>
-                {c.unread > 0 && (
-                  <span className="bg-blue-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                    {c.unread}
-                  </span>
-                )}
-              </button>
+                <button onClick={() => onSelect(c.id)} className="flex items-center gap-1.5 min-w-0 flex-1 text-left">
+                  <Hash className="w-3.5 h-3.5 flex-shrink-0" /> <span className="truncate">{c.label}</span>
+                </button>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {c.unread > 0 && (
+                    <span className="bg-blue-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                      {c.unread}
+                    </span>
+                  )}
+                  {isAdmin && (
+                    <button
+                      onClick={() => onManageChannel(c)}
+                      title="Manage channel access"
+                      className="opacity-0 group-hover:opacity-100 hover:text-white"
+                    >
+                      <Settings2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
 
@@ -367,7 +388,7 @@ function ProfilePanel({ conversation }) {
         </div>
       )}
 
-      <div className="mb-4">
+      <div className="mb-2">
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
             <Folder className="w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -415,20 +436,38 @@ function ProfilePanel({ conversation }) {
 }
 
 export default function MessagesPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [channelModal, setChannelModal] = useState(null); // null | { mode: "create" } | { mode: "manage", channel }
 
-  useEffect(() => {
+  function refreshConversations() {
     messagesApi.listConversations().then((list) => {
       setConversations(list);
       if (list.length && !activeId) setActiveId(list[0].id);
     });
+  }
+
+  useEffect(() => {
+    refreshConversations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function handleManageChannel(sidebarChannel) {
+    let all = await messagesApi.listAllChannels();
+    let full = all.find((c) => c.id === sidebarChannel.id) || sidebarChannel;
+    setChannelModal({ mode: "manage", channel: full });
+  }
+
+  function handleChannelModalChanged() {
+    setChannelModal(null);
+    refreshConversations();
+  }
 
   const loadConversation = useCallback(async (id) => {
     if (!id) return;
@@ -453,7 +492,14 @@ export default function MessagesPage() {
 
   return (
     <div className="w-screen h-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950">
-      <ConversationSidebar conversations={conversations} activeId={activeId} onSelect={setActiveId} />
+      <ConversationSidebar
+        conversations={conversations}
+        activeId={activeId}
+        onSelect={setActiveId}
+        isAdmin={isAdmin}
+        onNewChannel={() => setChannelModal({ mode: "create" })}
+        onManageChannel={handleManageChannel}
+      />
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <ChatHeader
           conversation={conversation}
@@ -466,6 +512,13 @@ export default function MessagesPage() {
         <MessageInput conversationLabel={conversation?.label} onSend={handleSend} />
       </div>
       <ProfilePanel conversation={conversation} />
+      {channelModal && (
+        <ManageChannelModal
+          channel={channelModal.mode === "manage" ? channelModal.channel : null}
+          onClose={() => setChannelModal(null)}
+          onChanged={handleChannelModalChanged}
+        />
+      )}
     </div>
   );
 }

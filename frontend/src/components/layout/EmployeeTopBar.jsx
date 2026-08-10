@@ -1,4 +1,4 @@
-import { Search, Bell, HelpCircle, Moon, Sun } from "lucide-react";
+import { Search, Bell, HelpCircle, Moon, Sun, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
 
@@ -6,8 +6,15 @@ export default function EmployeeTopBar({ user }) {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
+  function openSidebar() {
+    window.dispatchEvent(new CustomEvent("teamora:open-sidebar"));
+  }
+
   return (
-    <header className="flex items-center gap-4 border-b border-border bg-background px-8 py-4">
+    <header className="flex items-center gap-4 border-b border-border bg-background px-4 py-4 sm:px-6 lg:px-8">
+      <button type="button" className="rounded-lg border border-border p-2 text-foreground hover:bg-accent lg:hidden" onClick={openSidebar} aria-label="Open navigation">
+        <Menu className="h-4 w-4" />
+      </button>
       <div className="relative flex-1 max-w-xl">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input

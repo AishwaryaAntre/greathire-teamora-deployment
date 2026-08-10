@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Settings, HelpCircle, LogOut } from "lucide-react";
+import { Settings, HelpCircle, LogOut, X } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { getNavItemsForRole } from "@/data/navConfig";
 import { attendanceApi } from "@/lib/api/attendance";
@@ -12,71 +12,21 @@ import NavItem from "./NavItem";
 // status-driven gating added to EmployeeDashboardPage.jsx's QuickActions.
 const CHECKED_IN_STATES = ["Working", "On Break"];
 
-// Single, role-aware sidebar replacing Sidebar.jsx (admin) and
-// EmployeeSidebar.jsx (employee), plus the 5 hardcoded local copies.
-// Visual standard adopted is the admin look from Sidebar.jsx (bg-slate-900,
-// 280px, "GreatHire / TEAMORA" brand block) — copied verbatim below so the
-// 2 pages already using Sidebar.jsx see no visual regression once wired in.
-//
-// NOT rendered anywhere yet — this session only builds the component.
-export default function MasterSidebar() {
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-
-  const isAdmin = user?.role === "admin"; // confirmed field/value in Session 1 (ProtectedRoute.jsx, backend authController.js)
-  const items = getNavItemsForRole(user?.role);
-
-  const [currentStatus, setCurrentStatus] = useState(null);
-
-  function refreshStatus() {
-    if (isAdmin) return;
-    employeeDashboardApi.getStatus().then((data) => setCurrentStatus(data?.state)).catch(() => {});
-  }
-
-  // Sidebar is rendered on every page, so this is effectively "on route
-  // change" — cheap enough, and keeps the button in sync with check-ins/
-  // check-outs performed elsewhere (e.g. the dashboard's QuickActions).
-  useEffect(() => {
-    refreshStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, isAdmin]);
-
-  const isCheckedIn = CHECKED_IN_STATES.includes(currentStatus);
-
-  // Ported from EmployeeSidebar.jsx's handleClockIn — unchanged behavior.
-  async function handleClockIn() {
-    if (isCheckedIn) return;
-    if (user?.employeeId) {
-      await attendanceApi.checkIn(user.employeeId).catch(() => {});
-    }
-    refreshStatus();
-    navigate("/attendance");
-  }
-
-  // Logout was previously only on EmployeeSidebar.jsx. Intentional behavior
-  // change (see Session 2 commit message): admins now get a Logout entry
-  // too, since Sidebar.jsx had no sign-out affordance at all before.
-  async function handleLogout() {
-    await logout();
-    navigate("/");
-  }
-
-
+function SidebarContent({ pathname, closeMobile, items, isAdmin, handleClockIn, handleLogout, isCheckedIn, currentStatus, user }) {
   return (
-    <aside className="flex h-100p w-[280px] shrink-0 flex-col bg-slate-900 px-6 py-7">
-      {/* Brand block — copied verbatim from Sidebar.jsx */}
-      <div className="flex items-center gap-3 px-1">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-dark text-primary-foreground ring-2 ring-white ring-offset-2 ring-offset-black dark:bg-slate-900/10 text-white">
-          <span className="text-sm font-extrabold">
-            {/* <img src="/grlogo.jpeg" className="h-8 w-8 rounded-md object-cover" /> */}
-              ≫
-          </span>
+    <aside className="flex h-full w-[280px] shrink-0 flex-col bg-slate-900 px-6 py-7">
+      <div className="flex items-center justify-between gap-3 px-1">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-dark text-primary-foreground ring-2 ring-white ring-offset-2 ring-offset-black dark:bg-slate-900/10 text-white">
+            <span className="text-sm font-extrabold">≫</span>
+          </div>
+          <div>
+            <p className="text-lg font-bold leading-tight text-white">TEAMORA</p>
+          </div>
         </div>
-        <div>
-          <p className="text-lg font-bold leading-tight text-white">TEAMORA</p>
-          
-        </div>
+        <button type="button" className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden" onClick={closeMobile} aria-label="Close sidebar">
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       <nav className="mt-10 flex flex-1 flex-col gap-1.5 pl-4">
@@ -90,9 +40,6 @@ export default function MasterSidebar() {
 
         {!isAdmin && (
           <>
-            {/* -ml-4 cancels the pl-4 indent used for NavItem's active bar,
-                so the button stays flush/full-width like it was in
-                EmployeeSidebar.jsx rather than looking inset. */}
             <div className="-ml-4">
               <Button
                 className="w-full bg-blue-600 hover:bg-blue-600/90 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -117,5 +64,108 @@ export default function MasterSidebar() {
         </button>
       </div>
     </aside>
+  );
+}
+
+export default function MasterSidebar() {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const isAdmin = user?.role === "admin";
+  const items = getNavItemsForRole(user?.role);
+
+  const [currentStatus, setCurrentStatus] = useState(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  function refreshStatus() {
+    if (isAdmin) return;
+    employeeDashboardApi.getStatus().then((data) => setCurrentStatus(data?.state)).catch(() => {});
+  }
+
+  useEffect(() => {
+    refreshStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, isAdmin]);
+
+  useEffect(() => {
+    function handleToggle() {
+      setMobileOpen((value) => !value);
+    }
+
+    function handleOpen() {
+      setMobileOpen(true);
+    }
+
+    function handleClose() {
+      setMobileOpen(false);
+    }
+
+    window.addEventListener("teamora:toggle-sidebar", handleToggle);
+    window.addEventListener("teamora:open-sidebar", handleOpen);
+    window.addEventListener("teamora:close-sidebar", handleClose);
+
+    return () => {
+      window.removeEventListener("teamora:toggle-sidebar", handleToggle);
+      window.removeEventListener("teamora:open-sidebar", handleOpen);
+      window.removeEventListener("teamora:close-sidebar", handleClose);
+    };
+  }, []);
+
+  const isCheckedIn = CHECKED_IN_STATES.includes(currentStatus);
+
+  async function handleClockIn() {
+    if (isCheckedIn) return;
+    if (user?.employeeId) {
+      await attendanceApi.checkIn(user.employeeId).catch(() => {});
+    }
+    refreshStatus();
+    navigate("/attendance");
+  }
+
+  async function handleLogout() {
+    await logout();
+    navigate("/");
+  }
+
+  return (
+    <>
+      <div className="hidden lg:flex h-screen w-[280px] shrink-0">
+        <SidebarContent
+          pathname={pathname}
+          closeMobile={() => setMobileOpen(false)}
+          items={items}
+          isAdmin={isAdmin}
+          handleClockIn={handleClockIn}
+          handleLogout={handleLogout}
+          isCheckedIn={isCheckedIn}
+          currentStatus={currentStatus}
+          user={user}
+        />
+      </div>
+
+      <aside className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[280px] shrink-0 transform bg-slate-900 transition-transform duration-300 ease-in-out lg:hidden ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <SidebarContent
+          pathname={pathname}
+          closeMobile={() => setMobileOpen(false)}
+          items={items}
+          isAdmin={isAdmin}
+          handleClockIn={handleClockIn}
+          handleLogout={handleLogout}
+          isCheckedIn={isCheckedIn}
+          currentStatus={currentStatus}
+          user={user}
+        />
+      </aside>
+
+      {mobileOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-slate-950/60 lg:hidden"
+          aria-label="Close sidebar overlay"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+    </>
   );
 }

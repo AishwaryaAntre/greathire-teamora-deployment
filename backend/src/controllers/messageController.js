@@ -35,4 +35,26 @@ export let messageController = {
     let data = await Message.markConversationRead(req.params.id, resolveEmployeeId(req));
     res.json({ success: true, data });
   },
+
+  // Admin-only channel management — create/list channels, add or remove members.
+  listAllChannels: (req, res) => {
+    res.json({ success: true, data: Message.listAllChannels() });
+  },
+
+  createChannel: async (req, res) => {
+    let data = await Message.createChannel(req.body, resolveEmployeeId(req));
+    res.status(201).json({ success: true, data });
+  },
+
+  addChannelMember: async (req, res) => {
+    let data = await Message.addChannelMember(req.params.id, req.body.employeeId);
+    if (!data) throw new ApiError(404, "Channel not found");
+    res.status(201).json({ success: true, data });
+  },
+
+  removeChannelMember: async (req, res) => {
+    let data = await Message.removeChannelMember(req.params.id, req.params.employeeId);
+    if (!data) throw new ApiError(404, "Channel not found");
+    res.json({ success: true, data });
+  },
 };

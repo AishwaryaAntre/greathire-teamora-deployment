@@ -49,7 +49,7 @@ export default function DashboardPage() {
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopBar />
 
-        <main className="flex-1 space-y-5 px-8 py-6">
+        <main className="flex-1 space-y-5 px-4 py-6 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
             <div className="xl:col-span-2">
               <DashboardOverviewCard

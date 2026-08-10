@@ -126,7 +126,7 @@ export default function EmployeesListPage() {
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopBar />
 
-        <main className="flex-1 space-y-5 px-8 py-6">
+        <main className="flex-1 space-y-5 px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-slate-900 dark:text-white">Employees</h1>
             {isAdmin && (
