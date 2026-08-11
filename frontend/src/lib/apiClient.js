@@ -2,9 +2,11 @@
 // Base URL comes from VITE_API_BASE_URL (see .env.example) so the Vercel/
 // React shell can point at a hosted Render API in production.
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? "https://your-render-backend.onrender.com/api" : "http://localhost:5000/api");
+// const API_BASE_URL =
+//   import.meta.env.VITE_API_BASE_URL ||
+//   (import.meta.env.PROD ? "https://your-render-backend.onrender.com/api" : "http://localhost:5000/api");
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 const TOKEN_KEY = "gh_teamora_token";
 
