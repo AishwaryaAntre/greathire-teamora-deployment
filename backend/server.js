@@ -18,8 +18,8 @@ async function start() {
 
     let app = createApp();
     app.listen(PORT, "0.0.0.0", () => {
-      // logger.info({ port: PORT }, `GreatHire Teamora API listening on 0.0.0.0:${PORT}`);
-      logger.info({ port: PORT }, `GreatHire Teamora API listening on http://localhost:${PORT}`);
+      logger.info({ port: PORT }, `GreatHire Teamora API listening on 0.0.0.0:${PORT}`);
+      // logger.info({ port: PORT }, `GreatHire Teamora API listening on http://localhost:${PORT}`);
 
     });
   } catch (err) {
