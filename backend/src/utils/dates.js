@@ -1,16 +1,34 @@
 export let DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Returns YYYY-MM-DD for a Date object (local time, no timezone shift). */
+/** Returns YYYY-MM-DD for a Date object in Asia/Kolkata (IST) time. */
 export function toISODate(date) {
   let d = new Date(date);
-  let year = d.getFullYear();
-  let month = String(d.getMonth() + 1).padStart(2, "0");
-  let day = String(d.getDate()).padStart(2, "0");
+  let parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+
+  let year = parts.find((p) => p.type === "year")?.value;
+  let month = parts.find((p) => p.type === "month")?.value;
+  let day = parts.find((p) => p.type === "day")?.value;
+
   return `${year}-${month}-${day}`;
 }
 
 export function todayISO() {
   return toISODate(new Date());
+}
+
+/** Formats a clock string as IST, e.g. "03:00 PM". */
+export function formatTimeIST(date = new Date()) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
 }
 
 export function addDays(date, days) {

@@ -1,6 +1,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
+import { formatTimeIST } from "../src/utils/dates.js";
 import { setupTestApp, teardownTestApp, loginAs, EMPLOYEE_EMAIL } from "./helpers/setup.js";
 
 let app, auth;
@@ -17,6 +18,11 @@ after(async () => {
 function bearer() {
   return `Bearer ${auth.token}`;
 }
+
+test("IST clock formatter renders a timezone-specific time string", () => {
+  let utc = new Date("2026-08-11T09:30:00Z");
+  assert.equal(formatTimeIST(utc), "03:00 PM");
+});
 
 test("check-in requires authentication", async () => {
   let res = await request(app).post("/api/attendance/check-in");

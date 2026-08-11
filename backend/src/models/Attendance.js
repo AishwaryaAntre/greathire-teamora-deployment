@@ -6,7 +6,7 @@ import {
   deleteAttendanceByEmployeeId,
 } from "../data/attendanceStore.js";
 import { Employee } from "./Employee.js";
-import { todayISO } from "../utils/dates.js";
+import { todayISO, formatTimeIST } from "../utils/dates.js";
 import { generateId } from "../utils/id.js";
 import { logActivity } from "../data/activityStore.js";
 import { paginate } from "../utils/paginate.js";
@@ -145,7 +145,7 @@ export let Attendance = {
     if (existing) {
       existing.liveStatus = "Working";
       if (!existing.checkIn) {
-        existing.checkIn = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+        existing.checkIn = formatTimeIST(new Date());
       }
       existing.status = "Present";
       await persistAttendanceUpdate(existing);
@@ -159,7 +159,7 @@ export let Attendance = {
       date: todayISO(),
       status: "Present",
       liveStatus: "Working",
-      checkIn: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+      checkIn: formatTimeIST(new Date()),
       checkOut: null,
       late: false,
       hoursWorked: 0,
@@ -176,7 +176,7 @@ export let Attendance = {
     let record = findTodayRecord(employeeId);
     if (!record) return null;
     record.liveStatus = null;
-    record.checkOut = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    record.checkOut = formatTimeIST(new Date());
     await persistAttendanceUpdate(record);
     let employee = Employee.getById(employeeId);
     if (employee) logActivity("check-out", employeeId, `${employee.name} checked out`);
