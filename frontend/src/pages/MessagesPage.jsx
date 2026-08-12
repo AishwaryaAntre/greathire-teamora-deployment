@@ -32,7 +32,7 @@ import ManageChannelModal from "@/components/employee/ManageChannelModal";
 const navItems = [
   { label: "Organization", icon: Building2, to: "/dashboard" },
   { label: "Messages", icon: MessageSquare, active: true, to: "/messages" },
-  { label: "Tasks", icon: ListChecks, to: "/leave" },
+  { label: "Leaves", icon: ListChecks, to: "/leave" },
   { label: "Attendance", icon: CalendarCheck, to: "/attendance" },
   { label: "Analytics", icon: BarChart3, to: "/reports" },
 ];

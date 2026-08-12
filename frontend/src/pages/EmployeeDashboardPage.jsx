@@ -176,7 +176,7 @@ export default function EmployeeDashboardPage() {
             <LeaveBalanceCard balances={leaveBalances} onApply={() => setApplyLeaveOpen(true)} />
             <UpcomingHolidaysCard holidays={upcomingHolidays} />
             <QuickLinksCard links={quickLinks} onLinkClick={handleQuickLink} />
-            <AnnouncementCard {...announcement} onCtaClick={() => navigate("/notifications")} />
+            {/* <AnnouncementCard {...announcement} onCtaClick={() => navigate("/notifications")} /> */}
           </div>
         </main>
       </div>

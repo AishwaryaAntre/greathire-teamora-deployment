@@ -2,7 +2,7 @@ import { Search, Bell, HelpCircle, Moon, Sun, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
 
-export default function EmployeeTopBar({ user }) {
+export default function EmployeeTopBar({ user  }) {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -50,7 +50,7 @@ export default function EmployeeTopBar({ user }) {
         <div className="flex items-center gap-2 border-l border-border pl-4">
           <div className="text-right leading-tight">
             <p className="text-sm font-medium text-foreground">{user.name}</p>
-            <p className="text-xs text-muted-foreground">Admin Access</p>
+            <p className="text-xs text-muted-foreground">{user.role ? `${user.role} Access` : "Access"}</p>
           </div>
           <div className="h-9 w-9 overflow-hidden rounded-full bg-secondary">
             {user.avatarUrl ? (

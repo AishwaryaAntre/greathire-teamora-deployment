@@ -158,9 +158,9 @@ function EditProfileForm({ initial, onCancel, onSave, saving }) {
   );
 }
 
-function PersonalInfoCard({ personalInfo }) {
+function PersonalInfoCard({ personalInfo, className = "" }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+    <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 ${className}`}>
       <div className="flex items-center gap-2 mb-5">
         <User className="w-5 h-5 text-slate-700 dark:text-slate-200" />
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Personal Information</h3>
@@ -178,11 +178,11 @@ function PersonalInfoCard({ personalInfo }) {
   );
 }
 
-function AccountSettingsCard() {
+function AccountSettingsCard({ className = "" }) {
   let navigate = useNavigate();
   let { isDark, toggleTheme } = useTheme();
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+    <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 ${className}`}>
       <div className="flex items-center gap-2 mb-5">
         <ShieldCheck className="w-5 h-5 text-slate-700 dark:text-slate-200" />
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Account Settings</h3>
@@ -348,14 +348,14 @@ export default function MyProfilePage() {
               saving={saving}
             />
           )}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <div className="lg:col-span-2 flex flex-col gap-5">
-              <PersonalInfoCard personalInfo={personalInfo} />
+          <div className="grid grid-cols-1 gap-5">
+            <div className="grid gap-5 lg:grid-cols-[2fr_1fr] lg:items-stretch">
+              <PersonalInfoCard className="h-full" personalInfo={personalInfo} />
+              <AccountSettingsCard className="h-full" />
+            </div>
+            <div className="grid gap-5 lg:grid-cols-2">
               <WorkSummaryCard statCards={statCards} />
               <DocumentsCard documents={documents} />
-            </div>
-            <div className="flex flex-col gap-5">
-              <AccountSettingsCard />
             </div>
           </div>
         </main>

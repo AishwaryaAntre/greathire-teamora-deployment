@@ -8,22 +8,22 @@ export default function LiveWorkforceTable({ workforce = [] }) {
   const navigate = useNavigate();
 
   return (
-    <Card className="flex flex-col p-6">
+    <Card className="flex h-full flex-col p-6 overflow-hidden xl:max-h-[calc(75vh-18rem)]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <LayoutGrid className="h-[18px] w-[18px] text-slate-700 dark:text-slate-200" strokeWidth={2} />
           <h2 className="text-base font-bold text-slate-900 dark:text-white">Live Workforce</h2>
         </div>
-        <button
+        {/* <button
           type="button"
           onClick={() => navigate("/employees")}
           className="text-sm font-semibold text-primary hover:underline"
         >
           View All
-        </button>
+        </button> */}
       </div>
 
-      <div className="mt-5 overflow-x-auto">
+      <div className="mt-5 flex-1 min-h-0 overflow-x-auto overflow-y-auto">
         <table className="w-full min-w-[520px] border-collapse text-left">
           <thead>
             <tr className="text-xs font-semibold tracking-wide text-slate-400 dark:text-slate-500">

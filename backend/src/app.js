@@ -45,38 +45,38 @@ export function createApp() {
   // instead of crossing a local-only development assumption. CLIENT_ORIGIN can
   // contain a comma-separated list of exact origins for Vercel/Render combos.
   
-  const clientOrigins = (process.env.CLIENT_ORIGIN || process.env.CORS_ORIGIN || "")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-  if (!clientOrigins.length) {
+  // const clientOrigins = (process.env.CLIENT_ORIGIN || process.env.CORS_ORIGIN || "")
+  //   .split(",")
+  //   .map((origin) => origin.trim())
+  //   .filter(Boolean);
+  // if (!clientOrigins.length) {
   
-  // let clientOrigin = process.env.CLIENT_ORIGIN;
-  // if (!clientOrigin) {
+  let clientOrigin = process.env.CLIENT_ORIGIN;
+  if (!clientOrigin) {
   if (process.env.NODE_ENV === "production") {
       throw new Error("CLIENT_ORIGIN must be set in production (no wildcard CORS allowed).");
     }
-    clientOrigins.push("http://localhost:5173");
-      // clientOrigin = "http://localhost:5173";
+    //clientOrigins.push("http://localhost:5173");
+      clientOrigin = "http://localhost:5173";
   }
 
   app.use(
     cors({
-       // origin: clientOrigin,
-      origin: (origin, callback) => {
-        if (!origin) {
-          callback(null, true);
-          return;
-        }
+        origin: clientOrigin,
+      // origin: (origin, callback) => {
+      //   if (!origin) {
+      //     callback(null, true);
+      //     return;
+      //   }
 
-        if (clientOrigins.includes(origin)) {
-          callback(null, true);
-          return;
-        }
+        // if (clientOrigins.includes(origin)) {
+        //   callback(null, true);
+        //   return;
+        // }
 
-        logger.warn({ origin, allowed: clientOrigins }, "[cors] denied origin");
-        callback(new Error(`Origin ${origin} is not allowed by CORS`));
-      },
+      //   logger.warn({ origin, allowed: clientOrigins }, "[cors] denied origin");
+      //   callback(new Error(`Origin ${origin} is not allowed by CORS`));
+      // },
 
       
       credentials: true,

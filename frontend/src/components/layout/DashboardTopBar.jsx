@@ -1,8 +1,11 @@
-import { Search, ShieldCheck, HelpCircle, CircleUserRound, Menu } from "lucide-react";
+import { Search, ShieldCheck, HelpCircle, CircleUserRound, Menu, Moon, Sun } from "lucide-react";
 import IconButton from "./IconButton";
 import { Link } from "react-router-dom";
+import { useTheme } from "@/lib/ThemeContext";
 
 export default function DashboardTopBar() {
+  const { isDark, toggleTheme } = useTheme();
+
   function openSidebar() {
     window.dispatchEvent(new CustomEvent("teamora:open-sidebar"));
   }
@@ -24,6 +27,15 @@ export default function DashboardTopBar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+          className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+        >
+          {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </button>
+
         <Link to="/security">
           <IconButton icon={ShieldCheck} label="Security" />
         </Link>

@@ -64,7 +64,7 @@ export default function DashboardPage() {
 
           <MetricRow metrics={data.metrics} />
 
-          <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-3 items-stretch">
             <div className="xl:col-span-2">
               <LiveWorkforceTable workforce={data.liveWorkforce} />
             </div>
