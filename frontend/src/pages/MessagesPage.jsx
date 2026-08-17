@@ -33,7 +33,6 @@ const navItems = [
   { label: "Organization", icon: Building2, to: "/dashboard" },
   { label: "Messages", icon: MessageSquare, active: true, to: "/messages" },
   { label: "Leaves", icon: ListChecks, to: "/leave" },
-  { label: "Attendance", icon: CalendarCheck, to: "/attendance" },
   { label: "Analytics", icon: BarChart3, to: "/reports" },
 ];
 

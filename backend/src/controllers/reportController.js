@@ -21,6 +21,11 @@ export let reportController = {
     res.json({ success: true, data: Report.listDepartments() });
   },
 
+  // GET /api/reports/project-completion
+  getProjectCompletionStats: (req, res) => {
+    res.json({ success: true, data: Report.getProjectCompletionStats() });
+  },
+
   // POST /api/reports/generate  { range, department, title }
   generate: async (req, res) => {
     let { range, department, title } = req.body;

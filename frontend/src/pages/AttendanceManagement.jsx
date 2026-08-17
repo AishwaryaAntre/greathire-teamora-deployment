@@ -236,9 +236,7 @@ function LiveAttendanceTable({ rows }) {
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-slate-900 dark:text-white">Live Attendance</h3>
-        <button onClick={() => navigate("/employees")} className="text-sm font-medium text-blue-600 hover:underline">
-          View All
-        </button>
+        
       </div>
 
       <div className="overflow-x-auto">
@@ -345,7 +343,7 @@ export default function AttendanceManagement() {
   }
 
   return (
-    <div className="w-screen h-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950">
+    <div className="w-screen h-screen overflow-hidden flex bg-background dark:bg-slate-950">
       <MasterSidebar />
 
       <div className="flex-1 flex flex-col min-w-0 h-full">

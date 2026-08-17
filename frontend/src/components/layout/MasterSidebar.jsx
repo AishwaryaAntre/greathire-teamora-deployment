@@ -120,7 +120,7 @@ export default function MasterSidebar() {
       await attendanceApi.checkIn(user.employeeId).catch(() => {});
     }
     refreshStatus();
-    navigate("/attendance");
+    navigate("/employee-dashboard");
   }
 
   async function handleLogout() {

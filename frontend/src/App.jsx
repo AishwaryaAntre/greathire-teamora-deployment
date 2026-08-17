@@ -4,6 +4,8 @@ import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import EmployeeDashboardPage from "@/pages/EmployeeDashboardPage";
 import EmployeesListPage from "@/pages/EmployeesListPage";
+import ProjectManagement from "@/pages/ProjectManagement";
+import MyProjects from "@/pages/MyProjects";
 import AttendanceManagement from "@/pages/AttendanceManagement";
 import LeaveManagement from "@/pages/LeaveManagement";
 import EmployeeProfilePage from "@/pages/EmployeeProfilePage";
@@ -14,6 +16,16 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import ProtectedRoute from "@/components/routing/ProtectedRoute";
 import PublicOnlyRoute from "@/components/routing/PublicOnlyRoute";
 import PageLoading from "@/components/routing/PageLoading";
+import { useAuth } from "@/lib/AuthContext";
+
+// Renders the admin project management UI or the employee's read-only "My
+// Projects" view based on role, so a single /projects route works for both
+// sides (same pattern the sidebar/nav already assumes for e.g. /attendance,
+// /leave).
+function ProjectsRoute() {
+  const { user } = useAuth();
+  return user?.role === "admin" ? <ProjectManagement /> : <MyProjects />;
+}
 
 // Code-split the two heaviest pages: Report pulls in the recharts library,
 // and Messages is one of the larger standalone views. Both are lazy-loaded
@@ -33,8 +45,9 @@ export default function App() {
         <Route path="/reports" element={<ProtectedRoute adminOnly><Report /></ProtectedRoute>} />
 
         {/* Any authenticated user */}
+        <Route path="/projects" element={<ProtectedRoute><ProjectsRoute /></ProtectedRoute>} />
         <Route path="/employee-dashboard" element={<ProtectedRoute><EmployeeDashboardPage /></ProtectedRoute>} />
-        <Route path="/attendance" element={<ProtectedRoute><AttendanceManagement /></ProtectedRoute>} />
+        <Route path="/attendance" element={<ProtectedRoute adminOnly><AttendanceManagement /></ProtectedRoute>} />
         <Route path="/leave" element={<ProtectedRoute><LeaveManagement /></ProtectedRoute>} />
         <Route path="/employees" element={<ProtectedRoute><EmployeesListPage /></ProtectedRoute>} />
         <Route path="/employees/:id" element={<ProtectedRoute><EmployeeProfilePage /></ProtectedRoute>} />

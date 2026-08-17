@@ -23,6 +23,7 @@ import employeeDashboardRoutes from "./routes/employeeDashboardRoutes.js";
 import employeeProfileRoutes from "./routes/employeeProfileRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import projectRoutes from "./routes/projectRoutes.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
@@ -107,6 +108,7 @@ export function createApp() {
   app.use("/api/employees", employeeProfileRoutes);
   app.use("/api/notifications", notificationRoutes);
   app.use("/api/messages", messageRoutes);
+  app.use("/api/projects", projectRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

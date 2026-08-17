@@ -7,7 +7,6 @@ import { useAuth } from "@/lib/AuthContext";
 
 const PATH_BY_ID = {
   dashboard: "/employee-dashboard",
-  attendance: "/attendance",
   leave: "/leave",
   profile: "/profile",
   notifications: "/notifications",
@@ -23,7 +22,7 @@ export default function EmployeeSidebar() {
     if (user?.employeeId) {
       await attendanceApi.checkIn(user.employeeId).catch(() => {});
     }
-    navigate("/attendance");
+    navigate("/employee-dashboard");
   }
 
   async function handleLogout() {

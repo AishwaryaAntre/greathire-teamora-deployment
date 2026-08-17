@@ -18,6 +18,7 @@ router.get(
 );
 router.get("/working-hours", validate(reportRangeQuerySchema, "query"), asyncHandler(reportController.getWorkingHours));
 router.get("/departments", asyncHandler(reportController.listDepartments));
+router.get("/project-completion", asyncHandler(reportController.getProjectCompletionStats));
 router.get("/", asyncHandler(reportController.listGenerated));
 router.post("/generate", validate(reportGenerateSchema), asyncHandler(reportController.generate));
 

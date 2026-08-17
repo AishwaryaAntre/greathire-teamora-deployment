@@ -27,6 +27,7 @@ import {
   MessageSquare,
   Bell,
   Settings,
+  Briefcase,
 } from "lucide-react";
 
 // Routes below are verified against frontend/src/App.jsx.
@@ -41,6 +42,7 @@ import {
 export const ADMIN_NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
   { label: "Employees", href: "/employees", icon: Users },
+  { label: "Projects", href: "/projects", icon: Briefcase },
   { label: "Attendance", href: "/attendance", icon: Fingerprint },
   { label: "Leave Management", href: "/leave", icon: CalendarCheck },
   { label: "Reports & Analytics", href: "/reports", icon: BarChart3 },
@@ -50,7 +52,7 @@ export const ADMIN_NAV_ITEMS = [
 
 export const EMPLOYEE_NAV_ITEMS = [
   { label: "Dashboard", href: "/employee-dashboard", icon: LayoutGrid },
-  { label: "Attendance", href: "/attendance", icon: Fingerprint },
+  { label: "Projects", href: "/projects", icon: Briefcase },
   { label: "Leave", href: "/leave", icon: CalendarCheck },
   { label: "Messages", href: "/messages", icon: MessageSquare },
   { label: "Notifications", href: "/notifications", icon: Bell },

@@ -2,6 +2,7 @@ import { EmployeeProfile } from "../models/EmployeeProfile.js";
 import { Employee } from "../models/Employee.js";
 import { Attendance } from "../models/Attendance.js";
 import { LeaveRequest } from "../models/LeaveRequest.js";
+import { Project } from "../models/Project.js";
 import { CURRENT_EMPLOYEE_ID, employees } from "../data/employees.js";
 import { UsersStore } from "../data/usersStore.js";
 import { hashPassword } from "../utils/password.js";
@@ -61,6 +62,7 @@ export let employeeProfileController = {
       Attendance.deleteAllForEmployee(id),
       LeaveRequest.deleteAllForEmployee(id),
       UsersStore.deleteByEmployeeId(id),
+      Project.removeEmployeeEverywhere(id),
     ]);
     await Employee.remove(id);
 

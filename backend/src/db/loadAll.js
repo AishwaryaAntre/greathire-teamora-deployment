@@ -7,6 +7,7 @@ import { loadMessaging } from "../data/messagesStore.js";
 import { loadGeneratedReports } from "../data/reportsStore.js";
 import { loadHolidays } from "../data/holidaysStore.js";
 import { loadAnnouncements } from "../data/announcementsStore.js";
+import { loadProjects } from "../data/projectsStore.js";
 import { logger } from "../config/logger.js";
 
 /** Hydrates every module-level cache from MongoDB. Employees must load first —
@@ -23,6 +24,7 @@ export async function loadAllData() {
     loadGeneratedReports(),
     loadHolidays(),
     loadAnnouncements(),
+    loadProjects(),
   ]);
   logger.info("[db] all collections loaded into memory cache");
 }

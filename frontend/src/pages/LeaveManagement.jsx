@@ -379,7 +379,7 @@ export default function LeaveManagement() {
   const topBarUser = { name: user?.name || "—", role: user?.role || "Employee" };
 
   return (
-    <div className="w-screen h-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950">
+    <div className="w-screen h-screen overflow-hidden flex bg-background dark:bg-slate-950">
       <MasterSidebar />
 
       <div className="flex-1 flex flex-col min-w-0 h-full">

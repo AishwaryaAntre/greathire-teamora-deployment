@@ -5,6 +5,7 @@ export const reportsApi = {
   getAttendanceTrends: (params) => api.get("/reports/attendance-trends", params),
   getWorkingHours: (params) => api.get("/reports/working-hours", params),
   listDepartments: () => api.get("/reports/departments"),
+  getProjectCompletion: () => api.get("/reports/project-completion"),
   listGenerated: () => api.get("/reports"),
   generate: (payload) => api.post("/reports/generate", payload),
 };

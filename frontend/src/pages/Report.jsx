@@ -11,12 +11,19 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Legend, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { reportsApi } from "@/lib/api/reports";
 import MasterSidebar from "@/components/layout/MasterSidebar";
 
 const RANGE_TO_API = { "12 Months": "12m", "30 Days": "30d", "7 Days": "7d" };
 const STAT_ICON_BY_LABEL = { "TOTAL EMPLOYEES": Users, "AVG ATTENDANCE": FileBarChart2 };
+const PROJECT_STATUS_COLORS = {
+  Active: "#2563eb",
+  Working: "#f59e0b",
+  Completed: "#10b981",
+  "On Hold": "#94a3b8",
+  Cancelled: "#ef4444",
+};
 
 function TopBar() {
   const navigate = useNavigate();
@@ -197,6 +204,41 @@ function Charts({ attendanceTrends, workingHours }) {
   );
 }
 
+function ProjectCompletionChart({ completionStats }) {
+  const byStatus = (completionStats.byStatus || []).filter((s) => s.value > 0);
+  const total = completionStats.total || 0;
+  const completedPct = total ? Math.round((completionStats.completed / total) * 100) : 0;
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-5 mt-4">
+      <div className="flex items-start justify-between mb-1">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Projects: Completed vs Not Completed</h3>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Breakdown by project status, all projects</p>
+        </div>
+        <span className="text-blue-600 font-bold text-base">{completedPct}% completed</span>
+      </div>
+      <div style={{ height: 260 }} className="mt-4">
+        {total === 0 ? (
+          <div className="h-full flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">No projects yet.</div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={byStatus} dataKey="value" nameKey="status" innerRadius={60} outerRadius={95} paddingAngle={2}>
+                {byStatus.map((entry) => (
+                  <Cell key={entry.status} fill={PROJECT_STATUS_COLORS[entry.status] || "#94a3b8"} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Report() {
   const [activeRange, setActiveRange] = useState("12 Months");
   const [department, setDepartment] = useState("All Departments");
@@ -204,19 +246,22 @@ export default function Report() {
   const [stats, setStats] = useState([]);
   const [attendanceTrends, setAttendanceTrends] = useState([]);
   const [workingHours, setWorkingHours] = useState({ series: [], overallAvg: 0 });
+  const [completionStats, setCompletionStats] = useState({ total: 0, completed: 0, notCompleted: 0, byStatus: [] });
   const [generating, setGenerating] = useState(false);
 
   const refresh = useCallback(async () => {
     let range = RANGE_TO_API[activeRange];
     let params = { range, department: department === "All Departments" ? undefined : department };
-    let [statsData, trendsData, hoursData] = await Promise.all([
+    let [statsData, trendsData, hoursData, completionData] = await Promise.all([
       reportsApi.getStats(params),
       reportsApi.getAttendanceTrends(params),
       reportsApi.getWorkingHours(params),
+      reportsApi.getProjectCompletion(),
     ]);
     setStats(statsData);
     setAttendanceTrends(trendsData);
     setWorkingHours(hoursData);
+    setCompletionStats(completionData);
   }, [activeRange, department]);
 
   useEffect(() => {
@@ -256,6 +301,7 @@ export default function Report() {
           />
           <StatsCards stats={stats} />
           <Charts attendanceTrends={attendanceTrends} workingHours={workingHours} />
+          <ProjectCompletionChart completionStats={completionStats} />
         </main>
       </div>
     </div>

@@ -9,7 +9,6 @@ greathire-teamora/
 ├── frontend/   React 18 + Vite + Tailwind CSS (shadcn/ui conventions)
 └── backend/    Node.js + Express API (in-memory data by default, MongoDB-ready)
 ```
-
 Each app has its own detailed README — [`frontend/README.md`](./frontend/README.md) and
 [`backend/README.md`](./backend/README.md) — with full folder structures and API
 references. This top-level README is the fastest way to get both running together and
@@ -35,11 +34,10 @@ on startup. See `backend/.env.example` if you want to point it at MongoDB instea
 
 **2. Frontend** (`http://localhost:5173`)
 
-```bash
 cd frontend
 npm install
 npm run dev
-```
+
 
 **3. Sign in**
 

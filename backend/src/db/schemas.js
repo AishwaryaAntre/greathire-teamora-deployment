@@ -217,6 +217,22 @@ let AnnouncementSchema = new Schema(
   base
 );
 
+let ProjectSchema = new Schema(
+  {
+    id: { type: String, unique: true, index: true },
+    name: String,
+    description: { type: String, default: "" },
+    teamMemberIds: [String],
+    projectManagerId: { type: String, index: true },
+    endDate: String,
+    importance: { type: String, default: "Medium" }, // Low | Medium | High
+    status: { type: String, default: "Active", index: true }, // Active | Working | Completed | On Hold | Cancelled
+    createdBy: { type: String, default: null },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+  },
+  base
+);
+
 let HolidaySchema = new Schema(
   {
     date: String,
@@ -242,3 +258,4 @@ export let ReadStateModel = model("ReadState", ReadStateSchema);
 export let ReportModel = model("Report", ReportSchema);
 export let AnnouncementModel = model("Announcement", AnnouncementSchema);
 export let HolidayModel = model("Holiday", HolidaySchema);
+export let ProjectModel = model("Project", ProjectSchema);

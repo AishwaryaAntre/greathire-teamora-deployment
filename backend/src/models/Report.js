@@ -1,5 +1,6 @@
 import { Attendance } from "./Attendance.js";
 import { Employee } from "./Employee.js";
+import { Project } from "./Project.js";
 import { generatedReports, persistNewReport } from "../data/reportsStore.js";
 import { generateId } from "../utils/id.js";
 import { rangeToCutoff, toISODate, todayISO, addDays } from "../utils/dates.js";
@@ -106,6 +107,14 @@ export let Report = {
 
   listDepartments() {
     return Employee.listDepartments();
+  },
+
+  /** Maps to the Reports & Analytics "Projects: Completed vs Not Completed"
+   * chart. Delegates to Project.getCompletionStats() (Session 1) — range/
+   * department filters don't apply here since projects aren't attendance
+   * rows; this is a simple current-state snapshot across all projects. */
+  getProjectCompletionStats() {
+    return Project.getCompletionStats();
   },
 
   /** Simulates kicking off an async report job (the "Generate" button). */
