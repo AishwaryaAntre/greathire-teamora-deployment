@@ -33,6 +33,8 @@ import { Label } from "@/components/ui/label";
 import ConfirmDeleteEmployeeModal from "@/components/employee/ConfirmDeleteEmployeeModal";
 import PageLoading from "@/components/routing/PageLoading";
 import AttendanceCalendar from "@/components/employee/AttendanceCalendar";
+import ScheduleCalendar from "@/components/employee/ScheduleCalendar";
+import { scheduleApi } from "@/lib/api/schedule";
 
 // Backend sends icon names as plain strings — resolve to a component client-side.
 const ICON_BY_NAME = { Percent, Clock, CalendarCheck2, CalendarX2, CalendarMinus2, LogIn, Award };
@@ -371,6 +373,9 @@ export default function EmployeeProfilePage() {
   const [deleting, setDeleting] = useState(false);
   const [calendarCursor, setCalendarCursor] = useState(null); // { year, month } | null = current month
   const [attendanceMonth, setAttendanceMonth] = useState(null);
+  const [scheduleCursor, setScheduleCursor] = useState(null); // { year, month } | null = current month
+  const [scheduleMonth, setScheduleMonth] = useState(null);
+  const [scheduleSelectedDayISO, setScheduleSelectedDayISO] = useState(null);
   const isAdmin = user?.role === "admin";
 
   function loadBundle() {
@@ -394,6 +399,18 @@ export default function EmployeeProfilePage() {
     };
   }, [id, calendarCursor]);
 
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    scheduleApi
+      .getMonth({ employeeId: id, ...(scheduleCursor ? { year: scheduleCursor.year, month: scheduleCursor.month } : {}) })
+      .then((month) => !cancelled && setScheduleMonth(month))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [id, scheduleCursor]);
+
   function shiftCalendarMonth(delta) {
     const now = new Date();
     const base = calendarCursor || { year: now.getFullYear(), month: now.getMonth() };
@@ -407,6 +424,21 @@ export default function EmployeeProfilePage() {
       year += 1;
     }
     setCalendarCursor({ year, month });
+  }
+
+  function shiftScheduleMonth(delta) {
+    const now = new Date();
+    const base = scheduleCursor || { year: now.getFullYear(), month: now.getMonth() };
+    let month = base.month + delta;
+    let year = base.year;
+    if (month < 0) {
+      month = 11;
+      year -= 1;
+    } else if (month > 11) {
+      month = 0;
+      year += 1;
+    }
+    setScheduleCursor({ year, month });
   }
 
   if (!bundle) {
@@ -439,6 +471,24 @@ export default function EmployeeProfilePage() {
           ) : (
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 h-64 flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">
               Loading attendance calendar…
+            </div>
+          )}
+        </div>
+        <div className="mb-4">
+          {scheduleMonth ? (
+            <ScheduleCalendar
+              month={scheduleMonth}
+              onPrevMonth={() => shiftScheduleMonth(-1)}
+              onNextMonth={() => shiftScheduleMonth(1)}
+              selectedDayISO={scheduleSelectedDayISO}
+              onSelectDay={setScheduleSelectedDayISO}
+              canEdit={false}
+              title="Schedule"
+              subtitle={`Tasks and meetings ${profile.name} has scheduled.`}
+            />
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 h-64 flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">
+              Loading schedule…
             </div>
           )}
         </div>

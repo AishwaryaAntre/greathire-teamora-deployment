@@ -52,7 +52,7 @@ export const ADMIN_NAV_ITEMS = [
 
 export const EMPLOYEE_NAV_ITEMS = [
   { label: "Dashboard", href: "/employee-dashboard", icon: LayoutGrid },
-  { label: "Projects", href: "/projects", icon: Briefcase },
+  { label: "Todo list", href: "/projects", icon: Briefcase },
   { label: "Leave", href: "/leave", icon: CalendarCheck },
   { label: "Messages", href: "/messages", icon: MessageSquare },
   { label: "Notifications", href: "/notifications", icon: Bell },

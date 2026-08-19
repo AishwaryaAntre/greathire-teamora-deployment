@@ -1,10 +1,18 @@
-import { Search, ShieldCheck, HelpCircle, CircleUserRound, Menu, Moon, Sun } from "lucide-react";
+import { Search, ShieldCheck, HelpCircle, CircleUserRound, Menu, Moon, Sun, LogOut } from "lucide-react";
 import IconButton from "./IconButton";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
 
 export default function DashboardTopBar() {
   const { isDark, toggleTheme } = useTheme();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    await logout();
+    navigate("/", { replace: true });
+  }
 
   function openSidebar() {
     window.dispatchEvent(new CustomEvent("teamora:open-sidebar"));
@@ -47,6 +55,16 @@ export default function DashboardTopBar() {
         <Link to="/employee-dashboard">
           <IconButton icon={CircleUserRound} label="Account" />
         </Link>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          aria-label="Log out"
+          title="Log out"
+          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+        >
+          <LogOut className="h-5 w-5" />
+        </button>
       </div>
     </header>
   );

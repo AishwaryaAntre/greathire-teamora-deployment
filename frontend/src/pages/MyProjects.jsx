@@ -4,10 +4,13 @@ import MasterSidebar from "@/components/layout/MasterSidebar";
 import EmployeeTopBar from "@/components/layout/EmployeeTopBar";
 import { Card } from "@/components/ui/card";
 import { projectsApi, PROJECT_STATUS_OPTIONS } from "@/lib/api/projects";
+import { scheduleApi } from "@/lib/api/schedule";
 import { useAuth } from "@/lib/AuthContext";
 import PageLoading from "@/components/routing/PageLoading";
 import PageError from "@/components/routing/PageError";
 import { StatusBadge, ImportanceBadge, formatDateShort } from "@/lib/projectDisplay";
+import ScheduleCalendar from "@/components/employee/ScheduleCalendar";
+import ScheduleFormModal from "@/components/employee/ScheduleFormModal";
 
 /** Inline status control shown only to the project's assigned project
  * manager — everyone else on the project sees a plain read-only badge.
@@ -112,6 +115,11 @@ export default function MyProjects() {
   const [projects, setProjects] = useState(null);
   const [error, setError] = useState("");
 
+  const [scheduleMonth, setScheduleMonth] = useState(null);
+  const [monthCursor, setMonthCursor] = useState(null); // { year, month } | null = current month
+  const [selectedDayISO, setSelectedDayISO] = useState(null);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+
   function loadProjects() {
     projectsApi
       .getAll()
@@ -119,9 +127,36 @@ export default function MyProjects() {
       .catch((err) => setError(err.message));
   }
 
+  function loadScheduleMonth() {
+    scheduleApi
+      .getMonth(monthCursor ? { year: monthCursor.year, month: monthCursor.month } : undefined)
+      .then(setScheduleMonth)
+      .catch(() => {});
+  }
+
   useEffect(() => {
     loadProjects();
   }, []);
+
+  useEffect(() => {
+    loadScheduleMonth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthCursor]);
+
+  function shiftMonth(delta) {
+    const now = new Date();
+    const base = monthCursor || { year: now.getFullYear(), month: now.getMonth() };
+    let month = base.month + delta;
+    let year = base.year;
+    if (month < 0) {
+      month = 11;
+      year -= 1;
+    } else if (month > 11) {
+      month = 0;
+      year += 1;
+    }
+    setMonthCursor({ year, month });
+  }
 
   function handleUpdated(updated) {
     setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
@@ -168,8 +203,35 @@ export default function MyProjects() {
               ))}
             </div>
           )}
+
+          <div>
+            {scheduleMonth ? (
+              <ScheduleCalendar
+                month={scheduleMonth}
+                onPrevMonth={() => shiftMonth(-1)}
+                onNextMonth={() => shiftMonth(1)}
+                selectedDayISO={selectedDayISO}
+                onSelectDay={setSelectedDayISO}
+                canEdit
+                onAddSchedule={() => setScheduleModalOpen(true)}
+                title="My Schedule"
+                subtitle="Schedule a task or meeting on a specific date — visible on your profile to teammates and admins too."
+              />
+            ) : (
+              <Card className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                Loading your schedule…
+              </Card>
+            )}
+          </div>
         </main>
       </div>
+
+      <ScheduleFormModal
+        open={scheduleModalOpen}
+        defaultDate={selectedDayISO}
+        onClose={() => setScheduleModalOpen(false)}
+        onSaved={loadScheduleMonth}
+      />
     </div>
   );
 }

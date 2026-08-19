@@ -242,6 +242,26 @@ let HolidaySchema = new Schema(
   base
 );
 
+let ScheduleSchema = new Schema(
+  {
+    id: { type: String, unique: true, index: true },
+    employeeId: { type: String, index: true },
+    type: { type: String, default: "task" }, // task | meeting
+    title: String,
+    description: { type: String, default: "" },
+    date: { type: String, index: true },
+    startTime: { type: String, default: null },
+    endTime: { type: String, default: null },
+    location: { type: String, default: "" },
+    participantIds: { type: [String], default: [] },
+    projectId: { type: String, default: null, index: true },
+    status: { type: String, default: "scheduled" }, // scheduled | completed | cancelled
+    createdBy: { type: String, default: null },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+  },
+  base
+);
+
 export let EmployeeModel = model("Employee", EmployeeSchema);
 export let UserModel = model("User", UserSchema);
 export let PasswordResetTokenModel = model("PasswordResetToken", PasswordResetTokenSchema);
@@ -259,3 +279,4 @@ export let ReportModel = model("Report", ReportSchema);
 export let AnnouncementModel = model("Announcement", AnnouncementSchema);
 export let HolidayModel = model("Holiday", HolidaySchema);
 export let ProjectModel = model("Project", ProjectSchema);
+export let ScheduleModel = model("Schedule", ScheduleSchema);
