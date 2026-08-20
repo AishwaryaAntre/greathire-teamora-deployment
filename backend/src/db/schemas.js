@@ -51,9 +51,14 @@ let UserSchema = new Schema(
 
 let PasswordResetTokenSchema = new Schema(
   {
-    token: { type: String, unique: true, index: true },
-    userId: String,
+    // SHA-256 hash of the raw token — mirrors RefreshTokenSchema below. Only
+    // the raw value is ever emailed to the user; a DB leak alone can't be
+    // replayed to reset someone's password.
+    tokenHash: { type: String, unique: true, index: true },
+    userId: { type: String, index: true },
     expiresAt: String,
+    used: { type: Boolean, default: false },
+    createdAt: { type: String, default: () => new Date().toISOString() },
   },
   base
 );

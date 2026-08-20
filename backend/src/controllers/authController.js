@@ -4,7 +4,7 @@ import { Employee } from "../models/Employee.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { signAccessToken } from "../utils/jwt.js";
 import { ApiError } from "../middleware/errorHandler.js";
-import { logger } from "../config/logger.js";
+import { sendPasswordResetEmail } from "../config/email.js";
 
 function toPublicUser(user) {
   let employee = user.employeeId ? Employee.getById(user.employeeId) : null;
@@ -82,19 +82,25 @@ export let authController = {
   },
 
   // POST /api/auth/forgot-password
+  // Shared by both Admin and Employee logins — the account is looked up by
+  // email alone, so there's no separate admin/employee reset flow.
   forgotPassword: async (req, res) => {
     let { email } = req.body;
 
     let user = await UsersStore.findByEmail(email);
-    // Always respond the same way whether or not the account exists, to avoid
-    // leaking which emails are registered.
+    // Always respond the same way whether or not the account exists, and do
+    // the same amount of work either way, to avoid leaking which emails are
+    // registered (timing- and response-based enumeration).
     if (user) {
-      let token = await UsersStore.createPasswordResetToken(user.id);
-      // No email transport wired up yet — log it instead so it's easy to grab
-      // during local development/testing.
-      logger.debug({ email }, `[auth] Password reset requested. Reset token: ${token}`);
+      let rawToken = await UsersStore.createPasswordResetToken(user.id);
+      let clientOrigin = (process.env.CLIENT_ORIGIN || "http://localhost:5173").replace(/\/$/, "");
+      let resetUrl = `${clientOrigin}/reset-password?token=${encodeURIComponent(rawToken)}`;
+      await sendPasswordResetEmail({ to: user.email, resetUrl });
     }
-    res.json({ success: true, message: "If an account exists for that email, a reset link has been sent." });
+    res.json({
+      success: true,
+      message: "If an account exists with this email, a password reset link has been sent.",
+    });
   },
 
   // POST /api/auth/reset-password
@@ -102,7 +108,7 @@ export let authController = {
     let { token, password } = req.body;
 
     let entry = await UsersStore.consumePasswordResetToken(token);
-    if (!entry) throw new ApiError(400, "Invalid or expired reset token");
+    if (!entry) throw new ApiError(400, "This reset link is invalid or has expired. Please request a new one.");
 
     let passwordHash = await hashPassword(password);
     await UsersStore.updatePassword(entry.userId, passwordHash);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,6 @@ import SocialLoginButton from "./SocialLoginButton";
 import { GoogleIcon, MicrosoftIcon } from "./BrandIcons";
 import { useAuth } from "@/lib/AuthContext";
 import { API_BASE_URL } from "@/lib/apiClient";
-import { authApi } from "@/lib/api/auth";
 
 export default function LoginForm() {
   let navigate = useNavigate();
@@ -21,8 +20,6 @@ export default function LoginForm() {
   let [rememberMe, setRememberMe] = useState(false);
   let [error, setError] = useState("");
   let [submitting, setSubmitting] = useState(false);
-  let [forgotPasswordStatus, setForgotPasswordStatus] = useState("");
-  let [sendingReset, setSendingReset] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -35,23 +32,6 @@ export default function LoginForm() {
       setError(err.message || "Unable to sign in. Please check your credentials.");
     } finally {
       setSubmitting(false);
-    }
-  }
-
-  async function handleForgotPassword() {
-    if (!email) {
-      setForgotPasswordStatus("Enter your work email above first, then click this again.");
-      return;
-    }
-    setSendingReset(true);
-    setForgotPasswordStatus("");
-    try {
-      await authApi.forgotPassword(email);
-      setForgotPasswordStatus("If an account exists for that email, a reset link has been sent.");
-    } catch (err) {
-      setForgotPasswordStatus(err.message || "Something went wrong. Please try again.");
-    } finally {
-      setSendingReset(false);
     }
   }
 
@@ -87,18 +67,10 @@ export default function LoginForm() {
       <div className="mt-5 space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <button
-            type="button"
-            onClick={handleForgotPassword}
-            disabled={sendingReset}
-            className="text-sm font-semibold text-primary hover:underline disabled:opacity-60"
-          >
-            {sendingReset ? "Sending..." : "Forgot Password?"}
-          </button>
+          <Link to="/forgot-password" className="text-sm font-semibold text-primary hover:underline">
+            Forgot Password?
+          </Link>
         </div>
-        {forgotPasswordStatus && (
-          <p className="text-xs text-muted-foreground">{forgotPasswordStatus}</p>
-        )}
         <div className="relative">
           <Input
             id="password"

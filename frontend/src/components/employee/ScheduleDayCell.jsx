@@ -14,7 +14,7 @@ export default function ScheduleDayCell({ day, selected, onSelect }) {
       type="button"
       onClick={() => onSelect?.(day)}
       className={cn(
-        "flex min-h-[2.5rem] flex-col rounded-lg border p-0.5 text-left transition-colors",
+        "flex min-h-[4.5rem] flex-col rounded-lg border p-1.5 text-left transition-colors",
         !inMonth && "opacity-40",
         selected ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30" : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60",
         isToday && !selected && "ring-1 ring-blue-400",
@@ -23,7 +23,7 @@ export default function ScheduleDayCell({ day, selected, onSelect }) {
     >
       <span
         className={cn(
-          "mb-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md text-xs font-semibold",
+          "mb-1 inline-flex h-6 w-6 items-center justify-center rounded-md text-xs font-semibold",
           isToday ? "bg-blue-600 text-white" : "text-slate-700 dark:text-slate-200"
         )}
       >

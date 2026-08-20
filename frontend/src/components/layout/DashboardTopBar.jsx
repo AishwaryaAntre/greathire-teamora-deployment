@@ -1,18 +1,10 @@
-import { Search, ShieldCheck, HelpCircle, CircleUserRound, Menu, Moon, Sun, LogOut } from "lucide-react";
+import { ShieldCheck, HelpCircle, CircleUserRound, Menu, Moon, Sun } from "lucide-react";
 import IconButton from "./IconButton";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/lib/AuthContext";
+import { Link } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
 
 export default function DashboardTopBar() {
   const { isDark, toggleTheme } = useTheme();
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
-  async function handleLogout() {
-    await logout();
-    navigate("/", { replace: true });
-  }
 
   function openSidebar() {
     window.dispatchEvent(new CustomEvent("teamora:open-sidebar"));
@@ -24,14 +16,6 @@ export default function DashboardTopBar() {
         <button type="button" className="rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 lg:hidden dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" onClick={openSidebar} aria-label="Open navigation">
           <Menu className="h-4 w-4" />
         </button>
-        <div className="relative w-full max-w-md">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-          <input
-            type="search"
-            placeholder="Search employees, reports..."
-            className="h-10 w-full rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-ring/30"
-          />
-        </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">
@@ -55,16 +39,6 @@ export default function DashboardTopBar() {
         <Link to="/employee-dashboard">
           <IconButton icon={CircleUserRound} label="Account" />
         </Link>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          aria-label="Log out"
-          title="Log out"
-          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-        >
-          <LogOut className="h-5 w-5" />
-        </button>
       </div>
     </header>
   );

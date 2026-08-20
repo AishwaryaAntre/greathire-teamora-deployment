@@ -2,6 +2,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
 import { setupTestApp, teardownTestApp, loginAs, ADMIN_EMAIL, EMPLOYEE_EMAIL } from "./helpers/setup.js";
+import { UsersStore } from "../src/data/usersStore.js";
 
 let app;
 
@@ -109,4 +110,59 @@ test("forgot-password responds identically for a real and a fake email (no accou
   assert.equal(real.status, 200);
   assert.equal(fake.status, 200);
   assert.equal(real.body.message, fake.body.message);
+});
+
+test("reset-password rejects a garbage/unknown token", async () => {
+  let res = await request(app).post("/api/auth/reset-password").send({ token: "not-a-real-token", password: "NewPassword123" });
+  assert.equal(res.status, 400);
+});
+
+test("reset-password: full flow — new password works, old password stops working, token can't be reused, works for both admin and employee", async () => {
+  for (let email of [ADMIN_EMAIL, EMPLOYEE_EMAIL]) {
+    let user = await UsersStore.findByEmail(email);
+    let rawToken = await UsersStore.createPasswordResetToken(user.id);
+
+    let resetRes = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ token: rawToken, password: "BrandNewPassword123" });
+    assert.equal(resetRes.status, 200);
+
+    // Old password must no longer work.
+    let oldLogin = await request(app)
+      .post("/api/auth/login")
+      .send({ email, password: process.env.SEED_USER_PASSWORD || "password123" });
+    assert.equal(oldLogin.status, 401);
+
+    // New password works.
+    let newLogin = await request(app).post("/api/auth/login").send({ email, password: "BrandNewPassword123" });
+    assert.equal(newLogin.status, 200);
+
+    // The same token can't be replayed.
+    let replay = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ token: rawToken, password: "AnotherPassword123" });
+    assert.equal(replay.status, 400);
+
+    // Restore the seeded password so later tests (and re-runs) aren't affected.
+    let passwordHash = await (await import("../src/utils/password.js")).hashPassword(
+      process.env.SEED_USER_PASSWORD || "password123"
+    );
+    await UsersStore.updatePassword(user.id, passwordHash);
+  }
+});
+
+test("reset-password rejects an expired token", async () => {
+  let user = await UsersStore.findByEmail(EMPLOYEE_EMAIL);
+  let rawToken = await UsersStore.createPasswordResetToken(user.id);
+
+  // Force the stored token into the past to simulate expiry.
+  let { PasswordResetTokenModel } = await import("../src/db/schemas.js");
+  let { hashToken } = await import("../src/utils/refreshToken.js");
+  await PasswordResetTokenModel.updateOne(
+    { tokenHash: hashToken(rawToken) },
+    { $set: { expiresAt: new Date(Date.now() - 1000).toISOString() } }
+  );
+
+  let res = await request(app).post("/api/auth/reset-password").send({ token: rawToken, password: "NewPassword123" });
+  assert.equal(res.status, 400);
 });

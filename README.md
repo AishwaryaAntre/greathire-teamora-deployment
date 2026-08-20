@@ -57,9 +57,7 @@ else works without them.)
 
 **Admin views**
 - Dashboard — live workforce snapshot, metrics, recent activity
-- Employee Directory & Profiles — add/edit employees, stat cards, work summary, activity heatmap,
-  documents, attendance calendar, and a read-only **Schedule Calendar** of that employee's
-  scheduled tasks/meetings
+- Employee Directory & Profiles — add/edit employees, stat cards, work summary, activity heatmap, documents
 - Attendance Management — live attendance table, check-in/out, CSV export
 - Leave Management — request queue with status filtering, approve/reject, approve-all, CSV export
 - Reports & Analytics — attendance trends and working-hours charts across 7d/30d/12m
@@ -70,11 +68,6 @@ else works without them.)
 - Personal dashboard — status, quick actions (check in/out, break), hours stats
 - Attendance calendar with month-to-month navigation
 - Leave balances with an in-app "Apply for Leave" flow, upcoming holidays, quick links, announcements
-- My Projects — assigned projects, teammates, and project-manager status control, plus a
-  **Schedule Calendar** to schedule a task or meeting on a specific date (title, date,
-  start/end time, location, optional linked project, optional meeting participants).
-  Scheduled items are visible to the employee, and also show up read-only on that
-  employee's profile page so teammates and admins can see their schedule.
 - My Profile — personal info editing, documents, account settings
 
 **Cross-cutting**
@@ -128,7 +121,7 @@ frontend/
       routing/             ProtectedRoute, PublicOnlyRoute, PageLoading, PageError, ErrorBoundary
       sections/            login page composition
       dashboard/           admin dashboard composition
-      employee/            employee self-service composition (incl. ApplyLeaveModal, ScheduleCalendar, ScheduleFormModal)
+      employee/            employee self-service composition (incl. ApplyLeaveModal)
     lib/
       AuthContext.jsx      auth state + access/refresh token handling
       ThemeContext.jsx     global light/dark theme (persisted, system-aware)
