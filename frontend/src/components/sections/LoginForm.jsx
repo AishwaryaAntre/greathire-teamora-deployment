@@ -21,19 +21,49 @@ export default function LoginForm() {
   let [error, setError] = useState("");
   let [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
-    setSubmitting(true);
-    try {
-      let loggedInUser = await login({ email, password, rememberMe });
-      navigate(loggedInUser?.role === "admin" ? "/dashboard" : "/employee-dashboard");
-    } catch (err) {
-      setError(err.message || "Unable to sign in. Please check your credentials.");
-    } finally {
-      setSubmitting(false);
-    }
+  
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  // Prevent multiple simultaneous login requests
+  if (submitting) return;
+
+  const normalizedEmail = email.trim();
+
+  if (!normalizedEmail || !password) {
+    setError("Please enter your email and password.");
+    return;
   }
+
+  setError("");
+  setSubmitting(true);
+
+  try {
+    const loggedInUser = await login({
+      email: normalizedEmail,
+      password,
+      rememberMe,
+    });
+
+    if (!loggedInUser) {
+      throw new Error("Login succeeded but user details were not returned.");
+    }
+
+    navigate(
+      loggedInUser.role === "admin"
+        ? "/dashboard"
+        : "/employee-dashboard",
+      { replace: true }
+    );
+  } catch (err) {
+    setError(
+      err.message || "Unable to sign in. Please try again."
+    );
+  } finally {
+    setSubmitting(false);
+  }
+}
+
 
   return (
     <form onSubmit={handleSubmit} className="p-8 sm:p-9">
