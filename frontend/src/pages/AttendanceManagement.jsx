@@ -23,6 +23,7 @@ import { attendanceApi } from "@/lib/api/attendance";
 import { useAuth } from "@/lib/AuthContext";
 import MasterSidebar from "@/components/layout/MasterSidebar";
 
+
 // Backend sends stat cards without icons attached — map by label client-side.
 let STAT_ICONS = { "Total Expected": Users };
 
@@ -76,7 +77,13 @@ function TopBar({ onCheckIn, checkingIn, search, onSearchChange }) {
   );
 }
 
-function PageHeader({ onExport, onExportCsv, onRefresh, showExport }) {
+function PageHeader({
+  onExport,
+  onExportCsv,
+  onRefresh,
+  showExport,
+  refreshing,
+}) {
   return (
     <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4 mb-6">
       <div>
@@ -99,10 +106,18 @@ function PageHeader({ onExport, onExportCsv, onRefresh, showExport }) {
             </button>
           </>
         )}
-        <button onClick={onRefresh} className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-100">
-          <RefreshCw className="w-4 h-4" />
-          Refresh Live
-        </button>
+       
+<button
+  onClick={onRefresh}
+  disabled={refreshing}
+  className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-100 disabled:opacity-60"
+>
+  <RefreshCw
+    className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+  />
+  {refreshing ? "Refreshing..." : "Refresh Live"}
+</button>
+
       </div>
     </div>
   );
@@ -125,7 +140,7 @@ function Filters({ date, onDateChange, department, onDepartmentChange, departmen
             <option key={d}>{d}</option>
           ))}
         </select>
-        <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+        
       </label>
 
       <label className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -135,7 +150,7 @@ function Filters({ date, onDateChange, department, onDepartmentChange, departmen
             <option key={s}>{s}</option>
           ))}
         </select>
-        <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+        
       </label>
     </div>
   );
@@ -307,17 +322,27 @@ export default function AttendanceManagement() {
   const [live, setLive] = useState([]);
   const [summary, setSummary] = useState([]);
   const [checkingIn, setCheckingIn] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const refresh = useCallback(async () => {
-    let [statsData, liveData, summaryData] = await Promise.all([
+  
+const refresh = useCallback(async () => {
+  setRefreshing(true);
+
+  try {
+    const [statsData, liveData, summaryData] = await Promise.all([
       attendanceApi.getStats(date),
       attendanceApi.getLive({ date, department, status, search }),
       attendanceApi.getSummary(date),
     ]);
+
     setStats(statsData);
     setLive(liveData);
     setSummary(summaryData);
-  }, [date, department, status, search]);
+  } finally {
+    setRefreshing(false);
+  }
+}, [date, department, status, search]);
+
 
   useEffect(() => {
     attendanceApi.listDepartments().then(setDepartments).catch(() => {});
@@ -338,9 +363,44 @@ export default function AttendanceManagement() {
     }
   }
 
-  function handleExport() {
-    window.open(attendanceApi.exportCsvUrl({ date, department, status }), "_blank");
+ 
+
+
+async function handleExport() {
+  try {
+    const response = await attendanceApi.exportCsv({
+      date,
+      department:
+        department === "All Departments" ? "" : department,
+      status: status === "All" ? "" : status,
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || `Request failed: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = downloadUrl;
+    link.download = `attendance-${date}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+  } catch (error) {
+    console.error("Export error:", error);
+    alert(error.message || "Unable to export attendance.");
   }
+}
+
+async function handleExportCsv() {
+  await handleExport();
+}
+
 
   return (
     <div className="w-screen h-screen overflow-hidden flex bg-background dark:bg-slate-950">
@@ -350,8 +410,16 @@ export default function AttendanceManagement() {
         <TopBar onCheckIn={handleCheckIn} checkingIn={checkingIn} search={search} onSearchChange={setSearch} />
 
         <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
-          <PageHeader onExport={handleExport} onExportCsv={handleExport} onRefresh={refresh} showExport={user?.role === "admin"} />
-          <Filters
+
+<PageHeader
+  onExport={handleExport}
+  onExportCsv={handleExportCsv}
+  onRefresh={() => refresh().catch((err) => console.error(err))}
+  showExport={user?.role === "admin"}
+  refreshing={refreshing}
+/>
+       
+ <Filters
             date={date}
             onDateChange={setDate}
             department={department}

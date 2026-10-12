@@ -6,7 +6,13 @@ import {
   deleteAttendanceByEmployeeId,
 } from "../data/attendanceStore.js";
 import { Employee } from "./Employee.js";
-import { todayISO, formatTimeIST } from "../utils/dates.js";
+
+import {
+  todayISO,
+  formatTimeIST,
+  parseClockToMinutes,
+} from "../utils/dates.js";
+
 import { generateId } from "../utils/id.js";
 import { logActivity } from "../data/activityStore.js";
 import { paginate } from "../utils/paginate.js";
@@ -137,40 +143,55 @@ export let Attendance = {
       .map(withEmployee);
   },
 
-  async checkIn(employeeId) {
-    let employee = Employee.getById(employeeId);
-    if (!employee) return null;
 
-    let existing = findTodayRecord(employeeId);
-    if (existing) {
-      existing.liveStatus = "Working";
-      if (!existing.checkIn) {
-        existing.checkIn = formatTimeIST(new Date());
-      }
-      existing.status = "Present";
-      await persistAttendanceUpdate(existing);
-      logActivity("check-in", employeeId, `${employee.name} checked in`);
-      return withEmployee(existing);
+async checkIn(employeeId) {
+  const employee = Employee.getById(employeeId);
+  if (!employee) return null;
+
+  // Shift starts at 10:00 AM IST; grace period is 0 minutes.
+  const SHIFT_START_MINUTES = 10 * 60;
+  const now = new Date();
+  const checkInTime = formatTimeIST(now);
+  const checkInMinutes = parseClockToMinutes(checkInTime);
+  const isLate = checkInMinutes > SHIFT_START_MINUTES;
+
+  const existing = findTodayRecord(employeeId);
+
+  if (existing) {
+    existing.liveStatus = "Working";
+
+    if (!existing.checkIn) {
+      existing.checkIn = checkInTime;
+      existing.late = isLate;
+      existing.status = isLate ? "Late" : "Present";
     }
 
-    let record = {
-      id: generateId("att"),
-      employeeId,
-      date: todayISO(),
-      status: "Present",
-      liveStatus: "Working",
-      checkIn: formatTimeIST(new Date()),
-      checkOut: null,
-      late: false,
-      hoursWorked: 0,
-    };
-    await persistNewAttendance(record);
+    await persistAttendanceUpdate(existing);
     logActivity("check-in", employeeId, `${employee.name} checked in`);
-    // First check-in of the day nudges leave accrual up slightly — an
-    // attendance-driven reward, not part of the leave allocation itself.
-    await Employee.adjustLeaveAccrual(employeeId, 0.5);
-    return withEmployee(record);
-  },
+
+    return withEmployee(existing);
+  }
+
+  const record = {
+    id: generateId("att"),
+    employeeId,
+    date: todayISO(),
+    status: isLate ? "Late" : "Present",
+    liveStatus: "Working",
+    checkIn: checkInTime,
+    checkOut: null,
+    late: isLate,
+    hoursWorked: 0,
+  };
+
+  await persistNewAttendance(record);
+  logActivity("check-in", employeeId, `${employee.name} checked in`);
+
+  await Employee.adjustLeaveAccrual(employeeId, 0.5);
+
+  return withEmployee(record);
+},
+
 
   async checkOut(employeeId) {
     let record = findTodayRecord(employeeId);

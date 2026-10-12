@@ -92,7 +92,7 @@ function PageHeader({ activeRange, setActiveRange, department, onDepartmentChang
               <option key={d}>{d}</option>
             ))}
           </select>
-          <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+        
         </label>
 
         <button

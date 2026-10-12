@@ -64,17 +64,40 @@ function AddEmployeeModal({ onClose, onCreated }) {
             <Label htmlFor="department">Department</Label>
             <Input id="department" value={form.department} onChange={set("department")} placeholder="e.g. Engineering" />
           </div>
-          <div>
-            <Label htmlFor="phone">Phone (optional)</Label>
-            <Input id="phone" value={form.phone} onChange={set("phone")} />
-          </div>
+          
+<div>
+  <Label htmlFor="phone">Phone number</Label>
+  <Input
+    id="phone"
+    type="tel"
+    inputMode="numeric"
+    required
+    maxLength={10}
+    placeholder="Enter 10-digit mobile number"
+    value={form.phone}
+    onChange={(e) => {
+      const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+      setForm((f) => ({ ...f, phone: value }));
+      setError("");
+    }}
+  />
+  {form.phone.length > 0 &&
+    !/^[6-9]\d{9}$/.test(form.phone) && (
+      <p className="mt-1 text-sm text-red-600">
+        Mobile number must be exactly 10 digits and start with 6, 7, 8, or 9.
+      </p>
+    )}
+</div>
+
           <div>
             <Label htmlFor="role">Account type</Label>
             <select
               id="role"
               value={form.role}
               onChange={set("role")}
-              className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              
+className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+
             >
               <option value="employee">Employee</option>
               <option value="admin">Admin</option>
@@ -193,3 +216,4 @@ export default function EmployeesListPage() {
     </div>
   );
 }
+
