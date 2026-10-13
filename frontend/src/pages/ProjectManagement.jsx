@@ -86,8 +86,7 @@ function ProjectFormModal({ project, employees, onClose, onSaved }) {
               value={form.description}
               onChange={set("description")}
               rows={3}
-              className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            />
+className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"            />
           </div>
 
           <div>
@@ -112,8 +111,7 @@ function ProjectFormModal({ project, employees, onClose, onSaved }) {
               id="projectManagerId"
               value={form.projectManagerId}
               onChange={set("projectManagerId")}
-              className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            >
+className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"            >
               <option value="">— None —</option>
               {employees.map((emp) => (
                 <option key={emp.id} value={emp.id}>
@@ -134,8 +132,7 @@ function ProjectFormModal({ project, employees, onClose, onSaved }) {
                 id="importance"
                 value={form.importance}
                 onChange={set("importance")}
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-              >
+className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"              >
                 {PROJECT_IMPORTANCE_OPTIONS.map((opt) => (
                   <option key={opt} value={opt}>
                     {opt}
@@ -151,8 +148,7 @@ function ProjectFormModal({ project, employees, onClose, onSaved }) {
               id="status"
               value={form.status}
               onChange={set("status")}
-              className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            >
+className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"            >
               {PROJECT_STATUS_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>
                   {opt}

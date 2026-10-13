@@ -100,10 +100,10 @@ function PageHeader({
               <Download className="w-4 h-4" />
               Export
             </button>
-            <button onClick={onExportCsv} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950">
+            {/* <button onClick={onExportCsv} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950">
               <FileSpreadsheet className="w-4 h-4" />
               CSV
-            </button>
+            </button> */}
           </>
         )}
        
