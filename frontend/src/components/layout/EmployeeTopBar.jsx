@@ -1,10 +1,45 @@
 import { Bell, HelpCircle, Moon, Sun, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
+import { useEffect, useState } from "react";
+import { notificationsApi } from "@/lib/api/notifications";
 
 export default function EmployeeTopBar({ user  }) {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  
+const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+
+useEffect(() => {
+  let active = true;
+
+  async function checkNotifications() {
+    try {
+      const response = await notificationsApi.list({
+        filter: "all",
+        search: "",
+      });
+
+      if (!active || !Array.isArray(response)) return;
+
+      setHasUnreadNotifications(
+        response.some((item) => item.unread === true)
+      );
+    } catch (error) {
+      console.error("Failed to check unread notifications:", error);
+    }
+  }
+
+  checkNotifications();
+  const timer = window.setInterval(checkNotifications, 5000);
+
+  return () => {
+    active = false;
+    window.clearInterval(timer);
+  };
+}, []);
+
 
   function openSidebar() {
     window.dispatchEvent(new CustomEvent("teamora:open-sidebar"));
@@ -16,13 +51,20 @@ export default function EmployeeTopBar({ user  }) {
         <Menu className="h-4 w-4" />
       </button>
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate("/notifications")}
-          className="text-muted-foreground hover:text-foreground"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" />
-        </button>
+        
+<button
+  type="button"
+  onClick={() => navigate("/notifications")}
+  className="relative text-muted-foreground hover:text-foreground"
+  aria-label="Notifications"
+>
+  <Bell className="h-5 w-5" />
+
+  {hasUnreadNotifications && (
+    <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />
+  )}
+</button>
+
         <button
           onClick={() => navigate("/support")}
           className="text-muted-foreground hover:text-foreground"

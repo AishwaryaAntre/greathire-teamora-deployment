@@ -3,6 +3,7 @@ import {
   getPreferencesFor,
   persistNewNotification,
   persistNotificationUpdate,
+  persistNotificationDelete,
   persistPreferencesUpdate,
 } from "../data/notificationsStore.js";
 import { generateId } from "../utils/id.js";
@@ -118,4 +119,15 @@ export let Notification = {
     }
     return rows.length;
   },
+
+  
+ async deleteById(id, employeeId = CURRENT_EMPLOYEE_ID) {
+  const notification = notifications.find(
+    (n) => n.id === id && n.recipientEmployeeId === employeeId
+  );
+
+  if (!notification) return false;
+
+  return await persistNotificationDelete(id);
+},
 };

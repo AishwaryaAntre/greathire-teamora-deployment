@@ -21,6 +21,7 @@ router.put("/preferences", validate(notificationPreferencesSchema), asyncHandler
 
 router.post("/", requireRole("admin"), validate(notificationCreateSchema), asyncHandler(notificationController.create));
 router.patch("/:id/read", validate(idParamSchema, "params"), asyncHandler(notificationController.markAsRead));
+router.delete("/:id", validate(idParamSchema, "params"), asyncHandler(notificationController.delete));
 router.post("/mark-all-read", asyncHandler(notificationController.markAllAsRead));
 
 export default router;

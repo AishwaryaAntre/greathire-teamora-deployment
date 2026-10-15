@@ -28,6 +28,7 @@ import {
   Bell,
   Settings,
   Briefcase,
+  Send,
 } from "lucide-react";
 
 // Routes below are verified against frontend/src/App.jsx.
@@ -48,6 +49,7 @@ export const ADMIN_NAV_ITEMS = [
   { label: "Reports & Analytics", href: "/reports", icon: BarChart3 },
   { label: "Messages", href: "/messages", icon: MessageSquare },
   { label: "Notifications", href: "/notifications", icon: Bell },
+  { label: "System Notifications", href: "/admin/system-notifications", icon: Send },
 ];
 
 export const EMPLOYEE_NAV_ITEMS = [

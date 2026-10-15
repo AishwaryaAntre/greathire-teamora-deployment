@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { notificationsApi } from "@/lib/api/notifications";
 import {
   Users,
   Settings,
@@ -33,8 +34,45 @@ let SUMMARY_ICON_CONFIG = {
   late: { icon: Clock, iconBg: "bg-amber-100", iconColor: "text-amber-600" },
 };
 
+
 function TopBar({ onCheckIn, checkingIn, search, onSearchChange }) {
   const navigate = useNavigate();
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function checkNotifications() {
+      try {
+        const response = await notificationsApi.list({
+          filter: "all",
+          search: "",
+        });
+
+        if (!active || !Array.isArray(response)) return;
+
+        setHasUnreadNotifications(
+          response.some(
+            (item) =>
+              item.unread === true ||
+              item.isRead === false ||
+              item.read === false
+          )
+        );
+      } catch (error) {
+        console.error("Failed to check notifications:", error);
+      }
+    }
+
+    checkNotifications();
+    const timer = window.setInterval(checkNotifications, 5000);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
   return (
     <header className="flex items-center justify-between gap-4 px-4 sm:px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
       <div className="flex-1 max-w-md">
@@ -52,30 +90,40 @@ function TopBar({ onCheckIn, checkingIn, search, onSearchChange }) {
 
       <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
         <button
+          type="button"
           onClick={() => navigate("/notifications")}
+          aria-label="Notifications"
           className="relative text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
         >
           <Bell className="w-5 h-5" />
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500"></span>
+
+          {hasUnreadNotifications && (
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900" />
+          )}
         </button>
+
         <button
           onClick={() => navigate("/support")}
+          aria-label="Help"
           className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hidden sm:block"
         >
           <HelpCircle className="w-5 h-5" />
         </button>
+
         <button
           onClick={() => navigate("/profile")}
+          aria-label="Settings"
           className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hidden sm:block"
         >
           <Settings className="w-5 h-5" />
         </button>
-        
+
         <div className="w-8 h-8 rounded-full bg-slate-300 overflow-hidden flex-shrink-0" />
       </div>
     </header>
   );
 }
+
 
 function PageHeader({
   onExport,

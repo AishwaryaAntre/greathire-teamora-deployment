@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { notificationsApi } from "@/lib/api/notifications";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
@@ -25,8 +26,55 @@ const PROJECT_STATUS_COLORS = {
   Cancelled: "#ef4444",
 };
 
+
 function TopBar() {
   const navigate = useNavigate();
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function checkNotifications() {
+      try {
+        const response = await notificationsApi.list({
+          filter: "all",
+          search: "",
+        });
+
+        if (!active) return;
+
+        const items = Array.isArray(response)
+          ? response
+          : response?.data?.notifications ??
+            response?.notifications ??
+            response?.data ??
+            [];
+
+        if (Array.isArray(items)) {
+          setHasUnreadNotifications(
+            items.some(
+              (item) =>
+                item.unread === true ||
+                item.isRead === false ||
+                item.read === false
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Failed to check notifications:", error);
+      }
+    }
+
+    checkNotifications();
+
+    const intervalId = setInterval(checkNotifications, 5000);
+
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, []);
+
   return (
     <header className="flex items-center justify-between gap-4 px-4 sm:px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-3 min-w-0">
@@ -41,25 +89,38 @@ function TopBar() {
       <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
         <div className="hidden md:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-2 w-56 lg:w-72">
           <Search className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-          <input type="text" placeholder="Search reports..." className="bg-transparent outline-none text-sm text-slate-600 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 w-full" />
+          <input
+            type="text"
+            placeholder="Search reports..."
+            className="bg-transparent outline-none text-sm text-slate-600 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 w-full"
+          />
         </div>
+
         <button
           onClick={() => navigate("/notifications")}
-          className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+          className="relative text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+          aria-label="Notifications"
         >
           <Bell className="w-5 h-5" />
+
+          {hasUnreadNotifications && (
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900" />
+          )}
         </button>
+
         <button
           onClick={() => navigate("/support")}
           className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hidden sm:block"
         >
           <HelpCircle className="w-5 h-5" />
         </button>
+
         <div className="w-8 h-8 rounded-full bg-slate-300 overflow-hidden flex-shrink-0" />
       </div>
     </header>
   );
 }
+
 
 function PageHeader({ activeRange, setActiveRange, department, onDepartmentChange, departments, onGenerate, generating }) {
   return (

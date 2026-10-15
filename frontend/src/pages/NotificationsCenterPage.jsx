@@ -9,11 +9,14 @@ import {
   LogIn as LogInIcon,
   CalendarClock,
   Cog,
+  Trash2,
   X,
 } from "lucide-react";
 import { notificationsApi } from "@/lib/api/notifications";
 import { Checkbox } from "@/components/ui/checkbox";
 import MasterSidebar from "@/components/layout/MasterSidebar";
+
+
 
 const filters = ["All", "Unread", "Attendance", "Leave", "System"];
 
@@ -95,8 +98,10 @@ function PageHeader({ activeFilter, setActiveFilter, onMarkAllRead }) {
   );
 }
 
-function NotificationRow({ item, onClick }) {
+
+function NotificationRow({ item, onClick, onDelete, deleting }) {
   const Icon = CATEGORY_ICON[item.category] || Cog;
+
   return (
     <div
       onClick={onClick}
@@ -104,29 +109,65 @@ function NotificationRow({ item, onClick }) {
         item.unread ? "bg-blue-50/40" : "bg-white dark:bg-slate-900"
       }`}
     >
-      {item.unread ? <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-2 flex-shrink-0" /> : <span className="w-1.5 flex-shrink-0" />}
+      {item.unread ? (
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
+      ) : (
+        <span className="w-1 flex-shrink-0" />
+      )}
 
       {item.isSystem || !item.avatar ? (
         <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
           <Icon className="w-5 h-5 text-slate-500 dark:text-slate-400" />
         </div>
       ) : (
-        <img src={item.avatar} alt={item.title} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+        <img
+          src={item.avatar}
+          alt={item.title}
+          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+        />
       )}
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
-          <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">{item.time}</span>
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+            {item.title}
+          </p>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">
+              {item.time}
+            </span>
+
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete(item);
+              }}
+              aria-label={`Delete notification: ${item.title}`}
+              title="Delete notification"
+              className="p-2 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-50"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{item.description}</p>
-        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md mt-2 ${item.badge.tone}`}>
+
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          {item.description}
+        </p>
+
+        <span
+          className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md mt-2 ${item.badge.tone}`}
+        >
           {item.badge.label}
         </span>
       </div>
     </div>
   );
 }
+
 
 function SummaryCard({ summary }) {
   return (
@@ -205,9 +246,14 @@ export default function NotificationsCenterPage() {
       notificationsApi.list({ filter: filterToApiValue(activeFilter), search }),
       notificationsApi.getSummary(),
     ]);
-    setNotifications(list);
+    setNotifications(Array.isArray(list) ? list : list?.data || []);
     setSummary(summaryData);
   }, [activeFilter, search]);
+
+ 
+
+
+
 
   useEffect(() => {
     refresh().catch((err) => console.error(err));
@@ -217,7 +263,8 @@ export default function NotificationsCenterPage() {
     notificationsApi.getPreferences().then(setPreferences).catch((err) => console.error(err));
   }, []);
 
-  async function handleRowClick(item) {
+
+ async function handleRowClick(item) {
     if (!item.unread) return;
     await notificationsApi.markAsRead(item.id);
     await refresh();
@@ -226,28 +273,101 @@ export default function NotificationsCenterPage() {
     await notificationsApi.markAllAsRead();
     await refresh();
   }
-  async function handleTogglePreference(key, checked) {
-    const next = { ...preferences, [key]: checked };
-    setPreferences(next);
-    await notificationsApi.updatePreferences({ [key]: checked }).catch((err) => console.error(err));
+ 
+async function handleTogglePreference(key, checked) {
+  const previous = preferences;
+  const next = { ...preferences, [key]: checked };
+
+  setPreferences(next);
+
+  try {
+    const saved = await notificationsApi.updatePreferences({
+      [key]: checked,
+    });
+
+    // Keep the saved preferences returned by the backend.
+    if (saved && typeof saved === "object") {
+      setPreferences((current) => ({ ...current, ...saved }));
+    }
+  } catch (err) {
+    setPreferences(previous);
+    console.error("Failed to save notification preference:", err);
+    window.alert("Could not save notification settings. Please try again.");
   }
-  function handleExportLogs() {
-    const header = "Title,Description,Category,Time,Unread\n";
-    const rows = notifications
-      .map((n) => [n.title, n.description, n.category, n.time, n.unread].map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    const blob = new Blob([header + rows], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "notifications.csv";
-    link.click();
-    URL.revokeObjectURL(url);
+}
+
+function handleExportLogs() {
+  if (!notifications.length) {
+    window.alert("There are no notifications to export.");
+    return;
   }
+
+  const columns = [
+    ["Title", "title"],
+    ["Description", "description"],
+    ["Category", "category"],
+    ["Priority", "priority"],
+    ["Created At", "createdAt"],
+    ["Time", "time"],
+    ["Unread", "unread"],
+    ["System Notification", "isSystem"],
+  ];
+
+  const escapeCsv = (value) => {
+    const text = String(value ?? "");
+    return `"${text.replace(/"/g, '""')}"`;
+  };
+
+  const csv = [
+    columns.map(([label]) => escapeCsv(label)).join(","),
+    ...notifications.map((notification) =>
+      columns
+        .map(([, key]) => escapeCsv(notification[key]))
+        .join(",")
+    ),
+  ].join("\r\n");
+
+  // Add BOM so Excel opens UTF-8 text correctly.
+  const blob = new Blob(["\uFEFF", csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `notifications-${new Date()
+    .toISOString()
+    .slice(0, 10)}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+
+async function handleDeleteNotification(item) {
+  const confirmed = window.confirm(
+    `Delete "${item.title}" notification?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await notificationsApi.delete(item.id);
+    await refresh();
+  } catch (err) {
+    console.error("Failed to delete notification:", err);
+    window.alert("Could not delete notification. Please try again.");
+  }
+}
+
 
   return (
     <div className="w-screen h-screen overflow-hidden flex bg-background dark:bg-slate-950">
-      <MasterSidebar />
+ <MasterSidebar />
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <TopBar search={search} onSearchChange={setSearch} />
         <main className="flex-1 overflow-y-auto px-6 py-6">
@@ -259,7 +379,7 @@ export default function NotificationsCenterPage() {
                   <p className="px-6 py-10 text-center text-sm text-slate-400 dark:text-slate-500">No notifications here.</p>
                 ) : (
                   notifications.map((item) => (
-                    <NotificationRow key={item.id} item={item} onClick={() => handleRowClick(item)} />
+                    <NotificationRow key={item.id} item={item} onClick={() => handleRowClick(item)} onDelete={handleDeleteNotification} />
                   ))
                 )}
               </div>

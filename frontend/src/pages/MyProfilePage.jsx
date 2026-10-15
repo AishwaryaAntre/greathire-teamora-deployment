@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { notificationsApi } from "@/lib/api/notifications";
 import { Link, useNavigate } from "react-router-dom";
 import {
   CalendarCheck,
@@ -28,37 +29,96 @@ import MasterSidebar from "@/components/layout/MasterSidebar";
 let ICON_BY_NAME = { Percent: Gauge, Clock: Clock3, CalendarCheck2: CalendarCheck, CalendarX2: FileBarChart2 };
 
 function TopBar() {
-  let navigate = useNavigate();
+  const navigate = useNavigate();
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const checkNotifications = async () => {
+      try {
+        const response = await notificationsApi.list({
+          filter: "all",
+          search: "",
+        });
+
+        if (!active) return;
+
+        const items = Array.isArray(response)
+          ? response
+          : response?.data?.notifications ??
+            response?.notifications ??
+            response?.data ??
+            [];
+
+        if (Array.isArray(items)) {
+          setHasUnreadNotifications(
+            items.some(
+              (item) =>
+                item.unread === true ||
+                item.isRead === false ||
+                item.read === false
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Failed to check notifications:", error);
+      }
+    };
+
+    checkNotifications();
+
+    const intervalId = setInterval(checkNotifications, 5000);
+
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, []);
+
   return (
     <header className="flex items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
       <div className="hidden md:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-2 w-72">
         <Search className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-        <input type="text" placeholder="Search..." className="bg-transparent outline-none text-sm text-slate-600 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 w-full" />
+        <input
+          type="text"
+          placeholder="Search..."
+          className="bg-transparent outline-none text-sm text-slate-600 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 w-full"
+        />
       </div>
 
       <div className="flex items-center gap-5 flex-shrink-0 ml-auto">
         <button
           onClick={() => navigate("/notifications")}
-          className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+          className="relative text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+          aria-label="Notifications"
         >
           <Bell className="w-5 h-5" />
+
+          {hasUnreadNotifications && (
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900" />
+          )}
         </button>
+
         <Link to="/messages">
           <button className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
             <MessageSquare className="w-5 h-5" />
           </button>
         </Link>
+
         <button
           onClick={() => navigate("/dashboard")}
           className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
         >
           <Grid3x3 className="w-5 h-5" />
         </button>
+
         <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-slate-200" />
       </div>
     </header>
   );
 }
+
 
 function ProfileHeader({ profile, contact, onEdit, onAvatarChange, savingAvatar }) {
   return (

@@ -17,6 +17,42 @@ import { generateId } from "../utils/id.js";
 import { logActivity } from "../data/activityStore.js";
 import { paginate } from "../utils/paginate.js";
 
+import { Notification } from "./Notification.js";
+import { CURRENT_EMPLOYEE_ID } from "../data/employees.js";
+
+
+async function createAttendanceNotifications({
+  employeeId,
+  employeeName,
+  action,
+  time,
+}) {
+  const recipients = [...new Set([employeeId, CURRENT_EMPLOYEE_ID])];
+
+  for (const recipientEmployeeId of recipients) {
+    try {
+      await Notification.create({
+        title: action === "check-in"
+          ? "Attendance Check-in"
+          : "Attendance Check-out",
+        description: `${employeeName} ${
+          action === "check-in" ? "checked in" : "checked out"
+        } at ${time}.`,
+        category: "attendance",
+        priority: "low",
+        recipientEmployeeId,
+        relatedEmployeeId: employeeId,
+        avatar: null,
+      });
+    } catch (error) {
+      console.error(
+        "[attendance] Failed to create notification:",
+        error.message
+      );
+    }
+  }
+}
+
 function withEmployee(record) {
   let employee = Employee.getById(record.employeeId);
   return { ...record, employee };
@@ -144,11 +180,11 @@ export let Attendance = {
   },
 
 
+
 async checkIn(employeeId) {
   const employee = Employee.getById(employeeId);
   if (!employee) return null;
 
-  // Shift starts at 10:00 AM IST; grace period is 0 minutes.
   const SHIFT_START_MINUTES = 10 * 60;
   const now = new Date();
   const checkInTime = formatTimeIST(now);
@@ -157,20 +193,35 @@ async checkIn(employeeId) {
 
   const existing = findTodayRecord(employeeId);
 
-  if (existing) {
-    existing.liveStatus = "Working";
+ 
+if (existing) {
+  const wasCheckedOut = !existing.liveStatus;
+  const isFirstCheckIn = !existing.checkIn;
 
-    if (!existing.checkIn) {
-      existing.checkIn = checkInTime;
-      existing.late = isLate;
-      existing.status = isLate ? "Late" : "Present";
-    }
+  existing.liveStatus = "Working";
 
-    await persistAttendanceUpdate(existing);
-    logActivity("check-in", employeeId, `${employee.name} checked in`);
-
-    return withEmployee(existing);
+  if (isFirstCheckIn) {
+    existing.checkIn = checkInTime;
+    existing.late = isLate;
+    existing.status = isLate ? "Late" : "Present";
   }
+
+  await persistAttendanceUpdate(existing);
+
+  logActivity("check-in", employeeId, `${employee.name} checked in`);
+
+  // Notify on the first check-in or when returning after checkout.
+  if (isFirstCheckIn || wasCheckedOut) {
+    await createAttendanceNotifications({
+      employeeId,
+      employeeName: employee.name,
+      action: "check-in",
+      time: checkInTime,
+    });
+  }
+
+  return withEmployee(existing);
+}
 
   const record = {
     id: generateId("att"),
@@ -189,20 +240,44 @@ async checkIn(employeeId) {
 
   await Employee.adjustLeaveAccrual(employeeId, 0.5);
 
+  await createAttendanceNotifications({
+    employeeId,
+    employeeName: employee.name,
+    action: "check-in",
+    time: checkInTime,
+  });
+
   return withEmployee(record);
 },
 
 
-  async checkOut(employeeId) {
-    let record = findTodayRecord(employeeId);
-    if (!record) return null;
-    record.liveStatus = null;
-    record.checkOut = formatTimeIST(new Date());
-    await persistAttendanceUpdate(record);
-    let employee = Employee.getById(employeeId);
-    if (employee) logActivity("check-out", employeeId, `${employee.name} checked out`);
-    return withEmployee(record);
-  },
+
+ 
+async checkOut(employeeId) {
+  let record = findTodayRecord(employeeId);
+  if (!record) return null;
+
+  record.liveStatus = null;
+  record.checkOut = formatTimeIST(new Date());
+
+  await persistAttendanceUpdate(record);
+
+  let employee = Employee.getById(employeeId);
+
+  if (employee) {
+    logActivity("check-out", employeeId, `${employee.name} checked out`);
+
+    await createAttendanceNotifications({
+      employeeId,
+      employeeName: employee.name,
+      action: "check-out",
+      time: record.checkOut,
+    });
+  }
+
+  return withEmployee(record);
+},
+
 
   async startBreak(employeeId) {
     let record = findTodayRecord(employeeId);

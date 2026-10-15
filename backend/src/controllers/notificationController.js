@@ -28,17 +28,27 @@ export let notificationController = {
     res.json({ success: true, data });
   },
 
-  create: async (req, res) => {
-    let { title, description, category, priority, recipientEmployeeId } = req.body;
-    let data = await Notification.create({
-      title,
-      description,
-      category,
-      priority,
-      recipientEmployeeId: recipientEmployeeId || resolveEmployeeId(req),
-    });
-    res.status(201).json({ success: true, data });
-  },
+// edited code
+create: async (req, res) => {
+  let {
+    title,
+    description,
+    category,
+    priority,
+    recipientEmployeeId,
+  } = req.body;
+
+  let data = await Notification.create({
+    title,
+    description,
+    category,
+    priority,
+    recipientEmployeeId: recipientEmployeeId || resolveEmployeeId(req),
+    isSystem: category === "system",
+  });
+
+  res.status(201).json({ success: true, data });
+},
 
   markAsRead: async (req, res) => {
     let data = await Notification.markAsRead(req.params.id, resolveEmployeeId(req));
@@ -50,4 +60,22 @@ export let notificationController = {
     let count = await Notification.markAllAsRead(resolveEmployeeId(req));
     res.json({ success: true, data: { updated: count } });
   },
+
+  // edited code
+  delete: async (req, res) => {
+    const deleted = await Notification.deleteById(
+      req.params.id,
+      resolveEmployeeId(req)
+    );
+
+    if (!deleted) {
+      throw new ApiError(404, "Notification not found");
+    }
+
+    res.json({
+      success: true,
+      data: { deleted: true },
+    });
+  },
+
 };

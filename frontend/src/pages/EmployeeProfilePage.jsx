@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { notificationsApi } from "@/lib/api/notifications";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -42,8 +43,45 @@ const DOC_ICON_BY_TYPE = { pdf: FileText, image: FileImage };
 
 const intensityClasses = ["bg-slate-100 dark:bg-slate-800", "bg-blue-200", "bg-blue-400", "bg-blue-600", "bg-blue-800"];
 
+
 function TopBar() {
   const navigate = useNavigate();
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function checkNotifications() {
+      try {
+        const response = await notificationsApi.list({
+          filter: "all",
+          search: "",
+        });
+
+        if (!active || !Array.isArray(response)) return;
+
+        setHasUnreadNotifications(
+          response.some(
+            (item) =>
+              item.unread === true ||
+              item.isRead === false ||
+              item.read === false
+          )
+        );
+      } catch (error) {
+        console.error("Failed to check notifications:", error);
+      }
+    }
+
+    checkNotifications();
+    const timer = window.setInterval(checkNotifications, 5000);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
   return (
     <header className="flex items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
       <h1
@@ -55,27 +93,41 @@ function TopBar() {
 
       <div className="hidden md:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-4 py-2.5 w-full max-w-md">
         <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-        <input type="text" placeholder="Search employees, reports..." className="bg-transparent outline-none text-sm text-slate-600 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 w-full" />
+        <input
+          type="text"
+          placeholder="Search employees, reports..."
+          className="bg-transparent outline-none text-sm text-slate-600 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 w-full"
+        />
       </div>
 
       <div className="flex items-center gap-5 flex-shrink-0">
         <button
+          type="button"
           onClick={() => navigate("/notifications")}
-          className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+          aria-label="Notifications"
+          className="relative text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
         >
           <Bell className="w-5 h-5" />
+
+          {hasUnreadNotifications && (
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900" />
+          )}
         </button>
+
         <button
           onClick={() => navigate("/profile")}
+          aria-label="Settings"
           className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
         >
           <Settings className="w-5 h-5" />
         </button>
+
         <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-white bg-slate-200" />
       </div>
     </header>
   );
 }
+
 
 function PageActions({ breadcrumb }) {
   const navigate = useNavigate();

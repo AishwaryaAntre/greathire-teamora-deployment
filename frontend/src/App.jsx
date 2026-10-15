@@ -19,6 +19,8 @@ import ProtectedRoute from "@/components/routing/ProtectedRoute";
 import PublicOnlyRoute from "@/components/routing/PublicOnlyRoute";
 import PageLoading from "@/components/routing/PageLoading";
 import { useAuth } from "@/lib/AuthContext";
+import GlobalNotificationListener from "@/components/notifications/GlobalNotificationListener";
+import SystemNotificationsPage from "@/pages/SystemNotificationsPage";
 
 // Renders the admin project management UI or the employee's read-only "My
 // Projects" view based on role, so a single /projects route works for both
@@ -39,6 +41,7 @@ const MessagesPage = lazy(() => import("@/pages/MessagesPage"));
 export default function App() {
   return (
     <Suspense fallback={<PageLoading />}>
+       <GlobalNotificationListener />
       <Routes>
         <Route path="/" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
         <Route path="/forgot-password" element={<PublicOnlyRoute><ForgotPasswordPage /></PublicOnlyRoute>} />
@@ -46,6 +49,8 @@ export default function App() {
 
         {/* Admin-only */}
         <Route path="/dashboard" element={<ProtectedRoute adminOnly><DashboardPage /></ProtectedRoute>} />
+        <Route path="/admin/system-notifications" element={ <ProtectedRoute adminOnly> <SystemNotificationsPage />
+        </ProtectedRoute> }/>
         <Route path="/reports" element={<ProtectedRoute adminOnly><Report /></ProtectedRoute>} />
 
         {/* Any authenticated user */}

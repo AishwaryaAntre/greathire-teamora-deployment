@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { notificationsApi } from "@/lib/api/notifications";
 import { useNavigate } from "react-router-dom";
 import {
   CalendarClock,
@@ -33,8 +34,55 @@ function formatDateShort(iso) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "2-digit" });
 }
 
+
 function TopBar({ user, search, onSearchChange }) {
   const navigate = useNavigate();
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const checkUnreadNotifications = async () => {
+      try {
+        const response = await notificationsApi.list({
+          filter: "all",
+          search: "",
+        });
+
+        if (!active) return;
+
+        const items = Array.isArray(response)
+          ? response
+          : response?.data?.notifications ??
+            response?.notifications ??
+            response?.data ??
+            [];
+
+        if (Array.isArray(items)) {
+          setHasUnreadNotifications(
+            items.some(
+              (item) =>
+                item.unread === true ||
+                item.isRead === false ||
+                item.read === false
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Failed to check unread notifications:", error);
+      }
+    };
+
+    checkUnreadNotifications();
+
+    const intervalId = setInterval(checkUnreadNotifications, 5000);
+
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, []);
+
   return (
     <header className="flex items-center justify-between gap-4 px-4 sm:px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
       <div className="flex-1 max-w-md">
@@ -53,27 +101,39 @@ function TopBar({ user, search, onSearchChange }) {
       <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
         <button
           onClick={() => navigate("/notifications")}
-          className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+          className="relative text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+          aria-label="Notifications"
         >
           <Bell className="w-5 h-5" />
+
+          {hasUnreadNotifications && (
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900" />
+          )}
         </button>
+
         <button
           onClick={() => navigate("/support")}
           className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hidden sm:block"
         >
           <HelpCircle className="w-5 h-5" />
         </button>
+
         <div className="hidden sm:flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-slate-300 overflow-hidden flex-shrink-0" />
           <div className="leading-tight">
-            <p className="text-sm font-semibold text-slate-900 dark:text-white">{user.name}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">{user.role}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              {user.name}
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              {user.role}
+            </p>
           </div>
         </div>
       </div>
     </header>
   );
 }
+
 
 function PageHeader({ activeTab, onTabChange, onExport, showExport }) {
   return (

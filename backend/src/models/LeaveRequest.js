@@ -3,7 +3,8 @@ import { Employee } from "./Employee.js";
 import { generateId } from "../utils/id.js";
 import { todayISO, isSameMonth, isLastMonth, daysBetweenInclusive } from "../utils/dates.js";
 import { paginate } from "../utils/paginate.js";
-
+import { Notification } from "./Notification.js";
+import { CURRENT_EMPLOYEE_ID } from "../data/employees.js";
 function withEmployee(request) {
   let employee = Employee.getById(request.employeeId);
   return { ...request, employee };
@@ -111,32 +112,95 @@ export let LeaveRequest = {
       appliedOn: todayISO(),
       decidedOn: null,
     };
-    await persistNewLeaveRequest(request);
-    return withEmployee(request);
+   
+await persistNewLeaveRequest(request);
+
+try {
+  await Notification.create({
+    title: "New Leave Request",
+    description: `${employee.name} submitted a ${leaveType} request from ${startDate} to ${endDate}.`,
+    category: "leave",
+    priority: "low",
+    recipientEmployeeId: CURRENT_EMPLOYEE_ID,
+    relatedEmployeeId: employeeId,
+  });
+} catch (error) {
+  console.error("[leave] Failed to notify admin:", error.message);
+}
+
+return withEmployee(request);
+
   },
 
-  async updateStatus(id, status) {
-    let request = leaveRequests.find((r) => r.id === id);
-    if (!request) return null;
-    request.status = status;
-    request.decidedOn = todayISO();
-    await persistLeaveRequestUpdate(request);
-    return withEmployee(request);
-  },
 
-  async approveAllPending() {
-    let today = todayISO();
-    let updated = [];
-    for (let r of leaveRequests) {
-      if (r.status === "Pending") {
-        r.status = "Approved";
-        r.decidedOn = today;
-        await persistLeaveRequestUpdate(r);
-        updated.push(withEmployee(r));
-      }
+async updateStatus(id, status) {
+  let request = leaveRequests.find((r) => r.id === id);
+  if (!request) return null;
+
+  request.status = status;
+  request.decidedOn = todayISO();
+
+  await persistLeaveRequestUpdate(request);
+
+  try {
+    const employee = Employee.getById(request.employeeId);
+
+    if (employee && (status === "Approved" || status === "Rejected")) {
+      await Notification.create({
+        title: `Leave Request ${status}`,
+        description: `Your ${request.leaveType} request from ${request.startDate} to ${request.endDate} has been ${status.toLowerCase()}.`,
+        category: "leave",
+        priority: "low",
+        recipientEmployeeId: request.employeeId,
+        relatedEmployeeId: request.employeeId,
+      });
     }
-    return updated;
-  },
+  } catch (error) {
+    console.error("[leave] Failed to notify employee:", error.message);
+  }
+
+  return withEmployee(request);
+},
+
+  
+async approveAllPending() {
+  let today = todayISO();
+  let updated = [];
+
+  for (let r of leaveRequests) {
+    if (r.status === "Pending") {
+      r.status = "Approved";
+      r.decidedOn = today;
+
+      await persistLeaveRequestUpdate(r);
+
+      try {
+        const employee = Employee.getById(r.employeeId);
+
+        if (employee) {
+          await Notification.create({
+            title: "Leave Request Approved",
+            description: `Your ${r.leaveType} request from ${r.startDate} to ${r.endDate} has been approved.`,
+            category: "leave",
+            priority: "low",
+            recipientEmployeeId: r.employeeId,
+            relatedEmployeeId: r.employeeId,
+          });
+        }
+      } catch (error) {
+        console.error(
+          "[leave] Failed to notify employee:",
+          error.message
+        );
+      }
+
+      updated.push(withEmployee(r));
+    }
+  }
+
+  return updated;
+},
+
 
   /** Admin-only cleanup for a deleted employee: removes their leave request
    * history so the requests list/CSV export don't keep showing rows for
