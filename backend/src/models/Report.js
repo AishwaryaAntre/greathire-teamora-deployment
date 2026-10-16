@@ -63,6 +63,10 @@ export let Report = {
     ];
   },
 
+  getAttendanceRows(range = "12m", department) {
+    return periodRows(range, department);
+  },
+
   /** Maps to the "Attendance Trends" multi-series chart: Present / Absent / Leave / Late per day. */
   getAttendanceTrends(range = "12m", department) {
     let rows = periodRows(range, department);

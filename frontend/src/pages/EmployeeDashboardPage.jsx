@@ -71,6 +71,28 @@ export default function EmployeeDashboardPage() {
     };
   }, [calendarCursor, user?.employeeId]);
 
+    useEffect(() => {
+    if (data?.currentStatus?.state !== "Working") return undefined;
+
+    let cancelled = false;
+
+    const intervalId = window.setInterval(() => {
+      employeeDashboardApi
+        .getBundle(user?.employeeId)
+        .then((bundle) => {
+          if (!cancelled) setData(bundle);
+        })
+        .catch((err) => {
+          if (!cancelled) setActionError(err.message);
+        });
+    }, 60_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [data?.currentStatus?.state, user?.employeeId]);
+
   function shiftMonth(delta) {
     const now = new Date();
     const base = calendarCursor || { year: now.getFullYear(), month: now.getMonth() };

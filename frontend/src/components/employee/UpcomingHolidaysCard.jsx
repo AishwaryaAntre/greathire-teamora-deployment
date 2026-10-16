@@ -8,7 +8,7 @@ export default function UpcomingHolidaysCard({ holidays }) {
     <Card>
       <CardHeader>
         <CardTitle>Upcoming Holidays</CardTitle>
-        <button onClick={() => navigate("/leave")} className="text-xs font-semibold text-primary hover:underline">
+        <button onClick={() => navigate("/holidays")} className="text-xs font-semibold text-primary hover:underline">
           View All
         </button>
       </CardHeader>

@@ -8,4 +8,6 @@ export const reportsApi = {
   getProjectCompletion: () => api.get("/reports/project-completion"),
   listGenerated: () => api.get("/reports"),
   generate: (payload) => api.post("/reports/generate", payload),
+  exportCsv: (params) => api.download("/reports/export", params),
+  exportPdf: (params) => api.download("/reports/export.pdf", params),
 };

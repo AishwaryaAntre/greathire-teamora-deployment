@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { api } from "../lib/apiClient.js";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { notificationsApi } from "@/lib/api/notifications";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,12 +16,15 @@ import {
   Filter,
   MoreVertical,
   CalendarPlus,
+  Eye,
+  X,
 } from "lucide-react";
 import { leaveApi } from "@/lib/api/leave";
 import { reportsApi } from "@/lib/api/reports";
 import { useAuth } from "@/lib/AuthContext";
 import ApplyLeaveModal from "@/components/employee/ApplyLeaveModal";
 import MasterSidebar from "@/components/layout/MasterSidebar";
+import { createPortal } from "react-dom";
 
 // Backend sends stat cards keyed by `key` — map to an icon client-side.
 const STAT_ICON_BY_KEY = {
@@ -231,7 +235,60 @@ function StatusBadge({ tone, children }) {
   );
 }
 
-function LeaveRequestRow({ row, onApprove, onReject, canDecide }) {
+
+function LeaveRequestRow({ row, onApprove, onReject, onView, canDecide }) {
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const actionButtonRef = useRef(null);
+  const actionMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!actionsOpen) return;
+
+    function handlePointerDown(event) {
+      if (
+        !actionButtonRef.current?.contains(event.target) &&
+        !actionMenuRef.current?.contains(event.target)
+      ) {
+        setActionsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setActionsOpen(false);
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [actionsOpen]);
+
+  function toggleActions() {
+    if (actionsOpen) {
+      setActionsOpen(false);
+      return;
+    }
+
+    const bounds = actionButtonRef.current.getBoundingClientRect();
+    const menuHeight = canDecide && row.status === "Pending" ? 128 : 44;
+
+    const top =
+      bounds.bottom + menuHeight + 8 <= window.innerHeight
+        ? bounds.bottom + 4
+        : Math.max(8, bounds.top - menuHeight - 4);
+
+    setMenuPosition({
+      top,
+      left: Math.max(8, bounds.right - 160),
+    });
+
+    setActionsOpen(true);
+  }
+
   return (
     <tr className="border-t border-slate-100 dark:border-slate-800">
       <td className="py-4 pr-4">
@@ -240,36 +297,101 @@ function LeaveRequestRow({ row, onApprove, onReject, canDecide }) {
             {row.initials}
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-900 dark:text-white">{row.name}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">{row.role}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">
+              {row.name}
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              {row.role}
+            </p>
           </div>
         </div>
       </td>
+
       <td className="py-4 pr-4">
         <LeaveTypeBadge type={row.leaveType} />
       </td>
+
       <td className="py-4 pr-4 text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
         <p>{row.dates}</p>
-        <p className="text-xs text-slate-400 dark:text-slate-500">{row.duration}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">
+          {row.duration}
+        </p>
       </td>
+
       <td className="py-4 pr-4">
         <StatusBadge tone={row.statusTone}>{row.status}</StatusBadge>
       </td>
+
       <td className="py-4 text-right">
-        {row.status === "Pending" && canDecide ? (
-          <div className="flex items-center justify-end gap-2">
-            <button onClick={() => onApprove(row.id)} className="text-xs font-medium text-emerald-600 hover:underline">
-              Approve
-            </button>
-            <button onClick={() => onReject(row.id)} className="text-xs font-medium text-red-500 hover:underline">
-              Reject
-            </button>
-          </div>
-        ) : (
-          <button disabled title="No further actions" className="text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-50">
+        <div className="relative flex justify-end">
+          <button
+            type="button"
+            ref={actionButtonRef}
+            aria-label={`Actions for ${row.name}'s leave request`}
+            aria-haspopup="menu"
+            aria-expanded={actionsOpen}
+            onClick={toggleActions}
+            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          >
             <MoreVertical className="w-4 h-4" />
           </button>
-        )}
+
+          {actionsOpen &&
+            createPortal(
+              <div
+                ref={actionMenuRef}
+                role="menu"
+                style={{
+                  position: "fixed",
+                  top: menuPosition.top,
+                  left: menuPosition.left,
+                }}
+                className="z-50 min-w-[160px] rounded-lg border border-slate-200 bg-white py-1 text-left shadow-lg dark:border-slate-700 dark:bg-slate-900"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setActionsOpen(false);
+                    onView(row);
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <Eye className="h-4 w-4" />
+                  View Details
+                </button>
+
+                {canDecide && row.status === "Pending" && (
+                  <>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setActionsOpen(false);
+                        onApprove(row.id);
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm text-emerald-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                      Approve
+                    </button>
+
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setActionsOpen(false);
+                        onReject(row.id);
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm text-red-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                      Reject
+                    </button>
+                  </>
+                )}
+              </div>,
+              document.body
+            )}
+        </div>
       </td>
     </tr>
   );
@@ -277,8 +399,73 @@ function LeaveRequestRow({ row, onApprove, onReject, canDecide }) {
 
 const STATUS_FILTERS = ["All", "Pending", "Approved", "Rejected"];
 
+function LeaveRequestDetails({ request, onClose }) {
+  if (!request) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section className="w-full max-w-lg rounded-xl bg-white dark:bg-slate-900 p-6 shadow-xl">
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Leave Request Details
+            </h2>
+            <p className="text-sm text-slate-500">
+              {request.name}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close details"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-4 text-sm">
+          <p>
+            <strong>Leave Type:</strong> {request.leaveType || "—"}
+          </p>
+
+          <p>
+            <strong>Status:</strong> {request.status || "—"}
+          </p>
+
+          <p>
+            <strong>Dates:</strong> {request.dates || "—"}
+          </p>
+
+          <p>
+            <strong>Duration:</strong> {request.duration || "—"}
+          </p>
+
+          <p>
+            <strong>Applied On:</strong>{" "}
+            {request.appliedOn
+              ? formatDateShort(request.appliedOn)
+              : "—"}
+          </p>
+
+          <p>
+            <strong>Reason:</strong>{" "}
+            {request.reason || "No reason provided."}
+          </p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function LeaveRequestsTable({ requests, onApprove, onReject, statusFilter, onStatusFilterChange, canDecide }) {
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
       <div className="flex items-center justify-between mb-4">
@@ -331,11 +518,24 @@ function LeaveRequestsTable({ requests, onApprove, onReject, statusFilter, onSta
                 </td>
               </tr>
             ) : (
-              requests.map((row) => <LeaveRequestRow key={row.id} row={row} onApprove={onApprove} onReject={onReject} canDecide={canDecide} />)
-            )}
+requests.map((row) => (
+  <LeaveRequestRow
+    key={row.id}
+    row={row}
+    onApprove={onApprove}
+    onReject={onReject}
+    onView={setSelectedRequest}
+    canDecide={canDecide}
+  />
+))            )}
           </tbody>
         </table>
       </div>
+
+<LeaveRequestDetails
+  request={selectedRequest}
+  onClose={() => setSelectedRequest(null)}
+/>
     </div>
   );
 }
@@ -390,6 +590,8 @@ export default function LeaveManagement() {
         role: r.employee?.role,
         initials: initialsFor(r.employee?.name),
         leaveType: r.leaveType,
+        appliedOn: r.appliedOn,
+        reason: r.reason,
         dates: `${formatDateShort(r.startDate)} - ${formatDateShort(r.endDate)}`,
         duration: `${r.durationDays} Day${r.durationDays === 1 ? "" : "s"}`,
         status: r.status,
@@ -423,9 +625,35 @@ export default function LeaveManagement() {
     await reportsApi.generate({ range: "12m", department: "All Departments", title: "Leave Report" });
     navigate("/reports");
   }
-  function handleExport() {
-    window.open(leaveApi.exportCsvUrl({ period: activeTab, search, status: statusFilter === "All" ? undefined : statusFilter }), "_blank");
+  async function handleExport() {
+  try {
+    const response = await api.download("/leave/export", {
+      period: activeTab,
+      search,
+      status: statusFilter === "All" ? undefined : statusFilter,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || "Failed to export leave requests");
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "leave-requests.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Leave export failed:", error);
+    alert(error.message || "Unable to export leave requests");
   }
+}
 
   const isAdmin = user?.role === "admin";
 

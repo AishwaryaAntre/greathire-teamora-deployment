@@ -6,7 +6,11 @@
 //   import.meta.env.VITE_API_BASE_URL ||
 //   (import.meta.env.PROD ? "https://greathire-1.onrender.com" : "http://localhost:5000/api");
 
- const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD
+    ? "https://greathireattendance-backend.onrender.com/api"
+    : "http://localhost:5000/api");
 
 const TOKEN_KEY = "gh_teamora_token";
 
@@ -45,7 +49,19 @@ async function request(path, { method = "GET", body, params, headers, raw = fals
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  if (raw) return res;
+ if (raw) {
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+
+    throw new ApiError(
+      json?.error || json?.message || `Request failed (${res.status})`,
+      res.status,
+      json
+    );
+  }
+
+  return res;
+}
 
   let json = await res.json().catch(() => null);
   if (!res.ok) {

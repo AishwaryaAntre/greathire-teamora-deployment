@@ -5,6 +5,7 @@ import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import DashboardPage from "@/pages/DashboardPage";
 import EmployeeDashboardPage from "@/pages/EmployeeDashboardPage";
+import HolidaysPage from "@/pages/HolidaysPage";
 import EmployeesListPage from "@/pages/EmployeesListPage";
 import ProjectManagement from "@/pages/ProjectManagement";
 import MyProjects from "@/pages/MyProjects";
@@ -56,6 +57,7 @@ export default function App() {
         {/* Any authenticated user */}
         <Route path="/projects" element={<ProtectedRoute><ProjectsRoute /></ProtectedRoute>} />
         <Route path="/employee-dashboard" element={<ProtectedRoute><EmployeeDashboardPage /></ProtectedRoute>} />
+        <Route path="/holidays" element={<ProtectedRoute><HolidaysPage /></ProtectedRoute>} />
         <Route path="/attendance" element={<ProtectedRoute adminOnly><AttendanceManagement /></ProtectedRoute>} />
         <Route path="/leave" element={<ProtectedRoute><LeaveManagement /></ProtectedRoute>} />
         <Route path="/employees" element={<ProtectedRoute><EmployeesListPage /></ProtectedRoute>} />

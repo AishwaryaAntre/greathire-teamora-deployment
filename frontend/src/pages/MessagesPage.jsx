@@ -5,7 +5,6 @@ import {
   Building2,
   MessageSquare,
   ListChecks,
-  CalendarCheck,
   BarChart3,
   Phone,
   Video,
@@ -24,6 +23,8 @@ import {
   Hash,
   Plus,
   Settings2,
+  X,
+  Menu,
 } from "lucide-react";
 import { messagesApi } from "@/lib/api/messages";
 import { useAuth } from "@/lib/AuthContext";
@@ -36,23 +37,36 @@ const navItems = [
   { label: "Analytics", icon: BarChart3, to: "/reports" },
 ];
 
-function ConversationSidebar({ conversations, activeId, onSelect, isAdmin, onNewChannel, onManageChannel }) {
+function ConversationSidebar({ conversations, activeId, onSelect, isAdmin, onNewChannel, onManageChannel ,onClose}) {
   const navigate = useNavigate();
   const channels = conversations.filter((c) => c.type === "channel");
   const dms = conversations.filter((c) => c.type === "dm");
 
   return (
-    <aside className="w-64 h-full bg-slate-900 text-slate-300 flex flex-col justify-between flex-shrink-0">
-      <div className="min-h-0 overflow-y-auto">
-        <div className="flex items-center gap-3 px-5 py-6">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <LayoutGrid className="w-5 h-5 text-white" />
-          </div>
-          <div className="leading-tight">
-            <p className="text-white font-semibold text-sm">Teamora</p>
-            <p className="text-slate-400 dark:text-slate-500 text-xs">Remote Engineering</p>
-          </div>
-        </div>
+<aside className="w-64 h-full max-w-[85vw] bg-slate-900 text-slate-300 flex flex-col justify-between flex-shrink-0">      <div className="min-h-0 overflow-y-auto">
+        
+<div className="flex items-center gap-3 px-5 py-6">
+  <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+    <LayoutGrid className="w-5 h-5 text-white" />
+  </div>
+
+  <div className="leading-tight">
+    <p className="text-white font-semibold text-sm">Teamora</p>
+    <p className="text-slate-400 dark:text-slate-500 text-xs">
+      Remote Engineering
+    </p>
+  </div>
+
+  <button
+    type="button"
+    onClick={onClose}
+    className="ml-auto rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white md:hidden"
+    aria-label="Close sidebar"
+  >
+    <X className="h-5 w-5" />
+  </button>
+</div>
+
 
         <nav className="px-3 flex flex-col gap-1 mb-6">
           {navItems.map(({ label, icon: Icon, active, to }) => (
@@ -148,12 +162,20 @@ function ConversationSidebar({ conversations, activeId, onSelect, isAdmin, onNew
   );
 }
 
-function ChatHeader({ conversation, searchOpen, onToggleSearch, searchValue, onSearchChange }) {
+function ChatHeader({ conversation, searchOpen, onToggleSearch, searchValue, onSearchChange, onOpenSidebar, }) {
   const isDm = conversation?.type === "dm";
   return (
     <header className="flex flex-col gap-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-      <div className="flex items-center justify-between gap-4 px-6 py-4">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-2 px-3 py-4 sm:gap-4 sm:px-6">
+  <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+    <button
+      type="button"
+      onClick={onOpenSidebar}
+      className="md:hidden flex-shrink-0 rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+      aria-label="Open sidebar"
+    >
+      <Menu className="h-5 w-5" />
+    </button>
           {isDm ? (
             <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
               <img src={conversation.contact?.avatar} alt={conversation.label} className="w-full h-full object-cover" />
@@ -210,8 +232,11 @@ function ChatHeader({ conversation, searchOpen, onToggleSearch, searchValue, onS
 
 function MessageBubble({ message }) {
   return (
-    <div className={`flex items-start gap-3 mb-6 max-w-xl ${message.isOwn ? "ml-auto flex-row-reverse" : ""}`}>
-      {message.senderAvatar && (
+<div
+  className={`flex items-start gap-3 mb-6 w-full max-w-full sm:max-w-xl ${
+    message.isOwn ? "ml-auto flex-row-reverse" : ""
+  }`}
+>      {message.senderAvatar && (
         <img src={message.senderAvatar} alt={message.senderName} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
       )}
       <div>
@@ -254,7 +279,7 @@ function MessageThread({ messages, filterQuery }) {
     ? messages.filter((m) => m.content?.toLowerCase().includes(filterQuery.toLowerCase()))
     : messages;
   return (
-    <div className="flex-1 overflow-y-auto px-6 py-6">
+    <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
       {messages.length === 0 ? (
         <p className="text-center text-sm text-slate-400 dark:text-slate-500 mt-10">No messages yet — say hello!</p>
       ) : filtered.length === 0 ? (
@@ -309,8 +334,7 @@ function MessageInput({ conversationLabel, onSend }) {
   }
 
   return (
-    <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-4 flex-shrink-0">
-      <div className="border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5">
+<div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-3 sm:px-6 sm:py-4 flex-shrink-0">      <div className="border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5">
         {pendingAttachment && (
           <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-1.5 mb-2 text-xs text-slate-600 dark:text-slate-300">
             <span className="truncate">📎 {pendingAttachment.name}</span>
@@ -435,6 +459,7 @@ function ProfilePanel({ conversation }) {
 }
 
 export default function MessagesPage() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const [conversations, setConversations] = useState([]);
@@ -490,27 +515,76 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="w-screen h-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950">
-      <ConversationSidebar
-        conversations={conversations}
-        activeId={activeId}
-        onSelect={setActiveId}
-        isAdmin={isAdmin}
-        onNewChannel={() => setChannelModal({ mode: "create" })}
-        onManageChannel={handleManageChannel}
-      />
+    
+<div className="relative w-full h-[100dvh] overflow-hidden flex bg-slate-50 dark:bg-slate-950">
+
+      
+{/* Mobile Sidebar */}
+<div
+  className={`fixed inset-0 z-40 md:hidden ${
+    sidebarOpen ? "" : "pointer-events-none invisible"
+  }`}
+>
+  <div
+    className={`absolute inset-0 bg-black/50 ${
+      sidebarOpen ? "opacity-100" : "opacity-0"
+    }`}
+    onClick={() => setSidebarOpen(false)}
+  />
+
+  <div
+    className={`absolute inset-y-0 left-0 transition-transform duration-300 ${
+      sidebarOpen ? "translate-x-0" : "-translate-x-full"
+    }`}
+  >
+    <ConversationSidebar
+      conversations={conversations}
+      activeId={activeId}
+      onSelect={(id) => {
+        setActiveId(id);
+        setSidebarOpen(false);
+      }}
+      isAdmin={isAdmin}
+      onNewChannel={() => {
+        setChannelModal({ mode: "create" });
+        setSidebarOpen(false);
+      }}
+      onManageChannel={handleManageChannel}
+      onClose={() => setSidebarOpen(false)}
+    />
+  </div>
+</div>
+
+{/* Desktop Sidebar */}
+<div className="hidden md:block h-full">
+  <ConversationSidebar
+    conversations={conversations}
+    activeId={activeId}
+    onSelect={setActiveId}
+    isAdmin={isAdmin}
+    onNewChannel={() => setChannelModal({ mode: "create" })}
+    onManageChannel={handleManageChannel}
+    onClose={() => setSidebarOpen(false)}
+  />
+</div>
+
       <div className="flex-1 flex flex-col min-w-0 h-full">
-        <ChatHeader
-          conversation={conversation}
-          searchOpen={searchOpen}
-          onToggleSearch={() => setSearchOpen((v) => !v)}
-          searchValue={searchValue}
-          onSearchChange={setSearchValue}
-        />
+       
+<ChatHeader
+  conversation={conversation}
+  searchOpen={searchOpen}
+  onToggleSearch={() => setSearchOpen((v) => !v)}
+  searchValue={searchValue}
+  onSearchChange={setSearchValue}
+  onOpenSidebar={() => setSidebarOpen(true)}
+/>
+
         <MessageThread messages={messages} filterQuery={searchOpen ? searchValue : ""} />
         <MessageInput conversationLabel={conversation?.label} onSend={handleSend} />
       </div>
-      <ProfilePanel conversation={conversation} />
+      <div className="hidden xl:block h-full">
+  <ProfilePanel conversation={conversation} />
+</div>
       {channelModal && (
         <ManageChannelModal
           channel={channelModal.mode === "manage" ? channelModal.channel : null}

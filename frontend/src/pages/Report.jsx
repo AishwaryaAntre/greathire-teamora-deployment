@@ -333,15 +333,45 @@ export default function Report() {
     refresh().catch((err) => console.error(err));
   }, [refresh]);
 
-  async function handleGenerate() {
-    setGenerating(true);
-    try {
-      await reportsApi.generate({ range: RANGE_TO_API[activeRange], department });
-      await refresh();
-    } finally {
-      setGenerating(false);
+async function handleGenerate() {
+  setGenerating(true);
+
+  try {
+    const params = {
+      range: RANGE_TO_API[activeRange],
+      department:
+        department === "All Departments" ? undefined : department,
+    };
+
+    await reportsApi.generate(params);
+
+    const response = await reportsApi.exportPdf(params);
+
+    if (!response.ok) {
+      throw new Error("Failed to download PDF report.");
     }
+
+    const pdfBlob = await response.blob();
+    const url = window.URL.createObjectURL(pdfBlob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `greathire-report-${params.range}.pdf`;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+
+    await refresh();
+  } catch (error) {
+    console.error("Failed to generate report:", error);
+    window.alert(error.message || "Failed to generate report.");
+  } finally {
+    setGenerating(false);
   }
+}
 
   return (
     <div className="w-screen h-screen overflow-hidden flex bg-slate-50 dark:bg-slate-950">

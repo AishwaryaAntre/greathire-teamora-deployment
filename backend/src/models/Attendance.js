@@ -16,6 +16,7 @@ import {
 import { generateId } from "../utils/id.js";
 import { logActivity } from "../data/activityStore.js";
 import { paginate } from "../utils/paginate.js";
+import { calculateHoursWorked } from "../utils/attendanceHours.js";
 
 import { Notification } from "./Notification.js";
 import { CURRENT_EMPLOYEE_ID } from "../data/employees.js";
@@ -198,13 +199,16 @@ if (existing) {
   const wasCheckedOut = !existing.liveStatus;
   const isFirstCheckIn = !existing.checkIn;
 
-  existing.liveStatus = "Working";
+ existing.liveStatus = "Working";
 
-  if (isFirstCheckIn) {
-    existing.checkIn = checkInTime;
-    existing.late = isLate;
-    existing.status = isLate ? "Late" : "Present";
-  }
+if (isFirstCheckIn) {
+  existing.checkIn = checkInTime;
+  existing.checkInAt = now.toISOString();
+  existing.checkOut = null;
+  existing.checkOutAt = null;
+  existing.late = isLate;
+  existing.status = isLate ? "Late" : "Present";
+}
 
   await persistAttendanceUpdate(existing);
 
@@ -224,16 +228,20 @@ if (existing) {
 }
 
   const record = {
-    id: generateId("att"),
-    employeeId,
-    date: todayISO(),
-    status: isLate ? "Late" : "Present",
-    liveStatus: "Working",
-    checkIn: checkInTime,
-    checkOut: null,
-    late: isLate,
-    hoursWorked: 0,
-  };
+id: generateId("att"),
+employeeId,
+date: todayISO(),
+status: isLate ? "Late" : "Present",
+liveStatus: "Working",
+checkIn: checkInTime,
+checkOut: null,
+checkInAt: now.toISOString(),
+checkOutAt: null,
+breakStartedAt: null,
+breakDurationMs: 0,
+late: isLate,
+hoursWorked: 0,
+};
 
   await persistNewAttendance(record);
   logActivity("check-in", employeeId, `${employee.name} checked in`);
@@ -254,19 +262,40 @@ if (existing) {
 
  
 async checkOut(employeeId) {
-  let record = findTodayRecord(employeeId);
+  const record = findTodayRecord(employeeId);
   if (!record) return null;
 
+  const now = new Date();
+
+  // Close an active break before checking out.
+  if (record.breakStartedAt) {
+    const breakStart = new Date(record.breakStartedAt).getTime();
+
+    if (Number.isFinite(breakStart)) {
+      record.breakDurationMs =
+        (Number(record.breakDurationMs) || 0) +
+        Math.max(0, now.getTime() - breakStart);
+    }
+
+    record.breakStartedAt = null;
+  }
+
   record.liveStatus = null;
-  record.checkOut = formatTimeIST(new Date());
+  record.checkOut = formatTimeIST(now);
+  record.checkOutAt = now.toISOString();
+
+  record.hoursWorked = Number(
+    calculateHoursWorked(record, now).toFixed(2)
+  );
 
   await persistAttendanceUpdate(record);
 
-  let employee = Employee.getById(employeeId);
+  const employee = Employee.getById(employeeId);
 
   if (employee) {
     logActivity("check-out", employeeId, `${employee.name} checked out`);
 
+    // Preserve existing attendance notifications.
     await createAttendanceNotifications({
       employeeId,
       employeeName: employee.name,
@@ -277,29 +306,53 @@ async checkOut(employeeId) {
 
   return withEmployee(record);
 },
+ async startBreak(employeeId) {
+  const record = findTodayRecord(employeeId);
+  if (!record || record.liveStatus !== "Working") return null;
 
+  record.liveStatus = "On Break";
+  record.breakStartedAt = new Date().toISOString();
 
-  async startBreak(employeeId) {
-    let record = findTodayRecord(employeeId);
-    if (!record) return null;
-    if (record.liveStatus !== "Working") return null;
-    record.liveStatus = "On Break";
-    await persistAttendanceUpdate(record);
-    let employee = Employee.getById(employeeId);
-    if (employee) logActivity("break", employeeId, `${employee.name} started break`);
-    return withEmployee(record);
-  },
+  await persistAttendanceUpdate(record);
 
-  async resumeWork(employeeId) {
-    let record = findTodayRecord(employeeId);
-    if (!record) return null;
-    if (record.liveStatus !== "On Break") return null;
-    record.liveStatus = "Working";
-    await persistAttendanceUpdate(record);
-    let employee = Employee.getById(employeeId);
-    if (employee) logActivity("check-in", employeeId, `${employee.name} resumed work`);
-    return withEmployee(record);
-  },
+  const employee = Employee.getById(employeeId);
+
+  if (employee) {
+    logActivity("break", employeeId, `${employee.name} started break`);
+  }
+
+  return withEmployee(record);
+},
+
+async resumeWork(employeeId) {
+  const record = findTodayRecord(employeeId);
+  if (!record || record.liveStatus !== "On Break") return null;
+
+  const now = new Date();
+
+  if (record.breakStartedAt) {
+    const breakStart = new Date(record.breakStartedAt).getTime();
+
+    if (Number.isFinite(breakStart)) {
+      record.breakDurationMs =
+        (Number(record.breakDurationMs) || 0) +
+        Math.max(0, now.getTime() - breakStart);
+    }
+  }
+
+  record.breakStartedAt = null;
+  record.liveStatus = "Working";
+
+  await persistAttendanceUpdate(record);
+
+  const employee = Employee.getById(employeeId);
+
+  if (employee) {
+    logActivity("check-in", employeeId, `${employee.name} resumed work`);
+  }
+
+  return withEmployee(record);
+},
 
   async updateStatus(recordId, { status, liveStatus }) {
     let record = attendanceRecords.find((r) => r.id === recordId);
