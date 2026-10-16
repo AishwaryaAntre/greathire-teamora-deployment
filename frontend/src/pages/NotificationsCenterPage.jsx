@@ -123,8 +123,8 @@ function PageHeader({ activeFilter, setActiveFilter, onMarkAllRead }) {
     </>
   );
 }
-
 function NotificationRow({ item, onClick, onDelete, deleting = false }) {
+
   const Icon = CATEGORY_ICON[item.category] || Cog;
 
   return (
@@ -165,19 +165,18 @@ function NotificationRow({ item, onClick, onDelete, deleting = false }) {
               {item.time}
             </span>
 
-            <button
-              type="button"
-              disabled={deleting}
-              aria-label={`Delete notification: ${item.title}`}
-              title="Delete notification"
-              onClick={(event) => {
-                event.stopPropagation();
-                onDelete(item);
-              }}
-              className="rounded-md p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-950 disabled:opacity-50"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+                    <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(item);
+            }}
+            aria-label={`Delete notification: ${item.title}`}
+            title="Delete notification"
+            className="shrink-0 rounded-md p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
           </div>
         </div>
 
@@ -193,6 +192,18 @@ function NotificationRow({ item, onClick, onDelete, deleting = false }) {
           </span>
         )}
       </div>
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onDelete(item);
+        }}
+        aria-label={`Delete notification: ${item.title}`}
+        title="Delete notification"
+        className="shrink-0 rounded-md p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
     </div>
   );
 }
@@ -340,6 +351,25 @@ export default function NotificationsCenterPage() {
       console.error("Failed to mark notification as read:", err);
     }
   }
+async function handleDeleteNotification(item) {
+  const confirmed = window.confirm(
+    `Delete "${item.title}" notification?`
+  );
+
+  if (!confirmed) return;
+
+  setDeletingId(item.id);
+
+  try {
+    await notificationsApi.delete(item.id);
+    await refresh();
+  } catch (err) {
+    console.error("Failed to delete notification:", err);
+    window.alert("Could not delete notification. Please try again.");
+  } finally {
+    setDeletingId(null);
+  }
+}
 
   async function handleMarkAllRead() {
     try {
@@ -372,25 +402,25 @@ export default function NotificationsCenterPage() {
     }
   }
 
-  async function handleDeleteNotification(item) {
-    const confirmed = window.confirm(
-      `Delete "${item.title}" notification?`
-    );
+  // async function handleDeleteNotification(item) {
+  //   const confirmed = window.confirm(
+  //     `Delete "${item.title}" notification?`
+  //   );
 
-    if (!confirmed) return;
+  //   if (!confirmed) return;
 
-    setDeletingId(item.id);
+  //   setDeletingId(item.id);
 
-    try {
-      await notificationsApi.delete(item.id);
-      await refresh();
-    } catch (err) {
-      console.error("Failed to delete notification:", err);
-      window.alert("Could not delete notification. Please try again.");
-    } finally {
-      setDeletingId(null);
-    }
-  }
+  //   try {
+  //     await notificationsApi.delete(item.id);
+  //     await refresh();
+  //   } catch (err) {
+  //     console.error("Failed to delete notification:", err);
+  //     window.alert("Could not delete notification. Please try again.");
+  //   } finally {
+  //     setDeletingId(null);
+  //   }
+  // }
 
   function handleExportLogs() {
     if (!notifications.length) {
