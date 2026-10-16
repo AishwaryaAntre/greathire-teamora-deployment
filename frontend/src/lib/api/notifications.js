@@ -9,7 +9,7 @@ export const notificationsApi = {
   create: (payload) => api.post("/notifications", payload),
   markAsRead: (id) => api.patch(`/notifications/${id}/read`),
   markAllAsRead: () => api.post("/notifications/mark-all-read"),
-
   // Delete notification
+  remove: (id) => api.delete(`/notifications/${id}`),
   delete: (id) => api.delete(`/notifications/${id}`),
 };

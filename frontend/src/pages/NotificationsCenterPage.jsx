@@ -16,12 +16,13 @@ import { notificationsApi } from "@/lib/api/notifications";
 import { Checkbox } from "@/components/ui/checkbox";
 import MasterSidebar from "@/components/layout/MasterSidebar";
 
-
-
 const filters = ["All", "Unread", "Attendance", "Leave", "System"];
 
-// Backend sends `category` — map it to an icon client-side.
-const CATEGORY_ICON = { attendance: LogInIcon, leave: CalendarClock, system: Cog };
+const CATEGORY_ICON = {
+  attendance: LogInIcon,
+  leave: CalendarClock,
+  system: Cog,
+};
 
 function filterToApiValue(filter) {
   if (filter === "All") return "all";
@@ -31,6 +32,7 @@ function filterToApiValue(filter) {
 
 function TopBar({ search, onSearchChange }) {
   const navigate = useNavigate();
+
   return (
     <header className="flex items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
       <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-2 w-full max-w-md">
@@ -46,21 +48,33 @@ function TopBar({ search, onSearchChange }) {
 
       <div className="flex items-center gap-5 flex-shrink-0">
         <button
+          type="button"
           onClick={() => navigate("/profile")}
+          aria-label="Profile settings"
           className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
         >
           <Settings className="w-5 h-5" />
         </button>
+
         <button
+          type="button"
           onClick={() => navigate("/support")}
+          aria-label="Help"
           className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
         >
           <HelpCircle className="w-5 h-5" />
         </button>
+
         <span className="w-px h-5 bg-slate-200" />
-        <button onClick={() => navigate("/support")} className="text-sm font-medium text-blue-600 hover:text-blue-700">
+
+        <button
+          type="button"
+          onClick={() => navigate("/support")}
+          className="text-sm font-medium text-blue-600 hover:text-blue-700"
+        >
           Support
         </button>
+
         <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-slate-200" />
       </div>
     </header>
@@ -71,25 +85,37 @@ function PageHeader({ activeFilter, setActiveFilter, onMarkAllRead }) {
   return (
     <>
       <div className="mb-5">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Notifications</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Stay updated with workforce activities and important alerts.</p>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Notifications
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Stay updated with workforce activities and important alerts.
+        </p>
       </div>
 
-      <div className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 mb-5">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 mb-5">
+        <div className="flex flex-wrap items-center gap-2">
           {filters.map((filter) => (
             <button
+              type="button"
               key={filter}
               onClick={() => setActiveFilter(filter)}
               className={`relative px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                activeFilter === filter ? "bg-slate-900 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                activeFilter === filter
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               {filter}
             </button>
           ))}
         </div>
-        <button onClick={onMarkAllRead} className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700">
+
+        <button
+          type="button"
+          onClick={onMarkAllRead}
+          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+        >
           <CheckCheck className="w-4 h-4" />
           Mark All as Read
         </button>
@@ -98,15 +124,16 @@ function PageHeader({ activeFilter, setActiveFilter, onMarkAllRead }) {
   );
 }
 
-
-function NotificationRow({ item, onClick, onDelete, deleting }) {
+function NotificationRow({ item, onClick, onDelete, deleting = false }) {
   const Icon = CATEGORY_ICON[item.category] || Cog;
 
   return (
     <div
       onClick={onClick}
-      className={`flex items-start gap-4 px-6 py-5 border-b border-slate-100 dark:border-slate-800 last:border-b-0 cursor-pointer ${
-        item.unread ? "bg-blue-50/40" : "bg-white dark:bg-slate-900"
+      className={`flex items-start gap-4 px-4 sm:px-6 py-5 border-b border-slate-100 dark:border-slate-800 last:border-b-0 ${
+        item.unread
+          ? "bg-blue-50/40 dark:bg-blue-950/20"
+          : "bg-white dark:bg-slate-900"
       }`}
     >
       {item.unread ? (
@@ -129,11 +156,11 @@ function NotificationRow({ item, onClick, onDelete, deleting }) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-3">
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+          <p className="text-sm font-semibold text-slate-900 dark:text-white break-words min-w-0">
             {item.title}
           </p>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">
               {item.time}
             </span>
@@ -141,43 +168,52 @@ function NotificationRow({ item, onClick, onDelete, deleting }) {
             <button
               type="button"
               disabled={deleting}
+              aria-label={`Delete notification: ${item.title}`}
+              title="Delete notification"
               onClick={(event) => {
                 event.stopPropagation();
                 onDelete(item);
               }}
-              aria-label={`Delete notification: ${item.title}`}
-              title="Delete notification"
-              className="p-2 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-50"
+              className="rounded-md p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-950 disabled:opacity-50"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 break-words">
           {item.description}
         </p>
 
-        <span
-          className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md mt-2 ${item.badge.tone}`}
-        >
-          {item.badge.label}
-        </span>
+        {item.badge && (
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md mt-2 ${item.badge.tone || ""}`}
+          >
+            {item.badge.label || item.category}
+          </span>
+        )}
       </div>
     </div>
   );
 }
 
-
 function SummaryCard({ summary }) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
-      <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">Summary</h3>
+      <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+        Summary
+      </h3>
+
       <div className="grid grid-cols-2 gap-3 mb-3">
         {summary.map(({ label, value, tone }) => (
-          <div key={label} className="bg-slate-50 dark:bg-slate-950 rounded-xl p-3">
-            <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">{label}</p>
-            <p className={`text-xl font-bold ${tone}`}>{value}</p>
+          <div
+            key={label}
+            className="bg-slate-50 dark:bg-slate-950 rounded-xl p-3"
+          >
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
+              {label}
+            </p>
+            <p className={`text-xl font-bold ${tone || ""}`}>{value}</p>
           </div>
         ))}
       </div>
@@ -193,19 +229,38 @@ const PREFERENCE_LABELS = [
   { key: "systemAlerts", label: "System alerts" },
 ];
 
-function QuickActionsCard({ open, onToggle, preferences, onTogglePreference, onExport }) {
+function QuickActionsCard({
+  open,
+  onToggle,
+  preferences,
+  onTogglePreference,
+  onExport,
+}) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-bold text-slate-900 dark:text-white">Quick Actions</h3>
+        <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          Quick Actions
+        </h3>
+
         {open && (
-          <button onClick={onToggle} aria-label="Close notification settings" className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label="Close notification settings"
+            className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+          >
             <X className="w-4 h-4" />
           </button>
         )}
       </div>
+
       <div className="flex flex-col gap-2">
-        <button onClick={onToggle} className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950"
+        >
           <Settings className="w-4 h-4 text-slate-500 dark:text-slate-400" />
           Notification Settings
         </button>
@@ -213,18 +268,27 @@ function QuickActionsCard({ open, onToggle, preferences, onTogglePreference, onE
         {open && (
           <div className="flex flex-col gap-3 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-3 -mt-1">
             {PREFERENCE_LABELS.map(({ key, label }) => (
-              <label key={key} className="flex items-center justify-between gap-2 text-sm text-slate-600 dark:text-slate-300 cursor-pointer">
+              <label
+                key={key}
+                className="flex items-center justify-between gap-2 text-sm text-slate-600 dark:text-slate-300 cursor-pointer"
+              >
                 {label}
                 <Checkbox
                   checked={!!preferences?.[key]}
-                  onCheckedChange={(checked) => onTogglePreference(key, checked)}
+                  onCheckedChange={(checked) =>
+                    onTogglePreference(key, checked)
+                  }
                 />
               </label>
             ))}
           </div>
         )}
 
-        <button onClick={onExport} className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950">
+        <button
+          type="button"
+          onClick={onExport}
+          className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950"
+        >
           <Download className="w-4 h-4 text-slate-500 dark:text-slate-400" />
           Export Logs
         </button>
@@ -240,155 +304,181 @@ export default function NotificationsCenterPage() {
   const [summary, setSummary] = useState([]);
   const [preferences, setPreferences] = useState(null);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const refresh = useCallback(async () => {
-    let [list, summaryData] = await Promise.all([
-      notificationsApi.list({ filter: filterToApiValue(activeFilter), search }),
+    const [list, summaryData] = await Promise.all([
+      notificationsApi.list({
+        filter: filterToApiValue(activeFilter),
+        search,
+      }),
       notificationsApi.getSummary(),
     ]);
+
     setNotifications(Array.isArray(list) ? list : list?.data || []);
-    setSummary(summaryData);
+    setSummary(Array.isArray(summaryData) ? summaryData : []);
   }, [activeFilter, search]);
 
- 
-
-
-
-
   useEffect(() => {
-    refresh().catch((err) => console.error(err));
+    refresh().catch((err) => console.error("Failed to load notifications:", err));
   }, [refresh]);
 
   useEffect(() => {
-    notificationsApi.getPreferences().then(setPreferences).catch((err) => console.error(err));
+    notificationsApi
+      .getPreferences()
+      .then(setPreferences)
+      .catch((err) => console.error("Failed to load preferences:", err));
   }, []);
 
-
- async function handleRowClick(item) {
+  async function handleRowClick(item) {
     if (!item.unread) return;
-    await notificationsApi.markAsRead(item.id);
-    await refresh();
+
+    try {
+      await notificationsApi.markAsRead(item.id);
+      await refresh();
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
+    }
   }
+
   async function handleMarkAllRead() {
-    await notificationsApi.markAllAsRead();
-    await refresh();
+    try {
+      await notificationsApi.markAllAsRead();
+      await refresh();
+    } catch (err) {
+      console.error("Failed to mark all notifications as read:", err);
+      window.alert("Could not mark notifications as read. Please try again.");
+    }
   }
- 
-async function handleTogglePreference(key, checked) {
-  const previous = preferences;
-  const next = { ...preferences, [key]: checked };
 
-  setPreferences(next);
+  async function handleTogglePreference(key, checked) {
+    const previous = preferences;
+    const next = { ...preferences, [key]: checked };
 
-  try {
-    const saved = await notificationsApi.updatePreferences({
-      [key]: checked,
+    setPreferences(next);
+
+    try {
+      const saved = await notificationsApi.updatePreferences({
+        [key]: checked,
+      });
+
+      if (saved && typeof saved === "object") {
+        setPreferences((current) => ({ ...current, ...saved }));
+      }
+    } catch (err) {
+      setPreferences(previous);
+      console.error("Failed to save notification preference:", err);
+      window.alert("Could not save notification settings. Please try again.");
+    }
+  }
+
+  async function handleDeleteNotification(item) {
+    const confirmed = window.confirm(
+      `Delete "${item.title}" notification?`
+    );
+
+    if (!confirmed) return;
+
+    setDeletingId(item.id);
+
+    try {
+      await notificationsApi.delete(item.id);
+      await refresh();
+    } catch (err) {
+      console.error("Failed to delete notification:", err);
+      window.alert("Could not delete notification. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function handleExportLogs() {
+    if (!notifications.length) {
+      window.alert("There are no notifications to export.");
+      return;
+    }
+
+    const columns = [
+      ["Title", "title"],
+      ["Description", "description"],
+      ["Category", "category"],
+      ["Priority", "priority"],
+      ["Created At", "createdAt"],
+      ["Time", "time"],
+      ["Unread", "unread"],
+      ["System Notification", "isSystem"],
+    ];
+
+    const escapeCsv = (value) =>
+      `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+    const csv = [
+      columns.map(([label]) => escapeCsv(label)).join(","),
+      ...notifications.map((notification) =>
+        columns.map(([, key]) => escapeCsv(notification[key])).join(",")
+      ),
+    ].join("\r\n");
+
+    const blob = new Blob(["\uFEFF", csv], {
+      type: "text/csv;charset=utf-8;",
     });
 
-    // Keep the saved preferences returned by the backend.
-    if (saved && typeof saved === "object") {
-      setPreferences((current) => ({ ...current, ...saved }));
-    }
-  } catch (err) {
-    setPreferences(previous);
-    console.error("Failed to save notification preference:", err);
-    window.alert("Could not save notification settings. Please try again.");
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `notifications-${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-}
-
-function handleExportLogs() {
-  if (!notifications.length) {
-    window.alert("There are no notifications to export.");
-    return;
-  }
-
-  const columns = [
-    ["Title", "title"],
-    ["Description", "description"],
-    ["Category", "category"],
-    ["Priority", "priority"],
-    ["Created At", "createdAt"],
-    ["Time", "time"],
-    ["Unread", "unread"],
-    ["System Notification", "isSystem"],
-  ];
-
-  const escapeCsv = (value) => {
-    const text = String(value ?? "");
-    return `"${text.replace(/"/g, '""')}"`;
-  };
-
-  const csv = [
-    columns.map(([label]) => escapeCsv(label)).join(","),
-    ...notifications.map((notification) =>
-      columns
-        .map(([, key]) => escapeCsv(notification[key]))
-        .join(",")
-    ),
-  ].join("\r\n");
-
-  // Add BOM so Excel opens UTF-8 text correctly.
-  const blob = new Blob(["\uFEFF", csv], {
-    type: "text/csv;charset=utf-8;",
-  });
-
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = `notifications-${new Date()
-    .toISOString()
-    .slice(0, 10)}.csv`;
-
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-
-async function handleDeleteNotification(item) {
-  const confirmed = window.confirm(
-    `Delete "${item.title}" notification?`
-  );
-
-  if (!confirmed) return;
-
-  try {
-    await notificationsApi.delete(item.id);
-    await refresh();
-  } catch (err) {
-    console.error("Failed to delete notification:", err);
-    window.alert("Could not delete notification. Please try again.");
-  }
-}
-
 
   return (
     <div className="w-screen h-screen overflow-hidden flex bg-background dark:bg-slate-950">
- <MasterSidebar />
+      <MasterSidebar />
+
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <TopBar search={search} onSearchChange={setSearch} />
-        <main className="flex-1 overflow-y-auto px-6 py-6">
+
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
             <div className="xl:col-span-2 min-w-0">
-              <PageHeader activeFilter={activeFilter} setActiveFilter={setActiveFilter} onMarkAllRead={handleMarkAllRead} />
+              <PageHeader
+                activeFilter={activeFilter}
+                setActiveFilter={setActiveFilter}
+                onMarkAllRead={handleMarkAllRead}
+              />
+
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                 {notifications.length === 0 ? (
-                  <p className="px-6 py-10 text-center text-sm text-slate-400 dark:text-slate-500">No notifications here.</p>
+                  <p className="px-6 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
+                    No notifications here.
+                  </p>
                 ) : (
                   notifications.map((item) => (
-                    <NotificationRow key={item.id} item={item} onClick={() => handleRowClick(item)} onDelete={handleDeleteNotification} />
+                    <NotificationRow
+                      key={item.id}
+                      item={item}
+                      onClick={() => handleRowClick(item)}
+                      onDelete={handleDeleteNotification}
+                      deleting={deletingId === item.id}
+                    />
                   ))
                 )}
               </div>
             </div>
+
             <div className="flex flex-col gap-5">
               <SummaryCard summary={summary} />
+
               <QuickActionsCard
                 open={preferencesOpen}
-                onToggle={() => setPreferencesOpen((v) => !v)}
+                onToggle={() => setPreferencesOpen((value) => !value)}
                 preferences={preferences}
                 onTogglePreference={handleTogglePreference}
                 onExport={handleExportLogs}
