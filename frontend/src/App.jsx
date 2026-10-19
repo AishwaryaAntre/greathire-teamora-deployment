@@ -57,6 +57,7 @@ export default function App() {
 
         {/* Any authenticated user */}
         <Route path="/projects" element={<ProtectedRoute><ProjectsRoute /></ProtectedRoute>} />
+        <Route path="/leave" element={<ProtectedRoute><LeaveManagement /></ProtectedRoute>} />
         <Route path="/employee-dashboard" element={<ProtectedRoute><EmployeeDashboardPage /></ProtectedRoute>} />
         <Route path="/holidays" element={<ProtectedRoute><HolidaysPage /></ProtectedRoute>} />
        <Route
