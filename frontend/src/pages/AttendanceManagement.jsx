@@ -3,6 +3,7 @@ import { notificationsApi } from "@/lib/api/notifications";
 import {
   Users,
   Settings,
+  Menu,
   Search,
   Bell,
   HelpCircle,
@@ -73,18 +74,33 @@ function TopBar({ onCheckIn, checkingIn, search, onSearchChange }) {
     };
   }, []);
 
+  function openSidebar() {
+    window.dispatchEvent(new CustomEvent("teamora:open-sidebar"));
+  }
+
   return (
     <header className="flex items-center justify-between gap-4 px-4 sm:px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-      <div className="flex-1 max-w-md">
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-2">
-          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-          <input
-            type="text"
-            placeholder="Search employees..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="bg-transparent outline-none text-sm text-slate-600 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 w-full min-w-0"
-          />
+      <div className="flex flex-1 min-w-0 items-center gap-3">
+        <button
+          type="button"
+          onClick={openSidebar}
+          aria-label="Open navigation"
+          className="lg:hidden shrink-0 rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          <Menu className="h-4 w-4" />
+        </button>
+
+        <div className="w-full max-w-md min-w-0">
+          <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-2">
+            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Search employees..."
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="bg-transparent outline-none text-sm text-slate-600 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 w-full min-w-0"
+            />
+          </div>
         </div>
       </div>
 

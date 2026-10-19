@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Users,
   FileBarChart2,
+  Menu,
   HelpCircle,
   Search,
   Bell,
@@ -75,9 +76,21 @@ function TopBar() {
     };
   }, []);
 
+  function openSidebar() {
+    window.dispatchEvent(new CustomEvent("teamora:open-sidebar"));
+  }
+
   return (
     <header className="flex items-center justify-between gap-4 px-4 sm:px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-3 min-w-0">
+        <button
+          type="button"
+          onClick={openSidebar}
+          aria-label="Open navigation"
+          className="lg:hidden shrink-0 rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          <Menu className="h-4 w-4" />
+        </button>
         <h1
           onClick={() => navigate("/dashboard")}
           className="text-slate-900 dark:text-white font-semibold text-base sm:text-lg truncate cursor-pointer"
@@ -147,10 +160,21 @@ function PageHeader({ activeRange, setActiveRange, department, onDepartmentChang
 
         <label className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200">
           <FileBarChart2 className="w-4 h-4" />
-          <select value={department} onChange={(e) => onDepartmentChange(e.target.value)} className="outline-none bg-transparent">
-            <option>All Departments</option>
+          <select
+            value={department}
+            onChange={(e) => onDepartmentChange(e.target.value)}
+            className="bg-transparent outline-none dark:[color-scheme:dark]"
+          >
+            <option className="bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-200">
+              All Departments
+            </option>
             {departments.map((d) => (
-              <option key={d}>{d}</option>
+              <option
+                key={d}
+                className="bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              >
+                {d}
+              </option>
             ))}
           </select>
         

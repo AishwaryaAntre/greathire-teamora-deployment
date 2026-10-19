@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import {
   Settings,
   HelpCircle,
+  Menu,
+  Bell,
   Search,
   CheckCheck,
   Download,
@@ -32,26 +34,94 @@ function filterToApiValue(filter) {
 
 function TopBar({ search, onSearchChange }) {
   const navigate = useNavigate();
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function checkUnreadNotifications() {
+      try {
+        const response = await notificationsApi.list({
+          filter: "all",
+          search: "",
+        });
+        const items = Array.isArray(response)
+          ? response
+          : response?.data?.notifications ??
+            response?.notifications ??
+            response?.data ??
+            [];
+
+        if (active && Array.isArray(items)) {
+          setHasUnreadNotifications(
+            items.some(
+              (item) =>
+                item.unread === true ||
+                item.isRead === false ||
+                item.read === false
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Failed to check unread notifications:", error);
+      }
+    }
+
+    checkUnreadNotifications();
+    const intervalId = window.setInterval(checkUnreadNotifications, 5000);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  function openSidebar() {
+    window.dispatchEvent(new CustomEvent("teamora:open-sidebar"));
+  }
 
   return (
-    <header className="flex items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-      <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-2 w-full max-w-md">
-        <Search className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-        <input
-          type="text"
-          placeholder="Search Notifications..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="bg-transparent outline-none text-sm text-slate-600 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 w-full"
-        />
+    <header className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+      <div className="flex flex-1 min-w-0 items-center gap-3">
+        <button
+          type="button"
+          onClick={openSidebar}
+          aria-label="Open navigation"
+          className="lg:hidden shrink-0 rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          <Menu className="h-4 w-4" />
+        </button>
+
+        <div className="flex min-w-0 w-full max-w-md items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 dark:bg-slate-800">
+          <Search className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
+          <input
+            type="text"
+            placeholder="Search Notifications..."
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full min-w-0 bg-transparent text-sm text-slate-600 outline-none placeholder-slate-400 dark:text-slate-300 dark:placeholder-slate-500"
+          />
+        </div>
       </div>
 
-      <div className="flex items-center gap-5 flex-shrink-0">
+      <div className="flex shrink-0 items-center gap-3 sm:gap-4">
+        <button
+          type="button"
+          onClick={() => navigate("/notifications")}
+          aria-label="Notifications"
+          className="relative text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+        >
+          <Bell className="h-5 w-5" />
+          {hasUnreadNotifications && (
+            <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900" />
+          )}
+        </button>
+
         <button
           type="button"
           onClick={() => navigate("/profile")}
           aria-label="Profile settings"
-          className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+          className="hidden text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 sm:block"
         >
           <Settings className="w-5 h-5" />
         </button>
@@ -60,22 +130,27 @@ function TopBar({ search, onSearchChange }) {
           type="button"
           onClick={() => navigate("/support")}
           aria-label="Help"
-          className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+          className="hidden text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 sm:block"
         >
           <HelpCircle className="w-5 h-5" />
         </button>
 
-        <span className="w-px h-5 bg-slate-200" />
+        <span className="hidden h-5 w-px bg-slate-200 sm:block dark:bg-slate-700" />
 
         <button
           type="button"
           onClick={() => navigate("/support")}
-          className="text-sm font-medium text-blue-600 hover:text-blue-700"
+          className="hidden text-sm font-medium text-blue-600 hover:text-blue-700 sm:block"
         >
           Support
         </button>
 
-        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-slate-200" />
+        <button
+          type="button"
+          onClick={() => navigate("/profile")}
+          aria-label="Profile"
+          className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-slate-300"
+        />
       </div>
     </header>
   );
@@ -93,14 +168,14 @@ function PageHeader({ activeFilter, setActiveFilter, onMarkAllRead }) {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 mb-5">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 mb-5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="grid grid-cols-3 gap-1 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
           {filters.map((filter) => (
             <button
               type="button"
               key={filter}
               onClick={() => setActiveFilter(filter)}
-              className={`relative px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              className={`relative whitespace-nowrap rounded-full px-2 py-1.5 text-center text-xs font-medium transition-colors sm:px-3.5 sm:text-sm ${
                 activeFilter === filter
                   ? "bg-slate-900 text-white"
                   : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -114,7 +189,7 @@ function PageHeader({ activeFilter, setActiveFilter, onMarkAllRead }) {
         <button
           type="button"
           onClick={onMarkAllRead}
-          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+          className="flex items-center gap-1.5 self-start whitespace-nowrap text-sm font-medium text-blue-600 hover:text-blue-700 sm:self-auto"
         >
           <CheckCheck className="w-4 h-4" />
           Mark All as Read
@@ -165,18 +240,18 @@ function NotificationRow({ item, onClick, onDelete, deleting = false }) {
               {item.time}
             </span>
 
-                    <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onDelete(item);
-            }}
-            aria-label={`Delete notification: ${item.title}`}
-            title="Delete notification"
-            className="shrink-0 rounded-md p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete(item);
+              }}
+              aria-label={`Delete notification: ${item.title}`}
+              title="Delete notification"
+              className="shrink-0 rounded-md p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
@@ -191,19 +266,7 @@ function NotificationRow({ item, onClick, onDelete, deleting = false }) {
             {item.badge.label || item.category}
           </span>
         )}
-      </div>
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          onDelete(item);
-        }}
-        aria-label={`Delete notification: ${item.title}`}
-        title="Delete notification"
-        className="shrink-0 rounded-md p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+    </div>
     </div>
   );
 }
