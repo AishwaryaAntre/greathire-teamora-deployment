@@ -22,7 +22,7 @@ import PageLoading from "@/components/routing/PageLoading";
 import PageError from "@/components/routing/PageError";
 
 const QUICK_LINK_ROUTES = {
-  history: "/attendance",
+  history: "/attendance-history",
   report: "/reports",
   payslip: "/profile",
   policies: "/profile",
@@ -124,12 +124,82 @@ export default function EmployeeDashboardPage() {
     setData(bundle);
   }
 
-  async function handleQuickLink(id) {
-    if (id === "report") {
-      await reportsApi.generate({ range: "12m", department: "All Departments" }).catch(() => {});
-    }
-    navigate(QUICK_LINK_ROUTES[id] || "/profile");
+
+async function handleQuickLink(id) {
+  if (id === "history") {
+    navigate("/attendance-history");
+    return;
   }
+
+  if (id === "report") {
+    try {
+      const response = await attendanceApi.getHistory({});
+
+      const payload = response?.data ?? response;
+      const records = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+
+      if (records.length === 0) {
+        setActionError("Download karanyasathi attendance records available nahit.");
+        return;
+      }
+
+      const headers = [
+        "Date",
+        "Check In",
+        "Check Out",
+        "Working Hours",
+        "Status",
+      ];
+
+      const escapeCsv = (value) =>
+        `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+      const rows = records.map((record) => [
+        record.date,
+        record.checkIn,
+        record.checkOut,
+        record.hoursWorked ?? record.workingHours,
+        record.status,
+      ]);
+
+      const csv = [
+        headers,
+        ...rows,
+      ]
+        .map((row) => row.map(escapeCsv).join(","))
+        .join("\r\n");
+
+      const blob = new Blob(["\uFEFF", csv], {
+        type: "text/csv;charset=utf-8;",
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "my-attendance-report.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setActionError("");
+    } catch (error) {
+      setActionError(
+        error?.message || "Attendance report download hou shakla nahi."
+      );
+    }
+
+    return;
+  }
+
+  navigate(QUICK_LINK_ROUTES[id] || "/profile");
+}
+
+
 
   if (error) {
     return <PageError message={`Couldn't load your dashboard: ${error}`} onRetry={() => window.location.reload()} />;

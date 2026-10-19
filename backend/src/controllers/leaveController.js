@@ -60,6 +60,48 @@ export let leaveController = {
     res.json({ success: true, data: request });
   },
 
+  
+  // PATCH /api/leave/requests/:id/cancel
+  requestCancellation: async (req, res) => {
+    let employeeId = req.user?.employeeId;
+
+    if (!employeeId) {
+      throw new ApiError(403, "No employee profile linked to this account");
+    }
+
+    let request = await LeaveRequest.requestCancellation(
+      req.params.id,
+      employeeId
+    );
+
+    if (!request) {
+      throw new ApiError(404, "Leave request not found");
+    }
+
+    res.json({ success: true, data: request });
+  },
+
+  // PATCH /api/leave/requests/:id/cancellation-decision
+  decideCancellation: async (req, res) => {
+    let { decision } = req.body;
+
+    if (!["Approved", "Rejected"].includes(decision)) {
+      throw new ApiError(400, "Decision must be Approved or Rejected");
+    }
+
+    let request = await LeaveRequest.decideCancellation(
+      req.params.id,
+      decision
+    );
+
+    if (!request) {
+      throw new ApiError(404, "Pending cancellation request not found");
+    }
+
+    res.json({ success: true, data: request });
+  },
+
+
   // POST /api/leave/requests/approve-all  — "Approve All Pending" quick action
   approveAll: async (req, res) => {
     let updated = await LeaveRequest.approveAllPending();

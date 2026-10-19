@@ -31,23 +31,39 @@ function initialsFor(name) {
 }
 
 /** Employee ids on approved leave that covers the given date. */
+
+/** Unique employee ids on approved leave that covers the given date. */
 function onLeaveIdsFor(dateISO) {
-  return LeaveRequest.getAll({ status: "Approved" })
-    .filter((r) => r.startDate <= dateISO && r.endDate >= dateISO)
-    .map((r) => r.employeeId);
+  const requests = LeaveRequest.getAll({ status: "Approved" });
+
+  return [
+    ...new Set(
+      requests
+        .filter(
+          (request) =>
+            request.startDate <= dateISO &&
+            request.endDate >= dateISO
+        )
+        .map((request) => request.employeeId)
+        .filter(Boolean)
+    ),
+  ];
 }
+
 
 export let Dashboard = {
   /** Maps to DashboardOverviewCard: greeting + OVERVIEW_STATS (Total Employees / Live Online / Attendance). */
-  getOverview(adminName = "Swaraj Kadam") {
-    let today = todayISO();
-    let rows = Attendance.getByDate(today);
-    let workingDayRows = rows.filter((r) => r.status !== "Weekend");
-
-    let totalEmployees = Employee.getAll().length;
-    let liveOnline = rows.filter((r) => r.liveStatus).length;
-    let present = workingDayRows.filter((r) => r.status === "Present" || r.status === "Late").length;
-    let attendancePct = workingDayRows.length
+getOverview(adminName = "Swaraj Kadam") {
+let today = todayISO();
+let rows = Attendance.getByDate(today);
+let workingDayRows = rows.filter((r) => r.status !== "Weekend");
+let totalEmployees = Employee.getAll().length;
+let onLeaveIdSet = new Set(onLeaveIdsFor(today));
+let liveOnline = rows.filter(
+  (r) => r.liveStatus && !onLeaveIdSet.has(r.employeeId)
+).length;
+let present = workingDayRows.filter((r) => r.status === "Present" || r.status === "Late").length;
+let attendancePct = workingDayRows.length
       ? Math.round((present / workingDayRows.length) * 1000) / 10
       : 0;
 
@@ -63,14 +79,23 @@ export let Dashboard = {
   },
 
   /** Maps to WorkforceSnapshot: SNAPSHOT_STATS (Total / Working / Break / Leave, each with a percent bar). */
-  getSnapshot() {
-    let today = todayISO();
-    let rows = Attendance.getByDate(today);
+getSnapshot() {
+let today = todayISO();
+let rows = Attendance.getByDate(today);
+let total = Employee.getAll().length;
 
-    let total = Employee.getAll().length;
-    let working = rows.filter((r) => r.liveStatus === "Working").length;
-    let onBreak = rows.filter((r) => r.liveStatus === "On Break").length;
-    let onLeave = onLeaveIdsFor(today).length;
+let onLeaveIds = onLeaveIdsFor(today);
+let onLeaveIdSet = new Set(onLeaveIds);
+
+let working = rows.filter(
+  (r) => r.liveStatus === "Working" && !onLeaveIdSet.has(r.employeeId)
+).length;
+
+let onBreak = rows.filter(
+  (r) => r.liveStatus === "On Break" && !onLeaveIdSet.has(r.employeeId)
+).length;
+
+let onLeave = onLeaveIds.length;
 
     let pct = (n) => (total ? Math.round((n / total) * 100) : 0);
 
@@ -99,23 +124,33 @@ export let Dashboard = {
     let yesterdayAvg = avgHours(yesterdayRows);
     let trendPct = yesterdayAvg ? Math.round(((todayAvg - yesterdayAvg) / yesterdayAvg) * 1000) / 10 : 0;
 
-    return {
-      totalEmployees: Employee.getAll().length,
-      currentlyWorking: todayRows.filter((r) => r.liveStatus === "Working").length,
-      onBreak: todayRows.filter((r) => r.liveStatus === "On Break").length,
-      avgWorkingHours: Math.round(todayAvg * 10) / 10,
-      avgWorkingHoursTrendPct: trendPct,
-    };
+   let onLeaveIdSet = new Set(onLeaveIdsFor(today));
+
+return {
+  totalEmployees: Employee.getAll().length,
+  currentlyWorking: todayRows.filter(
+    (r) => r.liveStatus === "Working" && !onLeaveIdSet.has(r.employeeId)
+  ).length,
+  onBreak: todayRows.filter(
+    (r) => r.liveStatus === "On Break" && !onLeaveIdSet.has(r.employeeId)
+  ).length,
+  avgWorkingHours: Math.round(todayAvg * 10) / 10,
+  avgWorkingHoursTrendPct: trendPct,
+};
   },
 
   /** Maps to LiveWorkforceTable: currently working/break employees, plus those on leave today. */
-  getLiveWorkforce(limit = 10) {
+   getLiveWorkforce(limit = 10) {
     let today = todayISO();
     let rows = Attendance.getByDate(today);
+
     let onLeaveIds = onLeaveIdsFor(today);
+    let onLeaveIdSet = new Set(onLeaveIds);
 
     let active = rows
-      .filter((r) => r.liveStatus)
+      .filter(
+        (r) => r.liveStatus && !onLeaveIdSet.has(r.employeeId)
+      )
       .map((r) => ({
         id: r.employeeId,
         initials: initialsFor(r.employee.name),

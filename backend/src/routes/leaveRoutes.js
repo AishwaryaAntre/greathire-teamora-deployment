@@ -37,4 +37,18 @@ router.patch(
   asyncHandler(leaveController.reject)
 );
 
+
+router.patch(
+  "/requests/:id/cancel",
+  validate(idParamSchema, "params"),
+  asyncHandler(leaveController.requestCancellation)
+);
+
+router.patch(
+  "/requests/:id/cancellation-decision",
+  requireRole("admin"),
+  validate(idParamSchema, "params"),
+  asyncHandler(leaveController.decideCancellation)
+);
+
 export default router;

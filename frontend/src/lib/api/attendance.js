@@ -5,6 +5,7 @@ export const attendanceApi = {
   getStats: (date) => api.get("/attendance/stats", { date }),
   getLive: (params) => api.get("/attendance/live", params),
   getSummary: (date) => api.get("/attendance/summary", { date }),
+  getHistory: (params) => api.get("/attendance/history", params),
   listDepartments: () => api.get("/attendance/departments"),
   list: (params) => api.get("/attendance", params),
   checkIn: (employeeId) =>

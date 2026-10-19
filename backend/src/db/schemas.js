@@ -108,6 +108,7 @@ let ActivitySchema = new Schema(
   base
 );
 
+
 let LeaveRequestSchema = new Schema(
   {
     id: { type: String, unique: true, index: true },
@@ -120,6 +121,11 @@ let LeaveRequestSchema = new Schema(
     reason: String,
     appliedOn: String,
     decidedOn: { type: String, default: null },
+
+    // Leave cancellation tracking
+    cancellationStatus: { type: String, default: null },
+    cancellationRequestedOn: { type: String, default: null },
+    cancellationDecidedOn: { type: String, default: null },
   },
   base
 );

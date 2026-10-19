@@ -30,6 +30,27 @@ export let attendanceController = {
     res.json({ success: true, data: todaysSummaryWithIcons(Attendance.getTodaysSummary(date || todayISO())) });
   },
 
+    // GET /api/attendance/history?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+  getHistory: (req, res) => {
+    const employeeId = req.user?.employeeId;
+
+    if (!employeeId) {
+      throw new ApiError(403, "No employee profile linked to this account");
+    }
+
+    const { startDate, endDate } = req.query;
+
+    const records = Attendance.getForEmployee(employeeId, {
+      startISO: startDate,
+      endISO: endDate,
+    });
+
+    res.json({
+      success: true,
+      data: records.reverse(),
+    });
+  },
+
   // GET /api/attendance?date=&department=&status=&search=&page=&pageSize=
   list: (req, res) => {
     let { date, department, status, search, page, pageSize } = req.query;

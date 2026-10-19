@@ -17,13 +17,9 @@ router.use(requireAuth);
 router.get("/stats", validate(attendanceDateFilterQuerySchema, "query"), asyncHandler(attendanceController.getStats));
 router.get("/live", validate(attendanceDateFilterQuerySchema, "query"), asyncHandler(attendanceController.getLive));
 router.get("/summary", validate(attendanceDateFilterQuerySchema, "query"), asyncHandler(attendanceController.getSummary));
+router.get("/history",asyncHandler(attendanceController.getHistory));
 router.get("/departments", asyncHandler(attendanceController.listDepartments));
-router.get(
-  "/export",
-  requireRole("admin"),
-  validate(attendanceDateFilterQuerySchema, "query"),
-  asyncHandler(attendanceController.exportCsv)
-);
+router.get("/export",requireRole("admin"),validate(attendanceDateFilterQuerySchema, "query"),asyncHandler(attendanceController.exportCsv));
 router.get("/", validate(attendanceListQuerySchema, "query"), asyncHandler(attendanceController.list));
 
 router.post("/check-in", asyncHandler(attendanceController.checkIn));

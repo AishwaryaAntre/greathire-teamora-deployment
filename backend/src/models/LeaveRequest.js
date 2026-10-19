@@ -48,20 +48,52 @@ export let LeaveRequest = {
   },
 
   /** Maps to the Leave Management StatsCards row: Pending / Approved Today / On Leave Today. */
-  getStatsCards() {
-    let today = todayISO();
-    let pending = leaveRequests.filter((r) => r.status === "Pending").length;
-    let approvedToday = leaveRequests.filter((r) => r.status === "Approved" && r.decidedOn === today).length;
-    let onLeaveToday = leaveRequests.filter(
-      (r) => r.status === "Approved" && r.startDate <= today && r.endDate >= today
-    ).length;
+  
+getStatsCards() {
+  const today = todayISO();
 
-    return [
-      { key: "pending", tag: "Pending", label: "Pending Requests", value: String(pending) },
-      { key: "approvedToday", tag: "Today", label: "Approved Today", value: String(approvedToday) },
-      { key: "onLeaveToday", tag: "Active", label: "On Leave Today", value: String(onLeaveToday) },
-    ];
-  },
+  const pending = leaveRequests.filter(
+    (r) => r.status === "Pending"
+  ).length;
+
+  const approvedToday = leaveRequests.filter(
+    (r) => r.status === "Approved" && r.decidedOn === today
+  ).length;
+
+  // Count unique employees who have approved leave today.
+  const onLeaveTodayIds = new Set(
+    leaveRequests
+      .filter(
+        (r) =>
+          r.status === "Approved" &&
+          r.startDate <= today &&
+          r.endDate >= today
+      )
+      .map((r) => r.employeeId)
+  );
+
+  return [
+    {
+      key: "pending",
+      tag: "Pending",
+      label: "Pending Requests",
+      value: String(pending),
+    },
+    {
+      key: "approvedToday",
+      tag: "Today",
+      label: "Approved Today",
+      value: String(approvedToday),
+    },
+    {
+      key: "onLeaveToday",
+      tag: "Active",
+      label: "On Leave Today",
+      value: String(onLeaveTodayIds.size),
+    },
+  ];
+},
+
 
   /** Maps to the "Team Availability (Today)" panel. */
   getTeamAvailability() {
@@ -100,19 +132,25 @@ export let LeaveRequest = {
     let employee = Employee.getById(employeeId);
     if (!employee) throw new Error("Unknown employeeId");
 
-    let request = {
-      id: generateId("lv"),
-      employeeId,
-      leaveType,
-      startDate,
-      endDate,
-      durationDays: daysBetweenInclusive(startDate, endDate),
-      status: "Pending",
-      reason: reason || "",
-      appliedOn: todayISO(),
-      decidedOn: null,
-    };
    
+let request = {
+  id: generateId("lv"),
+  employeeId,
+  leaveType,
+  startDate,
+  endDate,
+  durationDays: daysBetweenInclusive(startDate, endDate),
+  status: "Pending",
+  reason: reason || "",
+  appliedOn: todayISO(),
+  decidedOn: null,
+
+  // Employee leave cancellation tracking
+  cancellationStatus: null,
+  cancellationRequestedOn: null,
+  cancellationDecidedOn: null,
+};
+
 await persistNewLeaveRequest(request);
 
 try {
@@ -161,6 +199,58 @@ async updateStatus(id, status) {
 
   return withEmployee(request);
 },
+
+
+async requestCancellation(id, employeeId) {
+  let request = leaveRequests.find(
+    (r) => r.id === id && r.employeeId === employeeId
+  );
+
+  if (!request) return null;
+
+  if (request.status !== "Approved") {
+    throw new Error("Only approved leave can be cancelled");
+  }
+
+  if (request.cancellationStatus === "Pending") {
+    throw new Error("Cancellation request is already pending");
+  }
+
+  request.cancellationStatus = "Pending";
+  request.cancellationRequestedOn = todayISO();
+  request.cancellationDecidedOn = null;
+
+  await persistLeaveRequestUpdate(request);
+
+  return withEmployee(request);
+},
+
+async decideCancellation(id, decision) {
+  let request = leaveRequests.find((r) => r.id === id);
+
+  if (!request) return null;
+
+  if (
+    request.status !== "Approved" ||
+    request.cancellationStatus !== "Pending"
+  ) {
+    throw new Error("No pending cancellation request found");
+  }
+
+  if (decision === "Approved") {
+    request.status = "Cancelled";
+  }
+
+  request.cancellationStatus =
+    decision === "Approved" ? "Approved" : "Rejected";
+
+  request.cancellationDecidedOn = todayISO();
+
+  await persistLeaveRequestUpdate(request);
+
+  return withEmployee(request);
+},
+
 
   
 async approveAllPending() {

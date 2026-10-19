@@ -1,3 +1,5 @@
+import { LeaveRequest } from "./LeaveRequest.js";
+import { ApiError } from "../middleware/errorHandler.js";
 import {
   attendanceRecords,
   findTodayRecord,
@@ -57,6 +59,22 @@ async function createAttendanceNotifications({
 function withEmployee(record) {
   let employee = Employee.getById(record.employeeId);
   return { ...record, employee };
+}
+
+
+function hasApprovedLeaveToday(employeeId) {
+  const today = todayISO();
+
+  const requests = LeaveRequest.getAll({
+    status: "Approved",
+    employeeId,
+  });
+
+  return requests.some(
+    (request) =>
+      request.startDate <= today &&
+      request.endDate >= today
+  );
 }
 
 export let Attendance = {
@@ -185,6 +203,15 @@ export let Attendance = {
 async checkIn(employeeId) {
   const employee = Employee.getById(employeeId);
   if (!employee) return null;
+
+  
+  
+if (hasApprovedLeaveToday(employeeId)) {
+  throw new ApiError(
+    409,
+    "You are on approved leave today. Check-in is not allowed."
+  );
+}
 
   const SHIFT_START_MINUTES = 10 * 60;
   const now = new Date();

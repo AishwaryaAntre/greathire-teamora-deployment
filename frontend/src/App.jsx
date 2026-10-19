@@ -22,6 +22,7 @@ import PageLoading from "@/components/routing/PageLoading";
 import { useAuth } from "@/lib/AuthContext";
 import GlobalNotificationListener from "@/components/notifications/GlobalNotificationListener";
 import SystemNotificationsPage from "@/pages/SystemNotificationsPage";
+import AttendanceHistoryPage from "@/pages/AttendanceHistoryPage";
 
 // Renders the admin project management UI or the employee's read-only "My
 // Projects" view based on role, so a single /projects route works for both
@@ -58,8 +59,23 @@ export default function App() {
         <Route path="/projects" element={<ProtectedRoute><ProjectsRoute /></ProtectedRoute>} />
         <Route path="/employee-dashboard" element={<ProtectedRoute><EmployeeDashboardPage /></ProtectedRoute>} />
         <Route path="/holidays" element={<ProtectedRoute><HolidaysPage /></ProtectedRoute>} />
-        <Route path="/attendance" element={<ProtectedRoute adminOnly><AttendanceManagement /></ProtectedRoute>} />
-        <Route path="/leave" element={<ProtectedRoute><LeaveManagement /></ProtectedRoute>} />
+       <Route
+  path="/attendance"
+  element={
+    <ProtectedRoute adminOnly>
+      <AttendanceManagement />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/attendance-history"
+  element={
+    <ProtectedRoute>
+      <AttendanceHistoryPage />
+    </ProtectedRoute>
+  }
+/>
         <Route path="/employees" element={<ProtectedRoute><EmployeesListPage /></ProtectedRoute>} />
         <Route path="/employees/:id" element={<ProtectedRoute><EmployeeProfilePage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><MyProfilePage /></ProtectedRoute>} />

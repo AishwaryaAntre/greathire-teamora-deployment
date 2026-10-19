@@ -225,18 +225,46 @@ function LeaveTypeBadge({ type }) {
 }
 
 function StatusBadge({ tone, children }) {
-  const toneStyles = { pending: "bg-amber-50 text-amber-600", approved: "bg-emerald-50 text-emerald-600", rejected: "bg-red-50 text-red-600" };
-  const dotStyles = { pending: "bg-amber-500", approved: "bg-emerald-500", rejected: "bg-red-500" };
+  const toneStyles = {
+    pending: "bg-amber-50 text-amber-600",
+    approved: "bg-emerald-50 text-emerald-600",
+    rejected: "bg-red-50 text-red-600",
+    cancelled: "bg-slate-100 text-slate-600",
+  };
+
+  const dotStyles = {
+    pending: "bg-amber-500",
+    approved: "bg-emerald-500",
+    rejected: "bg-red-500",
+    cancelled: "bg-slate-500",
+  };
+
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${toneStyles[tone]}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${dotStyles[tone]}`}></span>
+    <span
+      className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+        toneStyles[tone] || toneStyles.pending
+      }`}
+    >
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${
+          dotStyles[tone] || dotStyles.pending
+        }`}
+      />
       {children}
     </span>
   );
 }
 
 
-function LeaveRequestRow({ row, onApprove, onReject, onView, canDecide }) {
+function LeaveRequestRow({
+  row,
+  onApprove,
+  onReject,
+  onView,
+  canDecide,
+  onRequestCancellation,
+  onDecideCancellation,
+}) {
   const [actionsOpen, setActionsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionButtonRef = useRef(null);
@@ -274,7 +302,7 @@ function LeaveRequestRow({ row, onApprove, onReject, onView, canDecide }) {
     }
 
     const bounds = actionButtonRef.current.getBoundingClientRect();
-    const menuHeight = canDecide && row.status === "Pending" ? 128 : 44;
+    const menuHeight = 200;
 
     const top =
       bounds.bottom + menuHeight + 8 <= window.innerHeight
@@ -360,6 +388,61 @@ function LeaveRequestRow({ row, onApprove, onReject, onView, canDecide }) {
                   <Eye className="h-4 w-4" />
                   View Details
                 </button>
+
+                {/* Employee: Request cancellation for approved leave */}
+{!canDecide &&
+  row.status === "Approved" &&
+  row.cancellationStatus !== "Pending" && (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={() => {
+        setActionsOpen(false);
+        onRequestCancellation(row.id);
+      }}
+      className="w-full px-3 py-2 text-left text-sm text-orange-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+    >
+      Request Cancellation
+    </button>
+  )}
+
+{/* Show pending cancellation status */}
+{row.cancellationStatus === "Pending" && (
+  <div className="px-3 py-2 text-xs font-medium text-amber-600">
+    Cancellation Pending
+  </div>
+)}
+
+{/* Admin: Decide cancellation request */}
+{canDecide &&
+  row.status === "Approved" &&
+  row.cancellationStatus === "Pending" && (
+    <>
+      <button
+        type="button"
+        role="menuitem"
+        onClick={() => {
+          setActionsOpen(false);
+          onDecideCancellation(row.id, "Approved");
+        }}
+        className="w-full px-3 py-2 text-left text-sm text-emerald-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+      >
+        Approve Cancellation
+      </button>
+
+      <button
+        type="button"
+        role="menuitem"
+        onClick={() => {
+          setActionsOpen(false);
+          onDecideCancellation(row.id, "Rejected");
+        }}
+        className="w-full px-3 py-2 text-left text-sm text-red-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+      >
+        Reject Cancellation
+      </button>
+    </>
+  )}
 
                 {canDecide && row.status === "Pending" && (
                   <>
@@ -462,8 +545,17 @@ function LeaveRequestDetails({ request, onClose }) {
     </div>
   );
 }
+function LeaveRequestsTable({
+  requests,
+  onApprove,
+  onReject,
+  onRequestCancellation,
+  onDecideCancellation,
+  statusFilter,
+  onStatusFilterChange,
+  canDecide,
+}) {
 
-function LeaveRequestsTable({ requests, onApprove, onReject, statusFilter, onStatusFilterChange, canDecide }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   return (
@@ -520,13 +612,15 @@ function LeaveRequestsTable({ requests, onApprove, onReject, statusFilter, onSta
             ) : (
 requests.map((row) => (
   <LeaveRequestRow
-    key={row.id}
-    row={row}
-    onApprove={onApprove}
-    onReject={onReject}
-    onView={setSelectedRequest}
-    canDecide={canDecide}
-  />
+  key={row.id}
+  row={row}
+  onApprove={onApprove}
+  onReject={onReject}
+  onView={setSelectedRequest}
+  onRequestCancellation={onRequestCancellation}
+  onDecideCancellation={onDecideCancellation}
+  canDecide={canDecide}
+/>
 ))            )}
           </tbody>
         </table>
@@ -596,6 +690,10 @@ export default function LeaveManagement() {
         duration: `${r.durationDays} Day${r.durationDays === 1 ? "" : "s"}`,
         status: r.status,
         statusTone: r.status.toLowerCase(),
+        cancellationStatus: r.cancellationStatus || null,
+        cancellationRequestedOn: r.cancellationRequestedOn || null,
+        cancellationDecidedOn: r.cancellationDecidedOn || null,
+       
       }))
     );
   }, [activeTab, search, statusFilter]);
@@ -612,6 +710,34 @@ export default function LeaveManagement() {
     await leaveApi.reject(id);
     await refresh();
   }
+
+  async function handleRequestCancellation(id) {
+  try {
+    await leaveApi.requestCancellation(id);
+    await refresh();
+    alert("Cancellation request submitted successfully.");
+  } catch (error) {
+    console.error("Failed to request cancellation:", error);
+    alert(error.message || "Failed to submit cancellation request.");
+  }
+}
+
+async function handleDecideCancellation(id, decision) {
+  try {
+    await leaveApi.decideCancellation(id, decision);
+    await refresh();
+
+    alert(
+      decision === "Approved"
+        ? "Cancellation approved successfully."
+        : "Cancellation rejected successfully."
+    );
+  } catch (error) {
+    console.error("Failed to decide cancellation:", error);
+    alert(error.message || "Failed to process cancellation.");
+  }
+}
+
   async function handleApproveAll() {
     setApprovingAll(true);
     try {
@@ -683,14 +809,16 @@ export default function LeaveManagement() {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
             <div className="lg:col-span-3">
-              <LeaveRequestsTable
-                requests={requests}
-                canDecide={isAdmin}
-                onApprove={handleApprove}
-                onReject={handleReject}
-                statusFilter={statusFilter}
-                onStatusFilterChange={setStatusFilter}
-              />
+             <LeaveRequestsTable
+  requests={requests}
+  canDecide={isAdmin}
+  onApprove={handleApprove}
+  onReject={handleReject}
+  onRequestCancellation={handleRequestCancellation}
+  onDecideCancellation={handleDecideCancellation}
+  statusFilter={statusFilter}
+  onStatusFilterChange={setStatusFilter}
+/>
             </div>
             <ActivityPanel availability={teamAvailability} />
           </div>
