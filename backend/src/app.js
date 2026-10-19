@@ -7,12 +7,14 @@ import YAML from "yaml";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { getClientOrigins } from "./config/clientOrigins.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const openapiDocument = YAML.parse(readFileSync(join(__dirname, "..", "openapi.yaml"), "utf8"));
 
 import { logger } from "./config/logger.js";
 import passport from "./config/passport.js";
+import { ApiError } from "./middleware/errorHandler.js";
 import { attachUser } from "./middleware/auth.js";
 import authRoutes from "./routes/authRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
@@ -43,44 +45,19 @@ export function createApp() {
     })
   );
 
-  // Allow the API to be accessed from a specific deployed frontend domain
-  // instead of crossing a local-only development assumption. CLIENT_ORIGIN can
-  // contain a comma-separated list of exact origins for Vercel/Render combos.
-  
-  // const clientOrigins = (process.env.CLIENT_ORIGIN || process.env.CORS_ORIGIN || "")
-  //   .split(",")
-  //   .map((origin) => origin.trim())
-  //   .filter(Boolean);
-  // if (!clientOrigins.length) {
-  
-  let clientOrigin = process.env.CLIENT_ORIGIN;
-  if (!clientOrigin) {
-  if (process.env.NODE_ENV === "production") {
-      throw new Error("CLIENT_ORIGIN must be set in production (no wildcard CORS allowed).");
-    }
-    //clientOrigins.push("http://localhost:5173");
-      clientOrigin = "http://localhost:5173";
-  }
+  let clientOrigins = getClientOrigins();
 
   app.use(
     cors({
-        origin: clientOrigin,
-      // origin: (origin, callback) => {
-      //   if (!origin) {
-      //     callback(null, true);
-      //     return;
-      //   }
+      origin: (origin, callback) => {
+        if (!origin || clientOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
 
-        // if (clientOrigins.includes(origin)) {
-        //   callback(null, true);
-        //   return;
-        // }
-
-      //   logger.warn({ origin, allowed: clientOrigins }, "[cors] denied origin");
-      //   callback(new Error(`Origin ${origin} is not allowed by CORS`));
-      // },
-
-      
+        logger.warn({ origin, allowed: clientOrigins }, "[cors] denied origin");
+        callback(new ApiError(403, `Origin ${origin} is not allowed by CORS`));
+      },
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "Accept"],
