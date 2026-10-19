@@ -48,7 +48,14 @@ test("admin can create a new employee account", async () => {
   let res = await request(app)
     .post("/api/employees")
     .set("Authorization", bearer(adminAuth))
-    .send({ name: "Legit Hire", email: "legit@example.com", password: "password123", role: "employee" });
+     .send({
+      name: "Legit Hire",
+      email: "legit@example.com",
+      password: "password123",
+      role: "employee",
+      department: "Engineering",
+      phone: "9876543210",
+    });
   assert.equal(res.status, 201);
   assert.equal(res.body.data.employee.name, "Legit Hire");
 });
@@ -108,10 +115,30 @@ test("employee's attendance list only contains their own records, even if they e
 });
 
 test("admin's attendance list is NOT limited to their own records", async () => {
-  let res = await request(app).get("/api/attendance").set("Authorization", bearer(adminAuth));
+  // Create attendance records for two different employees.
+  await request(app)
+    .post("/api/attendance/check-in")
+    .set("Authorization", bearer(employeeAuth));
+
+  let secondEmployeeAuth = await loginAs(request, app, EMPLOYEE_EMAIL_2);
+
+  await request(app)
+    .post("/api/attendance/check-in")
+    .set("Authorization", bearer(secondEmployeeAuth));
+
+  // Admin should be able to see both employees' records.
+  let res = await request(app)
+    .get("/api/attendance")
+    .set("Authorization", bearer(adminAuth));
+
   assert.equal(res.status, 200);
+
   let distinctEmployeeIds = new Set(res.body.data.map((r) => r.employeeId));
-  assert.ok(distinctEmployeeIds.size > 1, "admin should see records from more than one employee");
+
+  assert.ok(
+    distinctEmployeeIds.size > 1,
+    "admin should see records from more than one employee"
+  );
 });
 
 test("employee's leave request list only contains their own requests", async () => {

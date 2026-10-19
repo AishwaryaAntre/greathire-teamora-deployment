@@ -49,7 +49,12 @@ export const ADMIN_NAV_ITEMS = [
   { label: "Reports & Analytics", href: "/reports", icon: BarChart3 },
   { label: "Messages", href: "/messages", icon: MessageSquare },
   { label: "Notifications", href: "/notifications", icon: Bell },
-  { label: "System Notifications", href: "/admin/system-notifications", icon: Send },
+
+  {
+    label: "System Notifications",
+    href: "/admin/system-notifications",
+    icon: Send,
+  },
 ];
 
 export const EMPLOYEE_NAV_ITEMS = [
