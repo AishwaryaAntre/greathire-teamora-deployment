@@ -80,6 +80,14 @@ export default function App() {
         <Route path="/employees/:id" element={<ProtectedRoute><EmployeeProfilePage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><MyProfilePage /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsCenterPage /></ProtectedRoute>} />
+        <Route
+  path="/leave"
+  element={
+    <ProtectedRoute>
+      <LeaveManagement />
+    </ProtectedRoute>
+  }
+/>
         <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
 
         {/* Public */}

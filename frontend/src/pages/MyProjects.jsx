@@ -42,18 +42,24 @@ function ManagerStatusControl({ project, onUpdated }) {
         <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
         You're the project manager — update status
       </label>
+      
       <select
         value={status}
         onChange={handleChange}
         disabled={saving}
-        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white disabled:opacity-60"
+        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white disabled:opacity-60"
       >
         {PROJECT_STATUS_OPTIONS.map((opt) => (
-          <option key={opt} value={opt}>
+          <option
+            key={opt}
+            value={opt}
+            className="bg-white text-slate-900 dark:bg-slate-900 dark:text-white"
+          >
             {opt}
           </option>
         ))}
       </select>
+
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );

@@ -199,7 +199,14 @@ getHoursStats(employeeId){
     let stateForType = { "check-in": "done", break: "warning", "check-out": "done" };
     let items = todaysEvents.map((e, idx) => ({
       id: idx + 1,
-      time: new Date(e.timestamp).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+      
+time: new Date(e.timestamp).toLocaleTimeString("en-US", {
+  timeZone: "Asia/Kolkata",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+}),
+
       label: e.type === "check-in" ? "Checked In" : e.type === "break" ? "Break Started" : "Checked Out",
       state: stateForType[e.type] || "done",
     }));
