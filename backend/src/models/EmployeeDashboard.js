@@ -187,39 +187,57 @@ getHoursStats(employeeId){
       { id: "late", label: "Late", color: "bg-amber-500" },
     ];
   },
-
-  /** Maps to TimelineCard — today's real check-in/break/check-out events. */
+/** Maps to TimelineCard — today's real check-in/break/check-out events. */
   getTimeline(employeeId) {
-    let today = todayISO();
-    let todaysEvents = activityLog
-      .filter((e) => e.employeeId === employeeId && e.timestamp.startsWith(today))
+  let today = todayISO();
+  let todaysEvents = activityLog
+      .filter((e) => {
+        if (e.employeeId !== employeeId || !e.timestamp) return false;
+        return toISODate(new Date(e.timestamp)) === today;
+      })
       .slice()
-      .reverse(); // oldest first
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-    let stateForType = { "check-in": "done", break: "warning", "check-out": "done" };
+    let stateForType = {
+      "check-in": "done",
+      break: "warning",
+      "check-out": "done",
+    };
+
     let items = todaysEvents.map((e, idx) => ({
       id: idx + 1,
-      
-time: new Date(e.timestamp).toLocaleTimeString("en-US", {
-  timeZone: "Asia/Kolkata",
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: true,
-}),
-
-      label: e.type === "check-in" ? "Checked In" : e.type === "break" ? "Break Started" : "Checked Out",
+      time: new Date(e.timestamp).toLocaleTimeString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }),
+      label:
+        e.type === "check-in"
+          ? "Checked In"
+          : e.type === "break"
+            ? "Break Started"
+            : "Checked Out",
       state: stateForType[e.type] || "done",
     }));
 
-    let record = Attendance.getForEmployee(employeeId, { startISO: today, endISO: today })[0];
+    let record = Attendance.getForEmployee(employeeId, {
+      startISO: today,
+      endISO: today,
+    })[0];
+
     if (!record?.checkOut) {
-      items.push({ id: items.length + 1, time: null, label: "Pending Check Out", state: "pending" });
+      items.push({
+        id: items.length + 1,
+        time: null,
+        label: "Pending Check Out",
+        state: "pending",
+      });
     }
 
     return items;
   },
-
-  /** Maps to LeaveBalanceCard. */
+/** Maps to LeaveBalanceCard. */
   getLeaveBalances(employeeId) {
     let employee = Employee.getById(employeeId);
     if (!employee) return [];
