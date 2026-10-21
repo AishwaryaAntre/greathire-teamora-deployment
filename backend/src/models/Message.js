@@ -10,6 +10,7 @@ import {
   persistChannelMembers,
 } from "../data/messagesStore.js";
 import { Employee } from "./Employee.js";
+import { SharedFile } from "./SharedFile.js";
 import { generateId } from "../utils/id.js";
 import { CURRENT_EMPLOYEE_ID } from "../data/employees.js";
 
@@ -79,12 +80,24 @@ export let Message = {
   },
 
   /** GET /api/messages/conversations/:id — header info + activity + shared files/links. */
-  getConversation(conversationId, employeeId = CURRENT_EMPLOYEE_ID) {
+  async getConversation(conversationId, employeeId = CURRENT_EMPLOYEE_ID) {
     let conversation = allConversationsFor(employeeId).find((c) => c.id === conversationId);
     if (!conversation) return null;
 
     let all = conversationMessages(conversationId);
-    let sharedFiles = all.flatMap((m) => (m.attachments || []).filter((a) => a.type === "file").map((a) => ({ ...a, from: m.senderId, at: m.createdAt })));
+    let uploadedFiles = await SharedFile.listForConversation(conversationId);
+    let sharedFiles = [
+      ...uploadedFiles.map((file) => ({
+        id: file.id,
+        name: file.name,
+        contentType: file.contentType,
+        size: file.size,
+        kind: file.kind,
+        createdAt: file.createdAt,
+        uploaderName: file.uploaderName,
+      })),
+      ...all.flatMap((m) => (m.attachments || []).filter((a) => a.type === "file").map((a) => ({ ...a, from: m.senderId, at: m.createdAt }))),
+    ];
     let sharedLinks = all.flatMap((m) => (m.attachments || []).filter((a) => a.type === "link").map((a) => ({ ...a, from: m.senderId, at: m.createdAt })));
 
     let contact = null;
@@ -101,6 +114,10 @@ export let Message = {
       sharedFiles,
       sharedLinks,
     };
+  },
+
+  hasConversationAccess(conversationId, employeeId) {
+    return allConversationsFor(employeeId).some((conversation) => conversation.id === conversationId);
   },
 
   /** GET /api/messages/conversations/:id/messages — paginated from the newest

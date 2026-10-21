@@ -1,4 +1,8 @@
+import { useTimeGreeting } from "@/lib/useTimeGreeting";
+
 export default function GreetingBanner({ name, role, dateLabel, lastLogin }) {
+  const greeting = useTimeGreeting();
+
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
@@ -6,7 +10,7 @@ export default function GreetingBanner({ name, role, dateLabel, lastLogin }) {
           <span role="img" aria-label="waving hand">
             👋
           </span>
-          Good Morning, {name}
+          {greeting}, {name || "there"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {role} • Today is a great day to stay productive.

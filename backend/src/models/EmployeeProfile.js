@@ -64,6 +64,7 @@ export let EmployeeProfile = {
     return {
       name: employee.name,
       role: employee.role,
+      employeeId: employee.id,
       id: employee.employeeCode,
       status,
       avatar: employee.avatar || "",

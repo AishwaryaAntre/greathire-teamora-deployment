@@ -6,11 +6,16 @@
 //   import.meta.env.VITE_API_BASE_URL ||
 //   (import.meta.env.PROD ? "https://greathire-1.onrender.com" : "http://localhost:5000/api");
 
-const API_BASE_URL =
+const configuredApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD
     ? "https://https://greathire-teamora-deployment-lz1a5d542.vercel.app/api"
     : "http://localhost:5000/api");
+
+const normalizedApiBaseUrl = configuredApiBaseUrl.replace(/\/+$/, "");
+const API_BASE_URL = /\/api$/i.test(normalizedApiBaseUrl)
+  ? normalizedApiBaseUrl
+  : `${normalizedApiBaseUrl}/api`;
 
 const TOKEN_KEY = "gh_teamora_token";
 

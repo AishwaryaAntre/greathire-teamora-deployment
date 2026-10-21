@@ -71,3 +71,185 @@
     font-feature-settings: "cv11", "ss01";
   }
 }
+
+.employee-print-meta {
+  display: none;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body {
+    color: #111827 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .employee-profile-page {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #111827 !important;
+  }
+
+  .employee-profile-topbar {
+    display: flex !important;
+    min-height: 0 !important;
+    padding: 0 0 8px !important;
+    margin-bottom: 12px !important;
+    border: 0 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    background: #fff !important;
+  }
+
+  .employee-profile-topbar h1 {
+    color: #111827 !important;
+    font-size: 16pt !important;
+  }
+
+  .employee-profile-main {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .employee-profile-actions {
+    align-items: flex-start !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .employee-print-meta {
+    display: block;
+    margin: 0;
+    color: #64748b;
+    font-size: 8pt;
+    text-align: right;
+  }
+
+  .print-hidden,
+  .employee-profile-header-actions,
+  .employee-profile-calendar [aria-label="Previous month"],
+  .employee-profile-calendar [aria-label="Next month"] {
+    display: none !important;
+  }
+
+  .employee-profile-header-card {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .employee-profile-header-card h2 {
+    font-size: 20pt !important;
+  }
+
+  .employee-profile-header-card > div:last-child {
+    margin-left: auto !important;
+  }
+
+  .employee-profile-stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .employee-profile-stat-grid > div {
+    padding: 10px !important;
+  }
+
+  .employee-profile-stat-grid .text-2xl {
+    font-size: 16pt !important;
+  }
+
+  .employee-profile-summary-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.42fr) !important;
+    gap: 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .employee-profile-summary-row > div:last-child {
+    width: auto !important;
+    min-width: 0 !important;
+  }
+
+  .employee-profile-summary-row > div,
+  .employee-profile-info-row > div {
+    padding: 12px !important;
+  }
+
+  .employee-profile-info-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .employee-print-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+  }
+
+  .employee-profile-calendar {
+    margin-bottom: 10px !important;
+  }
+
+  .employee-profile-calendar .rounded-lg {
+    border-radius: 3px !important;
+  }
+
+  .employee-profile-calendar button {
+    min-height: 34px !important;
+  }
+
+  .employee-profile-page [class*="dark:bg-slate-"] {
+    background-color: #fff !important;
+  }
+
+  .employee-profile-page [class*="dark:text-white"] {
+    color: #111827 !important;
+  }
+
+  .employee-profile-page [class*="dark:text-slate-"] {
+    color: #475569 !important;
+  }
+
+  .employee-profile-page [class*="dark:border-slate-"] {
+    border-color: #cbd5e1 !important;
+  }
+
+  .employee-profile-page .truncate {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+  }
+
+  .employee-profile-page .rounded-2xl,
+  .employee-profile-page .rounded-xl {
+    border-radius: 6px !important;
+  }
+}

@@ -5,6 +5,10 @@ export const messagesApi = {
   getConversation: (id) => api.get(`/messages/conversations/${id}`),
   listMessages: (id) => api.get(`/messages/conversations/${id}/messages`),
   sendMessage: (id, content, attachments) => api.post(`/messages/conversations/${id}/messages`, { content, attachments }),
+  createSharedFileUpload: (id, file) => api.post(`/messages/conversations/${id}/files/uploads`, file),
+  completeSharedFileUpload: (id, fileId) => api.post(`/messages/conversations/${id}/files/${fileId}/complete`, {}),
+  cancelSharedFileUpload: (id, fileId) => api.delete(`/messages/conversations/${id}/files/${fileId}`),
+  getSharedFileDownloadUrl: (id, fileId) => api.get(`/messages/conversations/${id}/files/${fileId}/download`),
   markRead: (id) => api.post(`/messages/conversations/${id}/read`),
 
   // Admin-only channel management.

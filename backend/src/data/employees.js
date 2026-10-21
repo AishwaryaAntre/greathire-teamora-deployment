@@ -28,19 +28,25 @@ export async function loadEmployees() {
  * subset; admins may pass the full editable field set. Mutates the in-memory
  * cache and persists the same change to MongoDB. */
 export async function persistEmployeeUpdate(id, updates = {}, allowed = ["name", "email", "phone", "avatar"]) {
-  let employee = employees.find((e) => e.id === id);
-  if (!employee) return null;
-
   let patch = {};
   for (let key of allowed) {
     if (updates[key] !== undefined) {
-      employee[key] = updates[key];
       patch[key] = updates[key];
     }
   }
-  if (Object.keys(patch).length) {
-    await EmployeeModel.updateOne({ id }, { $set: patch });
+  let employee = Object.keys(patch).length
+    ? await EmployeeModel.findOneAndUpdate({ id }, { $set: patch }, { new: true }).lean()
+    : await EmployeeModel.findOne({ id }).lean();
+  if (!employee) return null;
+
+  let cachedEmployee = employees.find((item) => item.id === id);
+  if (cachedEmployee) {
+    Object.assign(cachedEmployee, employee);
+    employee = cachedEmployee;
+  } else {
+    employees.push(employee);
   }
+  recomputeDepartments();
   return employee;
 }
 

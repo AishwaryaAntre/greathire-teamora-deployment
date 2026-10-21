@@ -559,6 +559,66 @@ paths:
       responses:
         "200": { description: Conversations }
 
+  /messages/conversations/{id}/files/uploads:
+    post:
+      tags: [Messages]
+      summary: Create a short-lived signed upload URL for a shared conversation file
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, contentType, size]
+              properties:
+                name: { type: string, maxLength: 255 }
+                contentType: { type: string }
+                size: { type: integer, minimum: 1, maximum: 2147483648 }
+                durationSeconds: { type: number, maximum: 90 }
+      responses:
+        "201": { description: Signed storage URL and file metadata }
+        "400": { description: File exceeds the allowed size or duration }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Conversation not found or access denied }
+        "503": { description: Object storage is not configured }
+
+  /messages/conversations/{id}/files/{fileId}/complete:
+    post:
+      tags: [Messages]
+      summary: Verify and publish an uploaded conversation file
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: fileId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Shared file is available }
+        "400": { description: Upload is incomplete or metadata does not match }
+        "404": { description: Conversation or file not found }
+
+  /messages/conversations/{id}/files/{fileId}/download:
+    get:
+      tags: [Messages]
+      summary: Create a short-lived download URL for a shared file
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: fileId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Signed download URL }
+        "404": { description: Conversation or file not found }
+
+  /messages/conversations/{id}/files/{fileId}:
+    delete:
+      tags: [Messages]
+      summary: Cancel a pending conversation file upload
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: fileId, in: path, required: true, schema: { type: string } }
+      responses:
+        "204": { description: Pending upload cancelled }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Pending upload not found }
+
   /messages/conversations/{id}/messages:
     get:
       tags: [Messages]

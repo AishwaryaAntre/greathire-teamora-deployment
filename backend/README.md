@@ -222,6 +222,13 @@ CLIENT_ORIGIN=http://localhost:5173
 MONGODB_URI=mongodb://127.0.0.1:27017/greathire
 MONGODB_DB_NAME=greathire
 
+# Shared conversation file storage (S3-compatible)
+S3_BUCKET=
+S3_REGION=
+S3_ENDPOINT=
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
+
 JWT_SECRET=change-this-to-a-long-random-secret
 JWT_EXPIRES_IN=1d
 JWT_REMEMBER_ME_EXPIRES_IN=30d
@@ -241,6 +248,43 @@ MICROSOFT_CALLBACK_URL=http://localhost:5000/api/auth/oauth/microsoft/callback
 ```
 
 ---
+
+## Shared conversation files
+
+The **Add files** control in a conversation's Shared Files panel uploads directly
+to private S3-compatible object storage; uploaded files do not create chat
+messages. Configure the five `S3_*` variables above on the backend. For AWS S3,
+leave `S3_ENDPOINT` blank and use the bucket region. For Cloudflare R2, use the
+bucket's S3 API endpoint and set `S3_REGION=auto`.
+
+Configure the bucket CORS policy to allow `PUT`, `GET`, and `HEAD` from each
+frontend origin. For example:
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "http://localhost:5173",
+      "https://greathire-teamora-deployment.vercel.app",
+      "https://greathire-teamora-deployment-lz1a5d542.vercel.app"
+    ],
+    "AllowedMethods": ["PUT", "GET", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+The storage credentials should have only the required object-level permissions
+(`PutObject`, `GetObject`, and `DeleteObject`) for the shared-files prefix.
+`GetObject` also authorizes the `HeadObject` verification request. The UI permits
+general files up to 2 GB and videos up to 16 MB and 90
+seconds. Video duration is checked by the browser before upload; image/video
+compression and a status-video feature are not part of this implementation.
+Uploads use short-lived signed URLs, and the backend checks stored size and
+content type before listing a file as shared. Download links expire after 15
+minutes.
 
 # 7. Local MongoDB
 
