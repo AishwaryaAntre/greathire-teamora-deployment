@@ -25,6 +25,8 @@ import {
   Settings2,
   X,
   Menu,
+  Upload,
+  Download,
 } from "lucide-react";
 import { messagesApi } from "@/lib/api/messages";
 import { useAuth } from "@/lib/AuthContext";
@@ -293,18 +295,16 @@ function MessageThread({ messages, filterQuery }) {
 
 const EMOJI_OPTIONS = ["😀", "😂", "👍", "🎉", "❤️", "🙏", "👏", "🔥"];
 
-function MessageInput({ conversationLabel, onSend }) {
+function MessageInput({ conversationLabel, onSend, onUpload, uploadStatus, uploadError }) {
   const [value, setValue] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
   const inputRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
-  const [pendingAttachment, setPendingAttachment] = useState(null);
 
   function submit() {
-    if (!value.trim() && !pendingAttachment) return;
-    onSend(value.trim(), pendingAttachment ? [pendingAttachment] : undefined);
+    if (!value.trim()) return;
+    onSend(value.trim());
     setValue("");
-    setPendingAttachment(null);
   }
 
   function wrapSelection(marker) {
@@ -326,44 +326,58 @@ function MessageInput({ conversationLabel, onSend }) {
     requestAnimationFrame(() => el?.focus());
   }
 
-  function handleFileChosen(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPendingAttachment({ name: file.name });
-    e.target.value = "";
+  function handleKeyDown(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      submit();
+    }
   }
 
   return (
 <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-3 sm:px-6 sm:py-4 flex-shrink-0">      <div className="border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5">
-        {pendingAttachment && (
-          <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-1.5 mb-2 text-xs text-slate-600 dark:text-slate-300">
-            <span className="truncate">📎 {pendingAttachment.name}</span>
-            <button onClick={() => setPendingAttachment(null)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 ml-2">
-              Remove
-            </button>
-          </div>
-        )}
-        <input
+  <textarea
           ref={inputRef}
-          type="text"
+    rows={1}
           placeholder={`Message ${conversationLabel || "..."}`}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submit()}
-          className="w-full text-sm outline-none placeholder-slate-400 dark:placeholder-slate-500 mb-2 bg-transparent"
-        />
-        <div className="flex items-center justify-between">
-          <div className="relative flex items-center gap-3 text-slate-400 dark:text-slate-500">
+    onKeyDown={handleKeyDown}
+    className="min-h-9 max-h-32 w-full resize-y bg-transparent text-sm outline-none placeholder-slate-400 dark:placeholder-slate-500"
+    aria-label={`Message ${conversationLabel || "conversation"}`}
+  />
+  {(uploadStatus || uploadError) && (
+    <div className={`mt-2 rounded-md px-2.5 py-1.5 text-xs ${uploadError ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300" : "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"}`}>
+      {uploadError || uploadStatus}
+    </div>
+  )}
+  <div className="flex items-center justify-between">
+    <div className="relative flex items-center gap-3 text-slate-400 dark:text-slate-500">
             <button title="Bold" onClick={() => wrapSelection("**")} className="hover:text-slate-600 dark:hover:text-slate-300">
               <Bold className="w-4 h-4" />
             </button>
             <button title="Italic" onClick={() => wrapSelection("_")} className="hover:text-slate-600 dark:hover:text-slate-300">
               <Italic className="w-4 h-4" />
             </button>
-            <button title="Attach file" onClick={() => fileInputRef.current?.click()} className="hover:text-slate-600 dark:hover:text-slate-300">
+            <button
+              type="button"
+              title="Share files to this conversation"
+              aria-label="Share files to this conversation"
+              disabled={Boolean(uploadStatus) || !conversationLabel}
+              onClick={() => fileInputRef.current?.click()}
+              className="hover:text-slate-600 disabled:cursor-wait disabled:opacity-50 dark:hover:text-slate-300"
+            >
               <Paperclip className="w-4 h-4" />
             </button>
-            <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChosen} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(event) => {
+                onUpload(Array.from(event.target.files || []));
+                event.target.value = "";
+              }}
+            />
             <button title="Emoji" onClick={() => setEmojiOpen((v) => !v)} className="hover:text-slate-600 dark:hover:text-slate-300">
               <Smile className="w-4 h-4" />
             </button>
@@ -397,7 +411,14 @@ function MessageInput({ conversationLabel, onSend }) {
   );
 }
 
-function ProfilePanel({ conversation }) {
+function formatFileSize(size) {
+  if (!Number.isFinite(size) || size <= 0) return "";
+  if (size >= 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(size / 1024))} KB`;
+}
+
+function ProfilePanel({ conversation, onUpload, onDownload, uploadStatus }) {
+  const fileInputRef = React.useRef(null);
   if (!conversation) return <aside className="w-72 h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700 flex-shrink-0" />;
   const isDm = conversation.type === "dm";
 
@@ -417,18 +438,49 @@ function ProfilePanel({ conversation }) {
             <Folder className="w-4 h-4 text-slate-400 dark:text-slate-500" />
             Shared Files
           </p>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={Boolean(uploadStatus)}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:cursor-wait disabled:opacity-60 dark:text-blue-400 dark:hover:bg-slate-800"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Add files
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              onUpload(Array.from(event.target.files || []));
+              event.target.value = "";
+            }}
+          />
         </div>
         <div className="flex flex-col gap-2">
           {(conversation.sharedFiles || []).length === 0 && <p className="text-xs text-slate-400 dark:text-slate-500">No files shared yet.</p>}
           {(conversation.sharedFiles || []).map((f, i) => (
-            <div key={i} className="flex items-center gap-3">
+            <div key={f.id || `${f.name}-${i}`} className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-red-50 text-red-500">
                 <Folder className="w-4 h-4" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{f.name}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">{f.note}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                  {f.size ? `${formatFileSize(f.size)}${f.uploaderName ? ` · ${f.uploaderName}` : ""}` : f.note}
+                </p>
               </div>
+              {f.id && (
+                <button
+                  type="button"
+                  onClick={() => onDownload(f.id)}
+                  title={`Download ${f.name}`}
+                  className="ml-auto rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-blue-600 dark:hover:bg-slate-800 dark:hover:text-blue-400"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -469,6 +521,160 @@ export default function MessagesPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [channelModal, setChannelModal] = useState(null); // null | { mode: "create" } | { mode: "manage", channel }
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [uploadError, setUploadError] = useState("");
+
+  function isVideo(file) {
+    return file.type.toLowerCase().startsWith("video/") || /\.(mp4|m4v|mov|webm|mkv|avi)$/i.test(file.name);
+  }
+
+  function videoContentType(file) {
+    if (file.type.toLowerCase().startsWith("video/")) return file.type;
+    let extension = file.name.split(".").pop()?.toLowerCase();
+    return {
+      mov: "video/quicktime",
+      webm: "video/webm",
+      mkv: "video/x-matroska",
+      avi: "video/x-msvideo",
+      m4v: "video/x-m4v",
+    }[extension] || "video/mp4";
+  }
+
+  function getSharedFileError(error, message = error?.message) {
+    if (error?.status === 404 && error.message?.startsWith("Route not found:")) {
+      return "The backend does not have the shared-file upload route yet. Restart the local backend from the backend folder, or deploy the latest backend changes to Render.";
+    }
+    if (error?.status === 404) {
+      return "This conversation or file is no longer available to your account. Refresh the conversation and try again.";
+    }
+    if (error?.status === 503 && error.message?.includes("File sharing storage is not configured")) {
+      return "File sharing storage is not configured on the backend. Add S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY to the backend environment, then restart or redeploy it.";
+    }
+    return message || "The file operation failed. Please try again.";
+  }
+
+  function readVideoDuration(file) {
+    return new Promise((resolve, reject) => {
+      let video = document.createElement("video");
+      let url = URL.createObjectURL(file);
+      video.preload = "metadata";
+      video.onloadedmetadata = () => {
+        let duration = video.duration;
+        URL.revokeObjectURL(url);
+        if (!Number.isFinite(duration)) {
+          reject(new Error(`Could not read the duration of "${file.name}".`));
+          return;
+        }
+        resolve(duration);
+      };
+      video.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error(`Could not read the video "${file.name}".`));
+      };
+      video.src = url;
+    });
+  }
+
+  function uploadToStorage(url, headers, file, onProgress) {
+    return new Promise((resolve, reject) => {
+      let xhr = new XMLHttpRequest();
+      xhr.open("PUT", url);
+      Object.entries(headers).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+          return;
+        }
+        reject(new Error(`Storage upload failed (${xhr.status}). Check the bucket CORS and storage configuration.`));
+      };
+      xhr.onerror = () => reject(new Error("Storage upload failed. Check the bucket CORS configuration and try again."));
+      xhr.onabort = () => reject(new Error("Upload was cancelled."));
+      xhr.send(file);
+    });
+  }
+
+  async function handleUploadFiles(files) {
+    if (!activeId || files.length === 0) return;
+    setUploadError("");
+    setUploadStatus("Checking selected files…");
+
+    for (let index = 0; index < files.length; index += 1) {
+      let file = files[index];
+      let video = isVideo(file);
+      if (file.size > 2 * 1024 * 1024 * 1024) {
+        setUploadError(`"${file.name}" is larger than the 2 GB file limit.`);
+        setUploadStatus("");
+        return;
+      }
+      if (video && file.size > 16 * 1024 * 1024) {
+        setUploadError(`"${file.name}" is a video larger than the 16 MB video limit.`);
+        setUploadStatus("");
+        return;
+      }
+
+      let fileId;
+      try {
+        let durationSeconds;
+        let contentType = file.type || "application/octet-stream";
+        if (video) {
+          durationSeconds = await readVideoDuration(file);
+          if (durationSeconds > 90) {
+            setUploadError(`"${file.name}" is longer than the 90-second video limit.`);
+            setUploadStatus("");
+            return;
+          }
+          contentType = videoContentType(file);
+        }
+
+        setUploadStatus(`Preparing ${index + 1}/${files.length}: ${file.name}`);
+        let { file: sharedFile, upload } = await messagesApi.createSharedFileUpload(activeId, {
+          name: file.name,
+          contentType,
+          size: file.size,
+          ...(durationSeconds !== undefined ? { durationSeconds } : {}),
+        });
+        fileId = sharedFile.id;
+        await uploadToStorage(upload.url, upload.headers, file, (percent) => {
+          setUploadStatus(`Uploading ${index + 1}/${files.length}: ${file.name} (${percent}%)`);
+        });
+        await messagesApi.completeSharedFileUpload(activeId, sharedFile.id);
+        setUploadStatus(`Shared ${index + 1}/${files.length}: ${file.name}`);
+        try {
+          let details = await messagesApi.getConversation(activeId);
+          setConversation(details);
+        } catch (refreshError) {
+          setUploadError(refreshError.message || "File uploaded but the Shared Files panel could not be refreshed.");
+        }
+      } catch (error) {
+        let message = error.message || `Could not upload "${file.name}".`;
+        if (fileId) {
+          try {
+            await messagesApi.cancelSharedFileUpload(activeId, fileId);
+          } catch (cleanupError) {
+            message += ` Cleanup failed: ${cleanupError.message}`;
+          }
+        }
+        setUploadError(getSharedFileError(error, message));
+        setUploadStatus("");
+        return;
+      }
+    }
+
+    window.setTimeout(() => setUploadStatus(""), 3000);
+  }
+
+  async function handleDownloadFile(fileId) {
+    setUploadError("");
+    try {
+      let { url } = await messagesApi.getSharedFileDownloadUrl(activeId, fileId);
+      window.location.assign(url);
+    } catch (error) {
+      setUploadError(getSharedFileError(error));
+    }
+  }
 
   function refreshConversations() {
     messagesApi.listConversations().then((list) => {
@@ -580,10 +786,21 @@ export default function MessagesPage() {
 />
 
         <MessageThread messages={messages} filterQuery={searchOpen ? searchValue : ""} />
-        <MessageInput conversationLabel={conversation?.label} onSend={handleSend} />
+        <MessageInput
+          conversationLabel={conversation?.label}
+          onSend={handleSend}
+          onUpload={handleUploadFiles}
+          uploadStatus={uploadStatus}
+          uploadError={uploadError}
+        />
       </div>
       <div className="hidden xl:block h-full">
-  <ProfilePanel conversation={conversation} />
+  <ProfilePanel
+    conversation={conversation}
+    onUpload={handleUploadFiles}
+    onDownload={handleDownloadFile}
+    uploadStatus={uploadStatus}
+  />
 </div>
       {channelModal && (
         <ManageChannelModal

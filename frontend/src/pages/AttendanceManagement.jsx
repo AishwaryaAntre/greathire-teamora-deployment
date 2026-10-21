@@ -198,10 +198,10 @@ function Filters({ date, onDateChange, department, onDepartmentChange, departmen
 
       <label className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200">
         <Building2 className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-        <select value={department} onChange={(e) => onDepartmentChange(e.target.value)} className="outline-none bg-transparent">
-          <option>All Departments</option>
+        <select value={department} onChange={(e) => onDepartmentChange(e.target.value)} className="outline-none bg-transparent dark:[color-scheme:dark]">
+          <option className="bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-200">All Departments</option>
           {departments.map((d) => (
-            <option key={d}>{d}</option>
+            <option key={d} className="bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-200">{d}</option>
           ))}
         </select>
         
@@ -209,9 +209,9 @@ function Filters({ date, onDateChange, department, onDepartmentChange, departmen
 
       <label className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200">
         <SlidersHorizontal className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-        <select value={status} onChange={(e) => onStatusChange(e.target.value)} className="outline-none bg-transparent">
+        <select value={status} onChange={(e) => onStatusChange(e.target.value)} className="outline-none bg-transparent dark:[color-scheme:dark]">
           {statuses.map((s) => (
-            <option key={s}>{s}</option>
+            <option key={s} className="bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-200">{s}</option>
           ))}
         </select>
         

@@ -83,7 +83,7 @@ function TopBar() {
   }, []);
 
   return (
-    <header className="flex items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+    <header className="employee-profile-topbar flex items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
       <h1
         onClick={() => navigate("/dashboard")}
         className="text-slate-900 dark:text-white font-semibold text-lg whitespace-nowrap cursor-pointer"
@@ -91,7 +91,7 @@ function TopBar() {
         GreatHire WorkTrack
       </h1>
 
-      <div className="hidden md:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-4 py-2.5 w-full max-w-md">
+      <div className="print-hidden hidden md:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-4 py-2.5 w-full max-w-md">
         <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
         <input
           type="text"
@@ -100,7 +100,7 @@ function TopBar() {
         />
       </div>
 
-      <div className="flex items-center gap-5 flex-shrink-0">
+      <div className="print-hidden flex items-center gap-5 flex-shrink-0">
         <button
           type="button"
           onClick={() => navigate("/notifications")}
@@ -132,7 +132,7 @@ function TopBar() {
 function PageActions({ breadcrumb }) {
   const navigate = useNavigate();
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="employee-profile-actions flex items-center justify-between mb-6">
       <nav className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">
         {breadcrumb.map((crumb, i) => {
           const isLast = i === breadcrumb.length - 1;
@@ -151,13 +151,18 @@ function PageActions({ breadcrumb }) {
         })}
       </nav>
 
-      <button
-        onClick={() => window.print()}
-        className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950"
-      >
-        <Download className="w-4 h-4" />
-        Export Report
-      </button>
+      <div className="flex items-center gap-4">
+        <p className="employee-print-meta">
+          Employee profile report · Prepared {new Date().toLocaleString()}
+        </p>
+        <button
+          onClick={() => window.print()}
+          className="print-hidden flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950"
+        >
+          <Download className="w-4 h-4" />
+          Export Report
+        </button>
+      </div>
     </div>
   );
 }
@@ -228,7 +233,7 @@ function EditEmployeeModal({ employee, onClose, onSaved }) {
 
 function ProfileHeaderCard({ employee, onViewAttendance, canEdit, onEdit, canDelete, onDelete }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-6 flex flex-col sm:flex-row sm:items-center gap-6">
+    <div className="employee-profile-header-card employee-print-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-6 flex flex-col sm:flex-row sm:items-center gap-6">
       <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0 bg-slate-200 flex items-center justify-center text-xl font-bold text-slate-500 dark:text-slate-400">
         {employee.avatar ? <img src={employee.avatar} alt={employee.name} className="w-full h-full object-cover" /> : employee.name?.[0]}
         <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />
@@ -249,7 +254,7 @@ function ProfileHeaderCard({ employee, onViewAttendance, canEdit, onEdit, canDel
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           {employee.status}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="employee-profile-header-actions flex items-center gap-2">
           {canEdit ? (
             <button
               onClick={onEdit}
@@ -291,7 +296,7 @@ function ProfileHeaderCard({ employee, onViewAttendance, canEdit, onEdit, canDel
 
 function StatCards({ statCards }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
+    <div className="employee-profile-stat-grid employee-print-card grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
       {statCards.map(({ label, value, valueSuffix, icon, note, noteTone }) => {
         let Icon = ICON_BY_NAME[icon] || Percent;
         return (
@@ -317,7 +322,7 @@ function StatCards({ statCards }) {
 
 function WorkSummaryCard({ workSummary }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex-1 min-w-0">
+    <div className="employee-print-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex-1 min-w-0">
       <div className="flex items-center gap-2 mb-5">
         <Briefcase className="w-5 h-5 text-slate-700 dark:text-slate-200" />
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Work Summary</h3>
@@ -340,7 +345,7 @@ function WorkSummaryCard({ workSummary }) {
 
 function ActivityMapCard({ activityMap }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 w-full lg:w-72 flex-shrink-0">
+    <div className="employee-print-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 w-full lg:w-72 flex-shrink-0">
       <div className="flex items-center gap-2 mb-5">
         <Calendar className="w-5 h-5 text-slate-700 dark:text-slate-200" />
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Activity Map</h3>
@@ -369,7 +374,7 @@ function ActivityMapCard({ activityMap }) {
 
 function PersonalInfoCard({ personalInfo }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex-1 min-w-0">
+    <div className="employee-print-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex-1 min-w-0">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <Briefcase className="w-5 h-5 text-slate-700 dark:text-slate-200" />
@@ -391,7 +396,7 @@ function PersonalInfoCard({ personalInfo }) {
 
 function DocumentsCard({ documents }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex-1 min-w-0">
+    <div className="employee-print-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex-1 min-w-0">
       <div className="flex items-center gap-2 mb-5">
         <Folder className="w-5 h-5 text-slate-700 dark:text-slate-200" />
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Documents</h3>
@@ -500,24 +505,24 @@ export default function EmployeeProfilePage() {
   const { profile, statCards, workSummary, activityMap, personalInfo, documents } = bundle;
 
   return (
-    <div className="w-screen h-screen overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950">
+    <div className="employee-profile-page w-screen h-screen overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950">
       <TopBar />
-      <main className="flex-1 overflow-y-auto px-6 py-8 max-w-7xl w-full mx-auto">
+      <main className="employee-profile-main flex-1 overflow-y-auto px-6 py-8 max-w-7xl w-full mx-auto">
         <PageActions breadcrumb={profile.breadcrumb} />
         <ProfileHeaderCard
           employee={profile}
           onViewAttendance={() => navigate("/attendance")}
           canEdit={isAdmin}
           onEdit={() => setEditing(true)}
-          canDelete={isAdmin && profile.id !== user?.employeeId}
+          canDelete={isAdmin && profile.employeeId !== user?.employeeId}
           onDelete={() => setDeleting(true)}
         />
         <StatCards statCards={statCards} />
-        <div className="flex flex-col lg:flex-row gap-4 mb-4">
+        <div className="employee-profile-summary-row flex flex-col lg:flex-row gap-4 mb-4">
           <WorkSummaryCard workSummary={workSummary} />
           <ActivityMapCard activityMap={activityMap} />
         </div>
-        <div className="mb-4">
+        <div className="employee-profile-calendar employee-print-card mb-4">
           {attendanceMonth ? (
             <AttendanceCalendar month={attendanceMonth} onPrevMonth={() => shiftCalendarMonth(-1)} onNextMonth={() => shiftCalendarMonth(1)} />
           ) : (
@@ -526,7 +531,7 @@ export default function EmployeeProfilePage() {
             </div>
           )}
         </div>
-        <div className="mb-4">
+        <div className="employee-profile-calendar employee-print-card mb-4">
           {scheduleMonth ? (
             <ScheduleCalendar
               month={scheduleMonth}
@@ -544,7 +549,7 @@ export default function EmployeeProfilePage() {
             </div>
           )}
         </div>
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="employee-profile-info-row flex flex-col md:flex-row gap-4">
           <PersonalInfoCard personalInfo={personalInfo} />
           <DocumentsCard documents={documents} />
         </div>
@@ -552,7 +557,7 @@ export default function EmployeeProfilePage() {
 
       {editing && (
         <EditEmployeeModal
-          employee={{ id: profile.id, name: profile.name, email: personalInfo.find((p) => p.label === "Contact")?.value, phone: personalInfo.find((p) => p.label === "Contact")?.secondary, department: profile.department }}
+          employee={{ id: profile.employeeId, name: profile.name, email: personalInfo.find((p) => p.label === "Contact")?.value, phone: personalInfo.find((p) => p.label === "Contact")?.secondary, department: profile.department }}
           onClose={() => setEditing(false)}
           onSaved={() => {
             setEditing(false);
@@ -563,7 +568,7 @@ export default function EmployeeProfilePage() {
 
       {deleting && (
         <ConfirmDeleteEmployeeModal
-          employee={{ id: profile.id, name: profile.name }}
+          employee={{ id: profile.employeeId, name: profile.name }}
           onClose={() => setDeleting(false)}
           onDeleted={() => navigate("/employees")}
         />

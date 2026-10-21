@@ -7,6 +7,8 @@ import { idParamSchema } from "../validators/common.js";
 import {
   messageListQuerySchema,
   sendMessageSchema,
+  createSharedFileUploadSchema,
+  sharedFileParamsSchema,
   createChannelSchema,
   channelMemberBodySchema,
   channelMemberParamsSchema,
@@ -35,6 +37,27 @@ router.delete(
 
 router.get("/conversations", asyncHandler(messageController.listConversations));
 router.get("/conversations/:id", validate(idParamSchema, "params"), asyncHandler(messageController.getConversation));
+router.post(
+  "/conversations/:id/files/uploads",
+  validate(idParamSchema, "params"),
+  validate(createSharedFileUploadSchema),
+  asyncHandler(messageController.createSharedFileUpload)
+);
+router.post(
+  "/conversations/:id/files/:fileId/complete",
+  validate(sharedFileParamsSchema, "params"),
+  asyncHandler(messageController.completeSharedFileUpload)
+);
+router.delete(
+  "/conversations/:id/files/:fileId",
+  validate(sharedFileParamsSchema, "params"),
+  asyncHandler(messageController.cancelSharedFileUpload)
+);
+router.get(
+  "/conversations/:id/files/:fileId/download",
+  validate(sharedFileParamsSchema, "params"),
+  asyncHandler(messageController.getSharedFileDownloadUrl)
+);
 router.get(
   "/conversations/:id/messages",
   validate(idParamSchema, "params"),

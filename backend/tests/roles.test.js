@@ -2,6 +2,8 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
 import { setupTestApp, teardownTestApp, loginAs, ADMIN_EMAIL, EMPLOYEE_EMAIL, EMPLOYEE_EMAIL_2 } from "./helpers/setup.js";
+import { employees, loadEmployees } from "../src/data/employees.js";
+import { EmployeeModel } from "../src/db/schemas.js";
 
 let app, adminAuth, employeeAuth;
 
@@ -99,6 +101,39 @@ test("admin CAN edit another employee's profile", async () => {
     .set("Authorization", bearer(adminAuth))
     .send({ department: "Operations" });
   assert.equal(res.status, 200);
+});
+
+test("employee profile exposes internal id separately from display employee code", async () => {
+  let employee = employees.find((item) => item.id === "emp_001");
+  let res = await request(app)
+    .get("/api/employees/emp_001/profile/bundle")
+    .set("Authorization", bearer(adminAuth));
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.data.profile.employeeId, "emp_001");
+  assert.equal(res.body.data.profile.id, employee.employeeCode);
+});
+
+test("admin can edit an employee found in MongoDB when the local employee cache is stale", async () => {
+  let employee = employees.find((item) => item.id === "emp_001");
+  assert.ok(employee);
+  let originalPhone = employee.phone;
+  employees.splice(employees.indexOf(employee), 1);
+
+  try {
+    let res = await request(app)
+      .put("/api/employees/emp_001/profile/personal-info")
+      .set("Authorization", bearer(adminAuth))
+      .send({ phone: "9876543210" });
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.data.find((item) => item.label === "Contact").secondary, "9876543210");
+    assert.equal((await EmployeeModel.findOne({ id: "emp_001" }).lean()).phone, "9876543210");
+    assert.equal(employees.find((item) => item.id === "emp_001").phone, "9876543210");
+  } finally {
+    await EmployeeModel.updateOne({ id: "emp_001" }, { $set: { phone: originalPhone } });
+    await loadEmployees();
+  }
 });
 
 // --- Data scoping: list endpoints actually filter to "my own records" for non-admins ---

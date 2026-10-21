@@ -2,14 +2,16 @@ import { Eye, Download } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import OverviewStatCard from "./OverviewStatCard";
+import { useTimeGreeting } from "@/lib/useTimeGreeting";
 
 export default function DashboardOverviewCard({ name, adminName, dateLabel, stats, onViewAttendance, onGenerateReport }) {
   const displayName = name || adminName || "there";
+  const greeting = useTimeGreeting();
 
   return (
     <Card className="p-6">
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-        Good Morning, {displayName}
+        {greeting}, {displayName}
       </h1>
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
         Here is the workforce status for today, {dateLabel}.
@@ -34,4 +36,3 @@ export default function DashboardOverviewCard({ name, adminName, dateLabel, stat
     </Card>
   );
 }
-

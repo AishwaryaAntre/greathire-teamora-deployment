@@ -193,6 +193,25 @@ let MessageSchema = new Schema(
   base
 );
 
+let SharedFileSchema = new Schema(
+  {
+    id: { type: String, unique: true, index: true },
+    conversationId: { type: String, index: true },
+    key: { type: String, unique: true },
+    name: String,
+    contentType: String,
+    size: Number,
+    kind: String,
+    durationSeconds: { type: Number, default: null },
+    uploaderId: { type: String, index: true },
+    uploaderName: String,
+    status: { type: String, default: "pending", index: true },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+  },
+  base
+);
+SharedFileSchema.index({ conversationId: 1, status: 1, createdAt: -1 });
+
 let ReadStateSchema = new Schema(
   {
     employeeId: { type: String, index: true },
@@ -285,6 +304,7 @@ export let NotificationPreferenceModel = model("NotificationPreference", Notific
 export let ChannelModel = model("Channel", ChannelSchema);
 export let DirectConversationModel = model("DirectConversation", DirectConversationSchema);
 export let MessageModel = model("Message", MessageSchema);
+export let SharedFileModel = model("SharedFile", SharedFileSchema);
 export let ReadStateModel = model("ReadState", ReadStateSchema);
 export let ReportModel = model("Report", ReportSchema);
 export let AnnouncementModel = model("Announcement", AnnouncementSchema);

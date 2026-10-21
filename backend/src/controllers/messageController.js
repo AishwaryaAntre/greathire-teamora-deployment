@@ -1,6 +1,48 @@
 import { Message } from "../models/Message.js";
+import { SharedFile } from "../models/SharedFile.js";
 import { CURRENT_EMPLOYEE_ID } from "../data/employees.js";
 import { ApiError } from "../middleware/errorHandler.js";
+import { generateId } from "../utils/id.js";
+import {
+  createUploadUrl,
+  createDownloadUrl,
+  deleteStoredObject,
+  getStoredObjectMetadata,
+} from "../services/objectStorage.js";
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 16 * 1024 * 1024;
+const VIDEO_EXTENSIONS = /\.(mp4|m4v|mov|webm|mkv|avi)$/i;
+
+function sharedFileDto(file) {
+  return {
+    id: file.id,
+    name: file.name,
+    contentType: file.contentType,
+    size: file.size,
+    kind: file.kind,
+    durationSeconds: file.durationSeconds,
+    createdAt: file.createdAt,
+    uploaderName: file.uploaderName,
+  };
+}
+
+function sanitizeFileName(name) {
+  return name
+    .replace(/[\\/]/g, "_")
+    .split("")
+    .filter((character) => {
+      let code = character.charCodeAt(0);
+      return code >= 32 && code !== 127;
+    })
+    .join("")
+    .trim()
+    .slice(0, 255);
+}
+
+function isVideoFile(name, contentType) {
+  return contentType.toLowerCase().startsWith("video/") || VIDEO_EXTENSIONS.test(name);
+}
 
 function resolveEmployeeId(req) {
   return req.user?.employeeId || CURRENT_EMPLOYEE_ID;
@@ -11,8 +53,8 @@ export let messageController = {
     res.json({ success: true, data: Message.listConversations(resolveEmployeeId(req)) });
   },
 
-  getConversation: (req, res) => {
-    let data = Message.getConversation(req.params.id, resolveEmployeeId(req));
+  getConversation: async (req, res) => {
+    let data = await Message.getConversation(req.params.id, resolveEmployeeId(req));
     if (!data) throw new ApiError(404, "Conversation not found");
     res.json({ success: true, data });
   },
@@ -29,6 +71,120 @@ export let messageController = {
     let data = await Message.sendMessage(req.params.id, { content, attachments }, resolveEmployeeId(req));
     if (!data) throw new ApiError(404, "Conversation not found");
     res.status(201).json({ success: true, data });
+  },
+
+  createSharedFileUpload: async (req, res) => {
+    let employeeId = resolveEmployeeId(req);
+    let conversationId = req.params.id;
+    if (!Message.hasConversationAccess(conversationId, employeeId)) {
+      throw new ApiError(404, "Conversation not found");
+    }
+
+    let name = sanitizeFileName(req.body.name);
+    if (!name) throw new ApiError(400, "File name is invalid.");
+
+    let video = isVideoFile(name, req.body.contentType);
+    let maxSizeBytes = video ? MAX_VIDEO_SIZE : MAX_FILE_SIZE;
+    if (req.body.size > maxSizeBytes) {
+      throw new ApiError(400, video ? "Videos must be 16 MB or smaller." : "Files must be 2 GB or smaller.");
+    }
+    if (video && (req.body.durationSeconds === undefined || req.body.durationSeconds > 90)) {
+      throw new ApiError(400, "Videos must be 90 seconds or shorter.");
+    }
+
+    let id = generateId("file");
+    let file = await SharedFile.createPending({
+      id,
+      conversationId,
+      key: `shared-files/${conversationId}/${id}`,
+      name,
+      contentType: req.body.contentType,
+      size: req.body.size,
+      kind: video ? "video" : "file",
+      durationSeconds: video ? req.body.durationSeconds : null,
+      uploaderId: employeeId,
+      uploaderName: req.user.name,
+      status: "pending",
+    });
+
+    try {
+      let upload = await createUploadUrl({
+        key: file.key,
+        contentType: file.contentType,
+        size: file.size,
+      });
+      res.status(201).json({
+        success: true,
+        data: { file: sharedFileDto(file), upload },
+      });
+    } catch (error) {
+      await SharedFile.deletePending(file.id);
+      throw error;
+    }
+  },
+
+  completeSharedFileUpload: async (req, res) => {
+    let employeeId = resolveEmployeeId(req);
+    let conversationId = req.params.id;
+    if (!Message.hasConversationAccess(conversationId, employeeId)) {
+      throw new ApiError(404, "Conversation not found");
+    }
+
+    let file = await SharedFile.findById(conversationId, req.params.fileId);
+    if (!file) throw new ApiError(404, "Shared file not found");
+    if (file.uploaderId !== employeeId) throw new ApiError(403, "Only the uploader can complete this upload.");
+    if (file.status === "ready") {
+      res.json({ success: true, data: sharedFileDto(file) });
+      return;
+    }
+
+    let storedObject;
+    try {
+      storedObject = await getStoredObjectMetadata(file.key);
+    } catch (error) {
+      if (error?.$metadata?.httpStatusCode === 404 || error?.name === "NotFound") {
+        throw new ApiError(400, "The file has not finished uploading to storage.");
+      }
+      throw error;
+    }
+    if (storedObject.ContentLength !== file.size || storedObject.ContentType !== file.contentType) {
+      await deleteStoredObject(file.key);
+      await SharedFile.deletePending(file.id);
+      throw new ApiError(400, "Uploaded file metadata did not match the requested upload.");
+    }
+
+    let readyFile = await SharedFile.markReady(file.id);
+    if (!readyFile) throw new ApiError(409, "Upload is no longer pending.");
+    res.json({ success: true, data: sharedFileDto(readyFile) });
+  },
+
+  getSharedFileDownloadUrl: async (req, res) => {
+    let employeeId = resolveEmployeeId(req);
+    let conversationId = req.params.id;
+    if (!Message.hasConversationAccess(conversationId, employeeId)) {
+      throw new ApiError(404, "Conversation not found");
+    }
+
+    let file = await SharedFile.findById(conversationId, req.params.fileId);
+    if (!file || file.status !== "ready") throw new ApiError(404, "Shared file not found");
+    let url = await createDownloadUrl(file.key, file.name);
+    res.json({ success: true, data: { url } });
+  },
+
+  cancelSharedFileUpload: async (req, res) => {
+    let employeeId = resolveEmployeeId(req);
+    let conversationId = req.params.id;
+    if (!Message.hasConversationAccess(conversationId, employeeId)) {
+      throw new ApiError(404, "Conversation not found");
+    }
+
+    let file = await SharedFile.findById(conversationId, req.params.fileId);
+    if (!file || file.status !== "pending") throw new ApiError(404, "Pending upload not found");
+    if (file.uploaderId !== employeeId) throw new ApiError(403, "Only the uploader can cancel this upload.");
+
+    await deleteStoredObject(file.key);
+    await SharedFile.deletePendingById(conversationId, file.id);
+    res.status(204).end();
   },
 
   markRead: async (req, res) => {
