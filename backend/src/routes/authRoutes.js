@@ -5,6 +5,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
 import passport, { googleEnabled, microsoftEnabled } from "../config/passport.js";
 import { authLimiter, forgotPasswordLimiter } from "../config/rateLimiters.js";
+import { getPrimaryClientOrigin } from "../config/clientOrigins.js";
 import {
   registerSchema,
   loginSchema,
@@ -37,7 +38,7 @@ if (googleEnabled) {
     passport.authenticate("google", { session: false, failureRedirect: "/api/auth/oauth/failure" }),
     asyncHandler(async (req, res) => {
       let { token } = await authController.issueOAuthToken(req.user.email, req.user.name);
-      let clientUrl = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+      let clientUrl = getPrimaryClientOrigin();
       res.redirect(`${clientUrl}/dashboard?token=${token}`);
     })
   );
@@ -58,7 +59,7 @@ if (microsoftEnabled) {
     passport.authenticate("microsoft", { session: false, failureRedirect: "/api/auth/oauth/failure" }),
     asyncHandler(async (req, res) => {
       let { token } = await authController.issueOAuthToken(req.user.email, req.user.name);
-      let clientUrl = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+      let clientUrl = getPrimaryClientOrigin();
       res.redirect(`${clientUrl}/dashboard?token=${token}`);
     })
   );
@@ -72,7 +73,7 @@ if (microsoftEnabled) {
 }
 
 router.get("/oauth/failure", (req, res) => {
-  let clientUrl = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+  let clientUrl = getPrimaryClientOrigin();
   res.redirect(`${clientUrl}/login?error=oauth_failed`);
 });
 

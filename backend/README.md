@@ -256,6 +256,12 @@ Set:
 MONGODB_URI=mongodb://127.0.0.1:27017/greathire
 ```
 
+For production, set `CLIENT_ORIGIN` in the backend hosting environment to the
+exact frontend origin(s), including `https://` and separated by commas if more
+than one frontend should be allowed. The first origin is used for OAuth
+redirects and password-reset links. After changing it in Render, redeploy the
+backend so the new CORS allowlist takes effect.
+
 The backend connects using:
 
 ```javascript

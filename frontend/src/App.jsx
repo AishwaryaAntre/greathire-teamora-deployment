@@ -24,77 +24,199 @@ import GlobalNotificationListener from "@/components/notifications/GlobalNotific
 import SystemNotificationsPage from "@/pages/SystemNotificationsPage";
 import AttendanceHistoryPage from "@/pages/AttendanceHistoryPage";
 
-// Renders the admin project management UI or the employee's read-only "My
-// Projects" view based on role, so a single /projects route works for both
-// sides (same pattern the sidebar/nav already assumes for e.g. /attendance,
-// /leave).
+// Render admin project management or the employee's My Projects view.
 function ProjectsRoute() {
   const { user } = useAuth();
+
   return user?.role === "admin" ? <ProjectManagement /> : <MyProjects />;
 }
 
-// Code-split the two heaviest pages: Report pulls in the recharts library,
-// and Messages is one of the larger standalone views. Both are lazy-loaded
-// so their code (and recharts, in Report's case) isn't in the initial bundle
-// that every user downloads just to log in.
+// Lazy-load heavier pages.
 const Report = lazy(() => import("@/pages/Report"));
 const MessagesPage = lazy(() => import("@/pages/MessagesPage"));
 
 export default function App() {
   return (
     <Suspense fallback={<PageLoading />}>
-       <GlobalNotificationListener />
+      <GlobalNotificationListener />
+
       <Routes>
-        <Route path="/" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
-        <Route path="/forgot-password" element={<PublicOnlyRoute><ForgotPasswordPage /></PublicOnlyRoute>} />
-        <Route path="/reset-password" element={<PublicOnlyRoute><ResetPasswordPage /></PublicOnlyRoute>} />
-
-        {/* Admin-only */}
-        <Route path="/dashboard" element={<ProtectedRoute adminOnly><DashboardPage /></ProtectedRoute>} />
-        <Route path="/admin/system-notifications" element={ <ProtectedRoute adminOnly> <SystemNotificationsPage />
-        </ProtectedRoute> }/>
-        <Route path="/reports" element={<ProtectedRoute adminOnly><Report /></ProtectedRoute>} />
-
-        {/* Any authenticated user */}
-        <Route path="/projects" element={<ProtectedRoute><ProjectsRoute /></ProtectedRoute>} />
-        <Route path="/employee-dashboard" element={<ProtectedRoute><EmployeeDashboardPage /></ProtectedRoute>} />
-        <Route path="/holidays" element={<ProtectedRoute><HolidaysPage /></ProtectedRoute>} />
-       <Route
-  path="/attendance"
-  element={
-    <ProtectedRoute adminOnly>
-      <AttendanceManagement />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/attendance-history"
-  element={
-    <ProtectedRoute>
-      <AttendanceHistoryPage />
-    </ProtectedRoute>
-  }
-/>
-        <Route path="/employees" element={<ProtectedRoute><EmployeesListPage /></ProtectedRoute>} />
-        <Route path="/employees/:id" element={<ProtectedRoute><EmployeeProfilePage /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><MyProfilePage /></ProtectedRoute>} />
-        <Route path="/notifications" element={<ProtectedRoute><NotificationsCenterPage /></ProtectedRoute>} />
+        {/* Public authentication routes */}
         <Route
-  path="/leave"
-  element={
-    <ProtectedRoute>
-      <LeaveManagement />
-    </ProtectedRoute>
-  }
-/>
-        <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+          path="/"
+          element={
+            <PublicOnlyRoute>
+              <LoginPage />
+            </PublicOnlyRoute>
+          }
+        />
 
-        {/* Public */}
-        <Route path="/privacy-policy" element={<LegalPage slug="privacy-policy" />} />
-        <Route path="/terms-of-service" element={<LegalPage slug="terms-of-service" />} />
-        <Route path="/security" element={<LegalPage slug="security" />} />
-        <Route path="/support" element={<LegalPage slug="support" />} />
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicOnlyRoute>
+              <ForgotPasswordPage />
+            </PublicOnlyRoute>
+          }
+        />
+
+        <Route
+          path="/reset-password"
+          element={
+            <PublicOnlyRoute>
+              <ResetPasswordPage />
+            </PublicOnlyRoute>
+          }
+        />
+
+        {/* Admin-only routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute adminOnly>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/system-notifications"
+          element={
+            <ProtectedRoute adminOnly>
+              <SystemNotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute adminOnly>
+              <Report />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/attendance"
+          element={
+            <ProtectedRoute adminOnly>
+              <AttendanceManagement />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/employees"
+          element={
+            <ProtectedRoute>
+              <EmployeesListPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/employees/:id"
+          element={
+            <ProtectedRoute>
+              <EmployeeProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Routes available to authenticated users */}
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute>
+              <ProjectsRoute />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/leave"
+          element={
+            <ProtectedRoute>
+              <LeaveManagement />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/employee-dashboard"
+          element={
+            <ProtectedRoute>
+              <EmployeeDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/holidays"
+          element={
+            <ProtectedRoute>
+              <HolidaysPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/attendance-history"
+          element={
+            <ProtectedRoute>
+              <AttendanceHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <MyProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsCenterPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <MessagesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Public informational pages */}
+        <Route
+          path="/privacy-policy"
+          element={<LegalPage slug="privacy-policy" />}
+        />
+
+        <Route
+          path="/terms-of-service"
+          element={<LegalPage slug="terms-of-service" />}
+        />
+
+        <Route
+          path="/security"
+          element={<LegalPage slug="security" />}
+        />
+
+        <Route
+          path="/support"
+          element={<LegalPage slug="support" />}
+        />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

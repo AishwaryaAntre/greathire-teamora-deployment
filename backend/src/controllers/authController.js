@@ -5,6 +5,7 @@ import { hashPassword, comparePassword } from "../utils/password.js";
 import { signAccessToken } from "../utils/jwt.js";
 import { ApiError } from "../middleware/errorHandler.js";
 import { sendPasswordResetEmail } from "../config/email.js";
+import { getPrimaryClientOrigin } from "../config/clientOrigins.js";
 
 function toPublicUser(user) {
   let employee = user.employeeId ? Employee.getById(user.employeeId) : null;
@@ -93,7 +94,7 @@ export let authController = {
     // registered (timing- and response-based enumeration).
     if (user) {
       let rawToken = await UsersStore.createPasswordResetToken(user.id);
-      let clientOrigin = (process.env.CLIENT_ORIGIN || "http://localhost:5173").replace(/\/$/, "");
+      let clientOrigin = getPrimaryClientOrigin();
       let resetUrl = `${clientOrigin}/reset-password?token=${encodeURIComponent(rawToken)}`;
       await sendPasswordResetEmail({ to: user.email, resetUrl });
     }
