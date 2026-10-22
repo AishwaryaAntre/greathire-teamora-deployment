@@ -1,3 +1,4 @@
+import { useAuth } from "@/lib/AuthContext";
 import React, { useEffect, useState } from "react";
 import { notificationsApi } from "@/lib/api/notifications";
 import { Link, useNavigate } from "react-router-dom";
@@ -239,8 +240,19 @@ function PersonalInfoCard({ personalInfo, className = "" }) {
 }
 
 function AccountSettingsCard({ className = "" }) {
-  let navigate = useNavigate();
-  let { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const { isDark, toggleTheme } = useTheme();
+  const { logout } = useAuth();
+
+  const handleChangePassword = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      navigate("/", { replace: true });
+    }
+  };
   return (
     <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 ${className}`}>
       <div className="flex items-center gap-2 mb-5">
@@ -249,7 +261,7 @@ function AccountSettingsCard({ className = "" }) {
       </div>
       <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
         <button
-          onClick={() => navigate("/")}
+          onClick={handleChangePassword}
           className="flex items-center justify-between py-3 text-left"
         >
           <div>
