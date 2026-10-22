@@ -9,7 +9,7 @@
 const configuredApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD
-    ? "https://https://greathire-teamora-deployment-lz1a5d542.vercel.app/api"
+    ? "https://greathire-teamora-deployment-backend.onrender.com/api"
     : "http://localhost:5000/api");
 
 const normalizedApiBaseUrl = configuredApiBaseUrl.replace(/\/+$/, "");
