@@ -17,6 +17,7 @@ import {
 import { notificationsApi } from "@/lib/api/notifications";
 import { Checkbox } from "@/components/ui/checkbox";
 import MasterSidebar from "@/components/layout/MasterSidebar";
+import ProfileAvatarButton from "@/components/layout/ProfileAvatarButton";
 
 const filters = ["All", "Unread", "Attendance", "Leave", "System"];
 
@@ -145,12 +146,7 @@ function TopBar({ search, onSearchChange }) {
           Support
         </button>
 
-        <button
-          type="button"
-          onClick={() => navigate("/profile")}
-          aria-label="Profile"
-          className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-slate-300"
-        />
+        <ProfileAvatarButton />
       </div>
     </header>
   );

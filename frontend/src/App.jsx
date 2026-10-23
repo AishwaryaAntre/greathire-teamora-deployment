@@ -60,14 +60,12 @@ export default function App() {
           }
         />
 
-        <Route
-          path="/reset-password"
-          element={
-            <PublicOnlyRoute>
-              <ResetPasswordPage />
-            </PublicOnlyRoute>
-          }
-        />
+        
+<Route
+  path="/reset-password"
+  element={<ResetPasswordPage />}
+/>
+
 
         {/* Admin-only routes */}
         <Route

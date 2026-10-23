@@ -16,6 +16,7 @@ import {
 import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Legend, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { reportsApi } from "@/lib/api/reports";
 import MasterSidebar from "@/components/layout/MasterSidebar";
+import ProfileAvatarButton from "@/components/layout/ProfileAvatarButton";
 
 const RANGE_TO_API = { "12 Months": "12m", "30 Days": "30d", "7 Days": "7d" };
 const STAT_ICON_BY_LABEL = { "TOTAL EMPLOYEES": Users, "AVG ATTENDANCE": FileBarChart2 };
@@ -128,7 +129,7 @@ function TopBar() {
           <HelpCircle className="w-5 h-5" />
         </button>
 
-        <div className="w-8 h-8 rounded-full bg-slate-300 overflow-hidden flex-shrink-0" />
+        <ProfileAvatarButton />
       </div>
     </header>
   );

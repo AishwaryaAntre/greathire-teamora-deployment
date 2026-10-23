@@ -95,6 +95,41 @@ test("employee CAN edit their own profile", async () => {
   assert.equal(res.status, 200);
 });
 
+test("employee can save a compressed profile image larger than the default JSON body limit", async () => {
+  let employee = employees.find((item) => item.id === "emp_001");
+  let originalAvatar = employee.avatar;
+  let avatar = `data:image/jpeg;base64,${"a".repeat(80_000)}`;
+
+  try {
+    let update = await request(app)
+      .put("/api/employees/profile/personal-info")
+      .set("Authorization", bearer(employeeAuth))
+      .send({ avatar });
+    assert.equal(update.status, 200);
+
+    let bundle = await request(app)
+      .get("/api/employees/profile/bundle")
+      .set("Authorization", bearer(employeeAuth));
+    assert.equal(bundle.status, 200);
+    assert.equal(bundle.body.data.profile.avatar, avatar);
+
+    let directory = await request(app)
+      .get("/api/employees")
+      .set("Authorization", bearer(adminAuth));
+    assert.equal(directory.status, 200);
+    assert.equal(
+      directory.body.data.find((item) => item.id === "emp_001").avatar,
+      avatar
+    );
+  } finally {
+    await EmployeeModel.updateOne(
+      { id: "emp_001" },
+      { $set: { avatar: originalAvatar ?? null } }
+    );
+    await loadEmployees();
+  }
+});
+
 test("admin CAN edit another employee's profile", async () => {
   let res = await request(app)
     .put("/api/employees/emp_002/profile/personal-info")

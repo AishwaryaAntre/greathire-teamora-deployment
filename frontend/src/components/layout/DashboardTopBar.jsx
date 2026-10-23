@@ -2,7 +2,6 @@
 import {
   ShieldCheck,
   HelpCircle,
-  CircleUserRound,
   Menu,
   Moon,
   Sun,
@@ -12,11 +11,14 @@ import { useNavigate, Link } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
 import { useEffect, useState } from "react";
 import { notificationsApi } from "@/lib/api/notifications";
+import { useAuth } from "@/lib/AuthContext";
 import IconButton from "./IconButton";
+import ProfileAvatarButton from "./ProfileAvatarButton";
 
 export default function DashboardTopBar() {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [hasUnreadNotifications, setHasUnreadNotifications] =
     useState(false);
 
@@ -107,9 +109,7 @@ export default function DashboardTopBar() {
           <IconButton icon={HelpCircle} label="Help" />
         </Link>
 
-        <Link to="/employee-dashboard">
-          <IconButton icon={CircleUserRound} label="Account" />
-        </Link>
+        <ProfileAvatarButton name={user?.name || "Employee"} />
       </div>
     </header>
   );
