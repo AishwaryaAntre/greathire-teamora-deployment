@@ -8,30 +8,13 @@ function gmailAuth() {
   return { user, pass, from, configured: Boolean(user && pass) };
 }
 
-// function createTransporter() {
-//   let { user, pass } = gmailAuth();
-//   return nodemailer.createTransport({
-//     host: "smtp.gmail.com",
-//     port: 465,
-//     secure: true,
-//     auth: { user, pass },
-//   });
-// }
-
 function createTransporter() {
-  const { user, pass } = gmailAuth();
-
+  let { user, pass } = gmailAuth();
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
-    auth: {
-      user,
-      pass,
-    },
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 20000,
+    auth: { user, pass },
   });
 }
 
