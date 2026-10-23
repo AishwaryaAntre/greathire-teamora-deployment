@@ -167,7 +167,7 @@ export default function EmployeesListPage() {
                 onClick={() => navigate(`/employees/${employee.id}`)}
                 className="flex cursor-pointer items-center gap-3 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-950"
               >
-                <Avatar initials={employee.initials} />
+                <Avatar initials={employee.initials} src={employee.avatar} name={employee.name} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{employee.name}</p>
                   <p className="truncate text-xs text-slate-500 dark:text-slate-400">
@@ -216,4 +216,3 @@ export default function EmployeesListPage() {
     </div>
   );
 }
-

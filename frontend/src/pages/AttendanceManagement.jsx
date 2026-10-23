@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { attendanceApi } from "@/lib/api/attendance";
 import { useAuth } from "@/lib/AuthContext";
 import MasterSidebar from "@/components/layout/MasterSidebar";
+import ProfileAvatarButton from "@/components/layout/ProfileAvatarButton";
 
 
 // Backend sends stat cards without icons attached — map by label client-side.
@@ -134,7 +135,7 @@ function TopBar({ onCheckIn, checkingIn, search, onSearchChange }) {
           <Settings className="w-5 h-5" />
         </button>
 
-        <div className="w-8 h-8 rounded-full bg-slate-300 overflow-hidden flex-shrink-0" />
+        <ProfileAvatarButton />
       </div>
     </header>
   );

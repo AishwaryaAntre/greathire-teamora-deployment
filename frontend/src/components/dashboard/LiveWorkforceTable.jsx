@@ -44,6 +44,8 @@ export default function LiveWorkforceTable({ workforce = [] }) {
                   <div className="flex items-center gap-3">
                     <Avatar
                       initials={employee.initials}
+                      src={employee.avatar}
+                      name={employee.name}
                       className={employee.avatarClass}
                     />
                     <span className="text-sm font-semibold text-slate-900 dark:text-white">

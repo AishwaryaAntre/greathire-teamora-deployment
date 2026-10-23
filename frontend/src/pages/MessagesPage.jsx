@@ -18,7 +18,6 @@ import {
   Italic,
   Folder,
   Link2,
-  User,
   HelpCircle,
   Hash,
   Plus,
@@ -31,6 +30,7 @@ import {
 import { messagesApi } from "@/lib/api/messages";
 import { useAuth } from "@/lib/AuthContext";
 import ManageChannelModal from "@/components/employee/ManageChannelModal";
+import ProfileAvatarButton from "@/components/layout/ProfileAvatarButton";
 
 const navItems = [
   { label: "Organization", icon: Building2, to: "/dashboard" },
@@ -150,10 +150,7 @@ function ConversationSidebar({ conversations, activeId, onSelect, isAdmin, onNew
 
       <div className="px-4 pb-5 pt-3 flex flex-col gap-3 border-t border-slate-800">
         <div className="flex items-center justify-around text-slate-400 dark:text-slate-500">
-          <button onClick={() => navigate("/profile")} className="flex items-center gap-1.5 text-xs hover:text-white">
-            <User className="w-4 h-4" />
-            Profile
-          </button>
+          <ProfileAvatarButton size="sm" />
           <button onClick={() => navigate("/support")} className="flex items-center gap-1.5 text-xs hover:text-white">
             <HelpCircle className="w-4 h-4" />
             Help

@@ -5,6 +5,8 @@ function empIdx(id) {
   return employees.findIndex((e) => e.id === id);
 }
 function avatarFor(employeeId) {
+  let employee = employees.find((item) => item.id === employeeId);
+  if (employee?.avatar) return employee.avatar;
   return `https://i.pravatar.cc/64?img=${10 + Math.max(empIdx(employeeId), 0)}`;
 }
 

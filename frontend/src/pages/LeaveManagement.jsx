@@ -26,6 +26,7 @@ import { useAuth } from "@/lib/AuthContext";
 import ApplyLeaveModal from "@/components/employee/ApplyLeaveModal";
 import MasterSidebar from "@/components/layout/MasterSidebar";
 import { createPortal } from "react-dom";
+import ProfileAvatarButton from "@/components/layout/ProfileAvatarButton";
 
 // Backend sends stat cards keyed by `key` — map to an icon client-side.
 const STAT_ICON_BY_KEY = {
@@ -43,7 +44,6 @@ function formatDateShort(iso) {
 function TopBar({ user, search, onSearchChange }) {
   const navigate = useNavigate();
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
-
   useEffect(() => {
     let active = true;
 
@@ -139,7 +139,7 @@ function TopBar({ user, search, onSearchChange }) {
         </button>
 
         <div className="hidden sm:flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-slate-300 overflow-hidden flex-shrink-0" />
+          <ProfileAvatarButton name={user?.name || "Employee"} />
           <div className="leading-tight">
             <p className="text-sm font-semibold text-slate-900 dark:text-white">
               {user.name}
@@ -337,8 +337,12 @@ function LeaveRequestRow({
     <tr className="border-t border-slate-100 dark:border-slate-800">
       <td className="py-4 pr-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 text-xs font-semibold flex items-center justify-center flex-shrink-0">
-            {row.initials}
+          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 text-xs font-semibold flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {row.avatar ? (
+              <img src={row.avatar} alt={`${row.name}'s profile`} className="h-full w-full object-cover" />
+            ) : (
+              row.initials
+            )}
           </div>
           <div>
             <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -699,6 +703,7 @@ export default function LeaveManagement() {
         name: r.employee?.name,
         role: r.employee?.role,
         initials: initialsFor(r.employee?.name),
+        avatar: r.employee?.avatar || "",
         leaveType: r.leaveType,
         appliedOn: r.appliedOn,
         reason: r.reason,

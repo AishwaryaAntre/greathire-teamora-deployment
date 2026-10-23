@@ -48,7 +48,8 @@ export const updatePersonalInfoSchema = z
     name: z.string().trim().min(1, "Name is required").max(120, "Name must be at most 120 characters").optional(),
     email: z.string().trim().toLowerCase().email("must be a valid email").optional(),
     phone: z.string().trim().max(40).optional(),
-    avatar: z.string().trim().max(2000).optional(),
+    // Keep in sync with the client-side compressed image size and JSON body limit.
+    avatar: z.string().trim().max(100_000).optional(),
     role: z.string().trim().max(60).optional(),
     department: z.string().trim().max(120).optional(),
     employeeCode: z.string().trim().max(60).optional(),

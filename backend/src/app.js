@@ -63,7 +63,8 @@ export function createApp() {
       allowedHeaders: ["Content-Type", "Authorization", "Accept"],
     })
   );
-  app.use(express.json());
+  // Profile photos are sent as compressed data URLs, which need more than Express's default JSON limit.
+  app.use(express.json({ limit: "150kb" }));
   app.use(passport.initialize());
 
   // Non-blocking: populates req.user when a valid Bearer token is sent, but

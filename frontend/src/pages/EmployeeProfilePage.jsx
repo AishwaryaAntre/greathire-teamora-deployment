@@ -27,6 +27,7 @@ import {
 import { employeeProfileApi } from "@/lib/api/employeeProfile";
 import { employeeDashboardApi } from "@/lib/api/employeeDashboard";
 import { useAuth } from "@/lib/AuthContext";
+import ProfileAvatarButton from "@/components/layout/ProfileAvatarButton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,7 +123,7 @@ function TopBar() {
           <Settings className="w-5 h-5" />
         </button>
 
-        <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-white bg-slate-200" />
+        <ProfileAvatarButton />
       </div>
     </header>
   );
