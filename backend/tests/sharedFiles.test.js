@@ -90,7 +90,7 @@ test("shared files are only accessible to conversation members", async () => {
   assert.equal(response.status, 404);
 });
 
-test("shared file upload reports missing object storage configuration", async () => {
+test("shared file upload falls back to internal storage when S3 is unconfigured", async () => {
   let { token } = await loginAs(request, app, ADMIN_EMAIL);
   let names = ["S3_BUCKET", "S3_REGION", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY"];
   let previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
@@ -102,9 +102,8 @@ test("shared file upload reports missing object storage configuration", async ()
       .set("Authorization", `Bearer ${token}`)
       .send({ name: "plan.pdf", contentType: "application/pdf", size: 1024 });
 
-    assert.equal(response.status, 503);
-    assert.match(response.body.error, /S3_BUCKET/);
-    assert.equal(await SharedFileModel.countDocuments({ conversationId: "chan_general", status: "pending" }), 0);
+    assert.equal(response.status, 201);
+    assert.match(response.body.data.upload.url, /\/api\/messages\/storage\/upload/);
   } finally {
     names.forEach((name) => {
       if (previous[name] === undefined) delete process.env[name];

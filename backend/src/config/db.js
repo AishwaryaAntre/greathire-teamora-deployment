@@ -29,9 +29,14 @@ export async function connectDB() {
     logger.warn("[mongo] disconnected");
   });
 
-  await mongoose.connect(uri, {
+  const options = {
     serverSelectionTimeoutMS: 10000,
-  });
+  };
+  if (process.env.MONGODB_DB_NAME) {
+    options.dbName = process.env.MONGODB_DB_NAME;
+  }
+
+  await mongoose.connect(uri, options);
 
   isConnected = true;
   return mongoose.connection;

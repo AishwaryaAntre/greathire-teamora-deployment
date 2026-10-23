@@ -112,6 +112,7 @@ export let messageController = {
         key: file.key,
         contentType: file.contentType,
         size: file.size,
+        req,
       });
       res.status(201).json({
         success: true,
@@ -155,6 +156,21 @@ export let messageController = {
 
     let readyFile = await SharedFile.markReady(file.id);
     if (!readyFile) throw new ApiError(409, "Upload is no longer pending.");
+
+    // Also share as a message in the chat thread
+    try {
+      await Message.sendMessage(
+        conversationId,
+        {
+          content: `Shared file: ${file.name}`,
+          attachments: [{ type: "file", name: file.name, label: file.name, note: file.name }],
+        },
+        employeeId
+      );
+    } catch (_) {
+      // non-fatal
+    }
+
     res.json({ success: true, data: sharedFileDto(readyFile) });
   },
 
@@ -167,7 +183,7 @@ export let messageController = {
 
     let file = await SharedFile.findById(conversationId, req.params.fileId);
     if (!file || file.status !== "ready") throw new ApiError(404, "Shared file not found");
-    let url = await createDownloadUrl(file.key, file.name);
+    let url = await createDownloadUrl(file.key, file.name, req);
     res.json({ success: true, data: { url } });
   },
 
