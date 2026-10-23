@@ -25,6 +25,7 @@ import employeeDashboardRoutes from "./routes/employeeDashboardRoutes.js";
 import employeeProfileRoutes from "./routes/employeeProfileRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import storageRoutes from "./routes/storageRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import scheduleRoutes from "./routes/scheduleRoutes.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
@@ -63,6 +64,10 @@ export function createApp() {
       allowedHeaders: ["Content-Type", "Authorization", "Accept"],
     })
   );
+  // Mount binary file storage upload/download before express.json()
+  // so file streams are piped directly to GridFS without middleware parsing limits
+  app.use("/api/messages/storage", storageRoutes);
+
   // Profile photos are sent as compressed data URLs, which need more than Express's default JSON limit.
   app.use(express.json({ limit: "150kb" }));
   app.use(passport.initialize());

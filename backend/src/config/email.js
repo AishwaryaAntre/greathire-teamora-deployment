@@ -1,13 +1,22 @@
+import nodemailer from "nodemailer";
 import { logger } from "./logger.js";
 
-// Resend is used for all transactional email — no SMTP/other providers.
-// RESEND_API_KEY is optional in local dev: if it's not set, we just log the
-// reset link instead of sending it, so `forgot-password` still "works" for
-// local testing without requiring a Resend account.
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Teamora <onboarding@resend.dev>";
+function gmailAuth() {
+  let user = (process.env.GMAIL_USER || "").trim();
+  let pass = (process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "");
+  let from = (process.env.GMAIL_FROM_EMAIL || "").trim() || user;
+  return { user, pass, from, configured: Boolean(user && pass) };
+}
 
-export const resendConfigured = Boolean(RESEND_API_KEY);
+function createTransporter() {
+  let { user, pass } = gmailAuth();
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: { user, pass },
+  });
+}
 
 function passwordResetEmailHtml({ resetUrl }) {
   return `<!doctype html>
@@ -55,41 +64,33 @@ function passwordResetEmailHtml({ resetUrl }) {
 </html>`;
 }
 
-/** Sends the password-reset email through Resend. Never throws — a delivery
+/** Sends the password-reset email through Gmail / Google SMTP. Never throws — a delivery
  * failure must not leak whether the account exists or block the generic
  * "if an account exists" response, so failures are logged and swallowed. */
 export async function sendPasswordResetEmail({ to, resetUrl }) {
-  if (!resendConfigured) {
+  let { configured, from } = gmailAuth();
+  if (!configured) {
     logger.warn(
       { to },
-      `[email] RESEND_API_KEY not set — skipping send. Reset link (dev only): ${resetUrl}`
+      `[email] GMAIL_USER / GMAIL_APP_PASSWORD not set — skipping send. Reset link (dev only): ${resetUrl}`
     );
     return { skipped: true };
   }
 
   try {
-    let res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: RESEND_FROM_EMAIL,
-        to: [to],
-        subject: "Reset your Teamora password",
-        html: passwordResetEmailHtml({ resetUrl }),
-      }),
+    let info = await createTransporter().sendMail({
+      from,
+      to,
+      subject: "Reset your Teamora password",
+      html: passwordResetEmailHtml({ resetUrl }),
     });
-
-    if (!res.ok) {
-      let body = await res.text().catch(() => "");
-      logger.error({ status: res.status, body }, "[email] Resend request failed");
-      return { skipped: false, ok: false };
-    }
+    logger.info({ to, messageId: info.messageId }, "[email] Password reset email sent via Google/Gmail SMTP");
     return { skipped: false, ok: true };
   } catch (err) {
-    logger.error({ err }, "[email] Failed to send password reset email");
+    logger.error(
+      { err, to, code: err.code, response: err.response },
+      "[email] Failed to send password reset email via Google/Gmail SMTP"
+    );
     return { skipped: false, ok: false };
   }
 }

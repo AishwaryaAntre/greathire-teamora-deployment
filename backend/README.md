@@ -245,6 +245,11 @@ GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/oauth/google/callback
 MICROSOFT_CLIENT_ID=
 MICROSOFT_CLIENT_SECRET=
 MICROSOFT_CALLBACK_URL=http://localhost:5000/api/auth/oauth/microsoft/callback
+
+# Gmail SMTP for forgot-password emails (not the same as Google login OAuth)
+GMAIL_USER=
+GMAIL_APP_PASSWORD=
+GMAIL_FROM_EMAIL=
 ```
 
 ---
